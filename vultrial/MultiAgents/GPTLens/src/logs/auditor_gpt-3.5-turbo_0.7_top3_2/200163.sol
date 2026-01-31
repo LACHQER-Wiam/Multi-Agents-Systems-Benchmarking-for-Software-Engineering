@@ -1,0 +1,37 @@
+[
+    {
+        "function_name": "elo_probe",
+        "code": "static int elo_probe(struct hid_device *hdev, const struct hid_device_id *id)\n{\n\tstruct elo_priv *priv;\n\tint ret;\n\tstruct usb_device *udev;\n\tif (!hid_is_usb(hdev))\n\t\treturn -EINVAL;\n\tpriv = kzalloc(sizeof(*priv), GFP_KERNEL);\n\tif (!priv)\n\t\treturn -ENOMEM;\n\tINIT_DELAYED_WORK(&priv->work, elo_work);\n\tudev = interface_to_usbdev(to_usb_interface(hdev->dev.parent));\n\tpriv->usbdev = usb_get_dev(udev);\n\thid_set_drvdata(hdev, priv);\n\tret = hid_parse(hdev);\n\tif (ret) {\n\t\thid_err(hdev, \"parse failed\\n\");\n\t\tgoto err_free;\n\t}\n\tret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);\n\tif (ret) {\n\t\thid_err(hdev, \"hw start failed\\n\");\n\t\tgoto err_free;\n\t}\n\tif (elo_broken_firmware(priv->usbdev)) {\n\t\thid_info(hdev, \"broken firmware found, installing workaround\\n\");\n\t\tqueue_delayed_work(wq, &priv->work, ELO_PERIODIC_READ_INTERVAL);\n\t}\n\treturn 0;\nerr_free:\n\tkfree(priv);\n\treturn ret;\n}",
+        "vulnerability": "Potential NULL pointer dereference",
+        "reason": "The code does not check if 'hdev' is NULL before passing it to hid_hw_start function. This could lead to a NULL pointer dereference vulnerability, allowing an attacker to crash the system by providing a NULL 'hdev' parameter.",
+        "file_name": "200163.sol"
+    },
+    {
+        "function_name": "elo_probe",
+        "code": "static int elo_probe(struct hid_device *hdev, const struct hid_device_id *id)\n{\n\tstruct elo_priv *priv;\n\tint ret;\n\tstruct usb_device *udev;\n\tif (!hid_is_usb(hdev))\n\t\treturn -EINVAL;\n\tpriv = kzalloc(sizeof(*priv), GFP_KERNEL);\n\tif (!priv)\n\t\treturn -ENOMEM;\n\tINIT_DELAYED_WORK(&priv->work, elo_work);\n\tudev = interface_to_usbdev(to_usb_interface(hdev->dev.parent));\n\tpriv->usbdev = usb_get_dev(udev);\n\thid_set_drvdata(hdev, priv);\n\tret = hid_parse(hdev);\n\tif (ret) {\n\t\thid_err(hdev, \"parse failed\\n\");\n\t\tgoto err_free;\n\t}\n\tret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);\n\tif (ret) {\n\t\thid_err(hdev, \"hw start failed\\n\");\n\t\tgoto err_free;\n\t}\n\tif (elo_broken_firmware(priv->usbdev)) {\n\t\thid_info(hdev, \"broken firmware found, installing workaround\\n\");\n\t\tqueue_delayed_work(wq, &priv->work, ELO_PERIODIC_READ_INTERVAL);\n\t}\n\treturn 0;\nerr_free:\n\tkfree(priv);\n\treturn ret;\n}",
+        "vulnerability": "Unrestricted Workqueue Injection",
+        "reason": "The code allows for an unrestricted injection of work into the workqueue 'wq'. This can be exploited by an attacker to perform denial of service attacks by overwhelming the workqueue with malicious work items.",
+        "file_name": "200163.sol"
+    },
+    {
+        "function_name": "elo_probe",
+        "code": "static int elo_probe(struct hid_device *hdev, const struct hid_device_id *id)\n{\n\tstruct elo_priv *priv;\n\tint ret;\n\tstruct usb_device *udev;\n\tif (!hid_is_usb(hdev))\n\t\treturn -EINVAL;\n\tpriv = kzalloc(sizeof(*priv), GFP_KERNEL);\n\tif (!priv)\n\t\treturn -ENOMEM;\n\tINIT_DELAYED_WORK(&priv->work, elo_work);\n\tudev = interface_to_usbdev(to_usb_interface(hdev->dev.parent));\n\tpriv->usbdev = usb_get_dev(udev);\n\thid_set_drvdata(hdev, priv);\n\tret = hid_parse(hdev);\n\tif (ret) {\n\t\thid_err(hdev, \"parse failed\\n\");\n\t\tgoto err_free;\n\t}\n\tret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);\n\tif (ret) {\n\t\thid_err(hdev, \"hw start failed\\n\");\n\t\tgoto err_free;\n\t}\n\tif (elo_broken_firmware(priv->usbdev)) {\n\t\thid_info(hdev, \"broken firmware found, installing workaround\\n\");\n\t\tqueue_delayed_work(wq, &priv->work, ELO_PERIODIC_READ_INTERVAL);\n\t}\n\treturn 0;\nerr_free:\n\tkfree(priv);\n\treturn ret;\n}",
+        "vulnerability": "Potential Use-After-Free Vulnerability",
+        "reason": "In the err_free label, the kfree(priv) function is called to free the allocated memory for the 'priv' structure. However, if an error occurs before this label is reached (e.g., during hid_parse or hid_hw_start), 'priv' may not have been fully initialized or allocated. This can lead to a use-after-free vulnerability if 'priv' is accessed after being freed, potentially allowing an attacker to exploit this behavior for malicious purposes.",
+        "file_name": "200163.sol"
+    },
+    {
+        "function_name": "elo_probe",
+        "code": "static int elo_probe(struct hid_device *hdev, const struct hid_device_id *id)\n{\n\tstruct elo_priv *priv;\n\tint ret;\n\tstruct usb_device *udev;\n\tif (!hid_is_usb(hdev))\n\t\treturn -EINVAL;\n\tpriv = kzalloc(sizeof(*priv), GFP_KERNEL);\n\tif (!priv)\n\t\treturn -ENOMEM;\n\tINIT_DELAYED_WORK(&priv->work, elo_work);\n\tudev = interface_to_usbdev(to_usb_interface(hdev->dev.parent));\n\tpriv->usbdev = usb_get_dev(udev);\n\thid_set_drvdata(hdev, priv);\n\tret = hid_parse(hdev);\n\tif (ret) {\n\t\thid_err(hdev, \"parse failed\\n\");\n\t\tgoto err_free;\n\t}\n\tret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);\n\tif (ret) {\n\t\thid_err(hdev, \"hw start failed\\n\");\n\t\tgoto err_free;\n\t}\n\tif (elo_broken_firmware(priv->usbdev)) {\n\t\thid_info(hdev, \"broken firmware found, installing workaround\\n\");\n\t\tqueue_delayed_work(wq, &priv->work, ELO_PERIODIC_READ_INTERVAL);\n\t}\n\treturn 0;\nerr_free:\n\tkfree(priv);\n\treturn ret;\n}",
+        "vulnerability": "Missing Input Validation",
+        "reason": "The code does not perform sufficient input validation before using the 'priv->usbdev' pointer in the elo_broken_firmware function call. If an attacker can control the input to this function, they may be able to pass a malicious or unexpected USB device, leading to potential exploitation of vulnerabilities in the elo_broken_firmware function. This lack of input validation can result in security risks and compromise the integrity of the system.",
+        "file_name": "200163.sol"
+    },
+    {
+        "function_name": "elo_probe",
+        "code": "static int elo_probe(struct hid_device *hdev, const struct hid_device_id *id)\n{\n\tstruct elo_priv *priv;\n\tint ret;\n\tstruct usb_device *udev;\n\tif (!hid_is_usb(hdev))\n\t\treturn -EINVAL;\n\tpriv = kzalloc(sizeof(*priv), GFP_KERNEL);\n\tif (!priv)\n\t\treturn -ENOMEM;\n\tINIT_DELAYED_WORK(&priv->work, elo_work);\n\tudev = interface_to_usbdev(to_usb_interface(hdev->dev.parent));\n\tpriv->usbdev = usb_get_dev(udev);\n\thid_set_drvdata(hdev, priv);\n\tret = hid_parse(hdev);\n\tif (ret) {\n\t\thid_err(hdev, \"parse failed\\n\");\n\t\tgoto err_free;\n\t}\n\tret = hid_hw_start(hdev, HID_CONNECT_DEFAULT);\n\tif (ret) {\n\t\thid_err(hdev, \"hw start failed\\n\");\n\t\tgoto err_free;\n\t}\n\tif (elo_broken_firmware(priv->usbdev)) {\n\t\thid_info(hdev, \"broken firmware found, installing workaround\\n\");\n\t\tqueue_delayed_work(wq, &priv->work, ELO_PERIODIC_READ_INTERVAL);\n\t}\n\treturn 0;\nerr_free:\n\tkfree(priv);\n\treturn ret;\n}",
+        "vulnerability": "Potential Memory Leak",
+        "reason": "If an error occurs during the execution of the code before reaching the return statement, the allocated memory for 'priv' is freed in the err_free label using kfree(priv). However, if 'elo_probe' is called multiple times or in a loop without properly freeing the resources, it can lead to a memory leak issue. This can result in a gradual depletion of system resources over time, potentially impacting the performance and stability of the system.",
+        "file_name": "200163.sol"
+    }
+]

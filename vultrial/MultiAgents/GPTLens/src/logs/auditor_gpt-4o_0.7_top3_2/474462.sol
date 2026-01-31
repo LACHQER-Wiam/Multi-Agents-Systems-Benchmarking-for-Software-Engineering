@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "HandleCoRREBPP",
+        "code": "HandleCoRREBPP (rfbClient* client, int rx, int ry, int rw, int rh)\n{\n    rfbRREHeader hdr;\n    int i;\n    CARDBPP pix;\n    uint8_t *ptr;\n    int x, y, w, h;\n    if (!ReadFromRFBServer(client, (char *)&hdr, sz_rfbRREHeader))\n\treturn FALSE;\n    hdr.nSubrects = rfbClientSwap32IfLE(hdr.nSubrects);\n    if (!ReadFromRFBServer(client, (char *)&pix, sizeof(pix)))\n\treturn FALSE;\n    client->GotFillRect(client, rx, ry, rw, rh, pix);\n    if (hdr.nSubrects > RFB_BUFFER_SIZE / (4 + (BPP / 8)) || !ReadFromRFBServer(client, client->buffer, hdr.nSubrects * (4 + (BPP / 8))))\n\treturn FALSE;\n    ptr = (uint8_t *)client->buffer;\n    for (i = 0; i < hdr.nSubrects; i++) {\n\tpix = *(CARDBPP *)ptr;\n\tptr += BPP/8;\n\tx = *ptr++;\n\ty = *ptr++;\n\tw = *ptr++;\n\th = *ptr++;\n\tclient->GotFillRect(client, rx+x, ry+y, w, h, pix);\n    }\n    return TRUE;\n}",
+        "vulnerability": "Integer Overflow leading to Buffer Overflow",
+        "reason": "The condition attempts to prevent a buffer overflow by ensuring hdr.nSubrects is not too large. However, if BPP is significantly large or hdr.nSubrects's calculations overflow, the multiplication can wrap around, resulting in a size smaller than expected, allowing hdr.nSubrects * (4 + (BPP / 8)) to write beyond the allocated buffer size. Attackers can exploit this to execute arbitrary code.",
+        "file_name": "474462.sol"
+    },
+    {
+        "function_name": "HandleCoRREBPP",
+        "code": "HandleCoRREBPP (rfbClient* client, int rx, int ry, int rw, int rh)\n{\n    rfbRREHeader hdr;\n    int i;\n    CARDBPP pix;\n    uint8_t *ptr;\n    int x, y, w, h;\n    if (!ReadFromRFBServer(client, (char *)&hdr, sz_rfbRREHeader))\n\treturn FALSE;\n    hdr.nSubrects = rfbClientSwap32IfLE(hdr.nSubrects);\n    if (!ReadFromRFBServer(client, (char *)&pix, sizeof(pix)))\n\treturn FALSE;\n    client->GotFillRect(client, rx, ry, rw, rh, pix);\n    if (hdr.nSubrects > RFB_BUFFER_SIZE / (4 + (BPP / 8)) || !ReadFromRFBServer(client, client->buffer, hdr.nSubrects * (4 + (BPP / 8))))\n\treturn FALSE;\n    ptr = (uint8_t *)client->buffer;\n    for (i = 0; i < hdr.nSubrects; i++) {\n\tpix = *(CARDBPP *)ptr;\n\tptr += BPP/8;\n\tx = *ptr++;\n\ty = *ptr++;\n\tw = *ptr++;\n\th = *ptr++;\n\tclient->GotFillRect(client, rx+x, ry+y, w, h, pix);\n    }\n    return TRUE;\n}",
+        "vulnerability": "Improper Pointer Arithmetic",
+        "reason": "The code assumes that ptr points to a memory area with at least BPP/8 + 4 bytes. If hdr.nSubrects is incorrectly validated, ptr can read beyond the buffer. Moreover, if BPP is not a multiple of 8, the program can read unaligned memory, potentially leading to undefined behavior. This can be exploited to leak sensitive memory information or cause a crash, enabling denial-of-service attacks.",
+        "file_name": "474462.sol"
+    },
+    {
+        "function_name": "HandleCoRREBPP",
+        "code": "HandleCoRREBPP (rfbClient* client, int rx, int ry, int rw, int rh)\n{\n    rfbRREHeader hdr;\n    int i;\n    CARDBPP pix;\n    uint8_t *ptr;\n    int x, y, w, h;\n    if (!ReadFromRFBServer(client, (char *)&hdr, sz_rfbRREHeader))\n\treturn FALSE;\n    hdr.nSubrects = rfbClientSwap32IfLE(hdr.nSubrects);\n    if (!ReadFromRFBServer(client, (char *)&pix, sizeof(pix)))\n\treturn FALSE;\n    client->GotFillRect(client, rx, ry, rw, rh, pix);\n    if (hdr.nSubrects > RFB_BUFFER_SIZE / (4 + (BPP / 8)) || !ReadFromRFBServer(client, client->buffer, hdr.nSubrects * (4 + (BPP / 8))))\n\treturn FALSE;\n    ptr = (uint8_t *)client->buffer;\n    for (i = 0; i < hdr.nSubrects; i++) {\n\tpix = *(CARDBPP *)ptr;\n\tptr += BPP/8;\n\tx = *ptr++;\n\ty = *ptr++;\n\tw = *ptr++;\n\th = *ptr++;\n\tclient->GotFillRect(client, rx+x, ry+y, w, h, pix);\n    }\n    return TRUE;\n}",
+        "vulnerability": "Unchecked Memory Access",
+        "reason": "The code does not validate the values of x, y, w, and h extracted from the buffer. If these values are manipulated by an attacker, they can cause out-of-bounds writes when passed to GotFillRect, leading to memory corruption. This lack of validation can be used to overwrite memory regions, potentially allowing for code execution or data leakage.",
+        "file_name": "474462.sol"
+    },
+    {
+        "function_name": "HandleCoRREBPP",
+        "code": "HandleCoRREBPP (rfbClient* client, int rx, int ry, int rw, int rh)\n{\n    rfbRREHeader hdr;\n    int i;\n    CARDBPP pix;\n    uint8_t *ptr;\n    int x, y, w, h;\n    if (!ReadFromRFBServer(client, (char *)&hdr, sz_rfbRREHeader))\n\treturn FALSE;\n    hdr.nSubrects = rfbClientSwap32IfLE(hdr.nSubrects);\n    if (!ReadFromRFBServer(client, (char *)&pix, sizeof(pix)))\n\treturn FALSE;\n    client->GotFillRect(client, rx, ry, rw, rh, pix);\n    if (hdr.nSubrects > RFB_BUFFER_SIZE / (4 + (BPP / 8)) || !ReadFromRFBServer(client, client->buffer, hdr.nSubrects * (4 + (BPP / 8))))\n\treturn FALSE;\n    ptr = (uint8_t *)client->buffer;\n    for (i = 0; i < hdr.nSubrects; i++) {\n\tpix = *(CARDBPP *)ptr;\n\tptr += BPP/8;\n\tx = *ptr++;\n\ty = *ptr++;\n\tw = *ptr++;\n\th = *ptr++;\n\tclient->GotFillRect(client, rx+x, ry+y, w, h, pix);\n    }\n    return TRUE;\n}",
+        "vulnerability": "Integer Overflow leading to Buffer Overflow",
+        "reason": "The calculation of `hdr.nSubrects * (4 + (BPP / 8))` can result in an integer overflow if `hdr.nSubrects` is sufficiently large. This can cause the subsequent memory allocation or buffer handling to be smaller than expected, leading to a buffer overflow when data is read into `client->buffer`. An attacker could exploit this by sending a crafted packet with a large `nSubrects` value to cause the overflow and potentially execute arbitrary code or crash the program.",
+        "file_name": "474462.sol"
+    },
+    {
+        "function_name": "HandleCoRREBPP",
+        "code": "HandleCoRREBPP (rfbClient* client, int rx, int ry, int rw, int rh)\n{\n    rfbRREHeader hdr;\n    int i;\n    CARDBPP pix;\n    uint8_t *ptr;\n    int x, y, w, h;\n    if (!ReadFromRFBServer(client, (char *)&hdr, sz_rfbRREHeader))\n\treturn FALSE;\n    hdr.nSubrects = rfbClientSwap32IfLE(hdr.nSubrects);\n    if (!ReadFromRFBServer(client, (char *)&pix, sizeof(pix)))\n\treturn FALSE;\n    client->GotFillRect(client, rx, ry, rw, rh, pix);\n    if (hdr.nSubrects > RFB_BUFFER_SIZE / (4 + (BPP / 8)) || !ReadFromRFBServer(client, client->buffer, hdr.nSubrects * (4 + (BPP / 8))))\n\treturn FALSE;\n    ptr = (uint8_t *)client->buffer;\n    for (i = 0; i < hdr.nSubrects; i++) {\n\tpix = *(CARDBPP *)ptr;\n\tptr += BPP/8;\n\tx = *ptr++;\n\ty = *ptr++;\n\tw = *ptr++;\n\th = *ptr++;\n\tclient->GotFillRect(client, rx+x, ry+y, w, h, pix);\n    }\n    return TRUE;\n}",
+        "vulnerability": "Buffer Overflow due to unchecked pointer arithmetic",
+        "reason": "The loop iterates over `hdr.nSubrects`, incrementing the pointer `ptr` without any bounds checking. If `hdr.nSubrects` is larger than expected or the buffer is smaller than required, this can lead to reading and potentially writing out of bounds. An attacker could exploit this by manipulating the `nSubrects` field to access or corrupt adjacent memory, leading to undefined behavior, information leakage, or even control of the execution flow.",
+        "file_name": "474462.sol"
+    },
+    {
+        "function_name": "HandleCoRREBPP",
+        "code": "HandleCoRREBPP (rfbClient* client, int rx, int ry, int rw, int rh)\n{\n    rfbRREHeader hdr;\n    int i;\n    CARDBPP pix;\n    uint8_t *ptr;\n    int x, y, w, h;\n    if (!ReadFromRFBServer(client, (char *)&hdr, sz_rfbRREHeader))\n\treturn FALSE;\n    hdr.nSubrects = rfbClientSwap32IfLE(hdr.nSubrects);\n    if (!ReadFromRFBServer(client, (char *)&pix, sizeof(pix)))\n\treturn FALSE;\n    client->GotFillRect(client, rx, ry, rw, rh, pix);\n    if (hdr.nSubrects > RFB_BUFFER_SIZE / (4 + (BPP / 8)) || !ReadFromRFBServer(client, client->buffer, hdr.nSubrects * (4 + (BPP / 8))))\n\treturn FALSE;\n    ptr = (uint8_t *)client->buffer;\n    for (i = 0; i < hdr.nSubrects; i++) {\n\tpix = *(CARDBPP *)ptr;\n\tptr += BPP/8;\n\tx = *ptr++;\n\ty = *ptr++;\n\tw = *ptr++;\n\th = *ptr++;\n\tclient->GotFillRect(client, rx+x, ry+y, w, h, pix);\n    }\n    return TRUE;\n}",
+        "vulnerability": "Lack of Input Validation",
+        "reason": "The function reads data directly from the RFB server into the `hdr` structure without validating its contents. Specifically, `hdr.nSubrects` is used in subsequent calculations that determine the size of memory allocations and loops. If `hdr.nSubrects` is not properly validated (e.g., checking for negative values or excessively large numbers), this can lead to integer overflows, buffer overflows, and other vulnerabilities. An attacker could exploit this by sending malicious data to cause unexpected behavior or memory corruption.",
+        "file_name": "474462.sol"
+    }
+]

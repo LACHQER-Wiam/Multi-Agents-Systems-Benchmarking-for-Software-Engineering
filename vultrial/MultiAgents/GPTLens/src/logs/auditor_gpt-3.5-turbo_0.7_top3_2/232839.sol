@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Integer Overflow",
+        "reason": "The code snippet checks if the input num_streams is greater than or equal to 0. However, since num_streams is declared as an int64_t, an attacker can provide a large positive value that overflows and becomes negative, bypassing the check and potentially causing unexpected behavior or crashes.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Memory Leak",
+        "reason": "The code snippet dynamically allocates memory for a new QuantileStreamResource object using the 'new' keyword, but there is no corresponding 'delete' statement to free the memory after its use. This can lead to memory leaks, where the allocated memory is not released, causing the program to consume more memory over time and potentially crash due to lack of memory.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Error Handling",
+        "reason": "The code snippet performs error handling by checking if the status is not okay and the error code is not 'ALREADY_EXISTS', then it raises an error using OP_REQUIRES. However, this error handling mechanism is not robust enough as it does not provide detailed error messages or handle different types of errors appropriately, making it easier for attackers to exploit and potentially hide their malicious activities.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Zero Epsilon Value Check Bypass",
+        "reason": "The check for epsilon value greater than 0 is not sufficient as it does not prevent an attacker from providing a very small non-zero epsilon value that could still potentially cause issues in the computation.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Memory Leak",
+        "reason": "The code dynamically allocates memory for 'result' using 'new' but there is no corresponding 'delete' or 'delete[]' statement to free the allocated memory. This can lead to memory leaks in the long run, potentially causing denial of service attacks.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Error Handling Bypass",
+        "reason": "The error handling logic in this code snippet is not robust enough. If the status is not OK and the error code is not ALREADY_EXISTS, the code simply sets the context to false. This could allow an attacker to bypass error checks and proceed with malicious activities.",
+        "file_name": "232839.sol"
+    }
+]

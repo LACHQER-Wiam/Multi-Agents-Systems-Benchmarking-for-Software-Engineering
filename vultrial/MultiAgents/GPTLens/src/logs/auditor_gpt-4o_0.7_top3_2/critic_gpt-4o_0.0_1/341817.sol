@@ -1,0 +1,68 @@
+[
+    {
+        "function_name": "search_impl",
+        "vulnerability": "Buffer Overflow",
+        "criticism": "The reasoning for a buffer overflow is incorrect. The code checks if 'size' is greater than 'r_size(op1)' and returns early if true, which prevents 'ptr' from going out of bounds. The loop is controlled by 'count', which is calculated as 'r_size(op1) - size', ensuring that 'ptr' does not exceed the bounds of 'op1'. Therefore, the likelihood of a buffer overflow is minimal. However, the use of 'ptr += incr' without additional boundary checks could be risky if the logic changes, but as it stands, the code is safe from buffer overflow.",
+        "correctness": 2,
+        "severity": 1,
+        "profitability": 1,
+        "reason": "The function does not properly check bounds when incrementing or decrementing the pointer 'ptr', leading to a potential buffer overflow. If 'size' is large enough, the 'ptr' can go out of bounds, allowing an attacker to overwrite adjacent memory, potentially leading to code execution or data corruption.",
+        "code": "search_impl(i_ctx_t *i_ctx_p, bool forward)\n{\n    os_ptr op = osp;\n    os_ptr op1 = op - 1;\n    uint size = r_size(op);\n    uint count;\n    byte *pat;\n    byte *ptr;\n    byte ch;\n    int incr = forward ? 1 : -1;\n    check_read_type(*op1, t_string);\n    check_read_type(*op, t_string);\n    if (size > r_size(op1)) {\t\n        make_false(op);\n        return 0;\n    }\n    count = r_size(op1) - size;\n    ptr = op1->value.bytes;\n    if (size == 0)\n        goto found;\n    if (!forward)\n        ptr += count;\n    pat = op->value.bytes;\n    ch = pat[0];\n    do {\n        if (*ptr == ch && (size == 1 || !memcmp(ptr, pat, size)))\n            goto found;\n        ptr += incr;\n    }\n    while (count--);\n    make_false(op);\n    return 0;\nfound:\n    op->tas.type_attrs = op1->tas.type_attrs;\n    op->value.bytes = ptr;\t\t\t\t\n    op->tas.rsize = size;\t\t\t\t\n    push(2);\n    op[-1] = *op1;\t\t\t\t\t\n    op[-3].value.bytes = ptr + size;\t\t\t\n    if (forward) {\n        op[-1].tas.rsize = ptr - op[-1].value.bytes;\t\n        op[-3].tas.rsize = count;\t\t\t\n    } else {\n        op[-1].tas.rsize = count;\t\t\t\n        op[-3].tas.rsize -= count + size;\t\t\n    }\n    make_true(op);\n    return 0;\n}",
+        "file_name": "341817.sol"
+    },
+    {
+        "function_name": "search_impl",
+        "vulnerability": "Integer Underflow",
+        "criticism": "The reasoning for integer underflow is incorrect. The code correctly checks if 'size' is greater than 'r_size(op1)' and returns early, preventing 'count' from becoming a large positive number due to underflow. The decrement operation on 'count' is safe because it is initialized to a non-negative value. The loop will not execute more iterations than intended, so the risk of accessing out-of-bounds memory is low.",
+        "correctness": 2,
+        "severity": 1,
+        "profitability": 1,
+        "reason": "The variable 'count' is of unsigned integer type and is decremented in a loop. If 'r_size(op1)' is less than 'size', 'count' becomes a large positive number due to underflow, allowing the loop to execute more iterations than intended, which could lead to accessing out-of-bounds memory.",
+        "code": "search_impl(i_ctx_t *i_ctx_p, bool forward)\n{\n    os_ptr op = osp;\n    os_ptr op1 = op - 1;\n    uint size = r_size(op);\n    uint count;\n    byte *pat;\n    byte *ptr;\n    byte ch;\n    int incr = forward ? 1 : -1;\n    check_read_type(*op1, t_string);\n    check_read_type(*op, t_string);\n    if (size > r_size(op1)) {\t\n        make_false(op);\n        return 0;\n    }\n    count = r_size(op1) - size;\n    ptr = op1->value.bytes;\n    if (size == 0)\n        goto found;\n    if (!forward)\n        ptr += count;\n    pat = op->value.bytes;\n    ch = pat[0];\n    do {\n        if (*ptr == ch && (size == 1 || !memcmp(ptr, pat, size)))\n            goto found;\n        ptr += incr;\n    }\n    while (count--);\n    make_false(op);\n    return 0;\nfound:\n    op->tas.type_attrs = op1->tas.type_attrs;\n    op->value.bytes = ptr;\t\t\t\t\n    op->tas.rsize = size;\t\t\t\t\n    push(2);\n    op[-1] = *op1;\t\t\t\t\t\n    op[-3].value.bytes = ptr + size;\t\t\t\n    if (forward) {\n        op[-1].tas.rsize = ptr - op[-1].value.bytes;\t\n        op[-3].tas.rsize = count;\t\t\t\n    } else {\n        op[-1].tas.rsize = count;\t\t\t\n        op[-3].tas.rsize -= count + size;\t\t\n    }\n    make_true(op);\n    return 0;\n}",
+        "file_name": "341817.sol"
+    },
+    {
+        "function_name": "search_impl",
+        "vulnerability": "Improper Input Validation",
+        "criticism": "The reasoning for improper input validation is partially correct. The function does assume that the inputs are valid strings, but it does perform type checks using 'check_read_type'. However, it does not validate the content of the strings beyond type checking, which could lead to unexpected behavior if the strings contain unexpected data. The risk of security vulnerabilities is low, but the function could benefit from more comprehensive input validation.",
+        "correctness": 5,
+        "severity": 3,
+        "profitability": 2,
+        "reason": "The code assumes that the input strings are correctly formatted and does not perform comprehensive validation on the input data. This could lead to unexpected behavior or exploitation if the input strings are malformed or contain unexpected data, potentially leading to security vulnerabilities such as memory corruption.",
+        "code": "search_impl(i_ctx_t *i_ctx_p, bool forward)\n{\n    os_ptr op = osp;\n    os_ptr op1 = op - 1;\n    uint size = r_size(op);\n    uint count;\n    byte *pat;\n    byte *ptr;\n    byte ch;\n    int incr = forward ? 1 : -1;\n    check_read_type(*op1, t_string);\n    check_read_type(*op, t_string);\n    if (size > r_size(op1)) {\t\n        make_false(op);\n        return 0;\n    }\n    count = r_size(op1) - size;\n    ptr = op1->value.bytes;\n    if (size == 0)\n        goto found;\n    if (!forward)\n        ptr += count;\n    pat = op->value.bytes;\n    ch = pat[0];\n    do {\n        if (*ptr == ch && (size == 1 || !memcmp(ptr, pat, size)))\n            goto found;\n        ptr += incr;\n    }\n    while (count--);\n    make_false(op);\n    return 0;\nfound:\n    op->tas.type_attrs = op1->tas.type_attrs;\n    op->value.bytes = ptr;\t\t\t\t\n    op->tas.rsize = size;\t\t\t\t\n    push(2);\n    op[-1] = *op1;\t\t\t\t\t\n    op[-3].value.bytes = ptr + size;\t\t\t\n    if (forward) {\n        op[-1].tas.rsize = ptr - op[-1].value.bytes;\t\n        op[-3].tas.rsize = count;\t\t\t\n    } else {\n        op[-1].tas.rsize = count;\t\t\t\n        op[-3].tas.rsize -= count + size;\t\t\n    }\n    make_true(op);\n    return 0;\n}",
+        "file_name": "341817.sol"
+    },
+    {
+        "function_name": "search_impl",
+        "vulnerability": "Buffer Over-read",
+        "criticism": "The reasoning for buffer over-read is correct. The function does not verify if the memory area pointed to by 'ptr' is large enough to contain 'size' bytes before calling 'memcmp'. This could lead to reading beyond the intended buffer if 'size' is larger than the remaining bytes in 'op1'. This vulnerability could potentially leak sensitive information, making it a valid concern.",
+        "correctness": 8,
+        "severity": 6,
+        "profitability": 5,
+        "reason": "The function does not verify if the memory area pointed to by 'ptr' is large enough to contain 'size' bytes before calling 'memcmp', leading to a potential buffer over-read if 'size' is larger than the remaining bytes in 'op1'. This can allow attackers to read beyond the intended buffer, potentially leaking sensitive information.",
+        "code": "search_impl(i_ctx_t *i_ctx_p, bool forward)\n{\n    os_ptr op = osp;\n    os_ptr op1 = op - 1;\n    uint size = r_size(op);\n    uint count;\n    byte *pat;\n    byte *ptr;\n    byte ch;\n    int incr = forward ? 1 : -1;\n    check_read_type(*op1, t_string);\n    check_read_type(*op, t_string);\n    if (size > r_size(op1)) {\t\n        make_false(op);\n        return 0;\n    }\n    count = r_size(op1) - size;\n    ptr = op1->value.bytes;\n    if (size == 0)\n        goto found;\n    if (!forward)\n        ptr += count;\n    pat = op->value.bytes;\n    ch = pat[0];\n    do {\n        if (*ptr == ch && (size == 1 || !memcmp(ptr, pat, size)))\n            goto found;\n        ptr += incr;\n    }\n    while (count--);\n    make_false(op);\n    return 0;\nfound:\n    op->tas.type_attrs = op1->tas.type_attrs;\n    op->value.bytes = ptr;\t\t\t\t\n    op->tas.rsize = size;\t\t\t\t\n    push(2);\n    op[-1] = *op1;\t\t\t\t\t\n    op[-3].value.bytes = ptr + size;\t\t\t\n    if (forward) {\n        op[-1].tas.rsize = ptr - op[-1].value.bytes;\t\n        op[-3].tas.rsize = count;\t\t\t\n    } else {\n        op[-1].tas.rsize = count;\t\t\t\n        op[-3].tas.rsize -= count + size;\t\t\n    }\n    make_true(op);\n    return 0;\n}",
+        "file_name": "341817.sol"
+    },
+    {
+        "function_name": "search_impl",
+        "vulnerability": "Improper Input Validation",
+        "criticism": "This reasoning is similar to the previous improper input validation issue. The function does perform type checks but does not validate the content of the strings. While this could lead to undefined behavior if the strings are malformed, the risk of significant security vulnerabilities is low. The function could be improved with more comprehensive input validation.",
+        "correctness": 5,
+        "severity": 3,
+        "profitability": 2,
+        "reason": "The code assumes that the values in 'op1' and 'op' are valid strings, but if these values are not properly validated or sanitized, an attacker could exploit this by providing malformed or malicious input, potentially leading to undefined behavior or security vulnerabilities.",
+        "code": "search_impl(i_ctx_t *i_ctx_p, bool forward)\n{\n    os_ptr op = osp;\n    os_ptr op1 = op - 1;\n    uint size = r_size(op);\n    uint count;\n    byte *pat;\n    byte *ptr;\n    byte ch;\n    int incr = forward ? 1 : -1;\n    check_read_type(*op1, t_string);\n    check_read_type(*op, t_string);\n    if (size > r_size(op1)) {\t\n        make_false(op);\n        return 0;\n    }\n    count = r_size(op1) - size;\n    ptr = op1->value.bytes;\n    if (size == 0)\n        goto found;\n    if (!forward)\n        ptr += count;\n    pat = op->value.bytes;\n    ch = pat[0];\n    do {\n        if (*ptr == ch && (size == 1 || !memcmp(ptr, pat, size)))\n            goto found;\n        ptr += incr;\n    }\n    while (count--);\n    make_false(op);\n    return 0;\nfound:\n    op->tas.type_attrs = op1->tas.type_attrs;\n    op->value.bytes = ptr;\t\t\t\t\n    op->tas.rsize = size;\t\t\t\t\n    push(2);\n    op[-1] = *op1;\t\t\t\t\t\n    op[-3].value.bytes = ptr + size;\t\t\t\n    if (forward) {\n        op[-1].tas.rsize = ptr - op[-1].value.bytes;\t\n        op[-3].tas.rsize = count;\t\t\t\n    } else {\n        op[-1].tas.rsize = count;\t\t\t\n        op[-3].tas.rsize -= count + size;\t\t\n    }\n    make_true(op);\n    return 0;\n}",
+        "file_name": "341817.sol"
+    },
+    {
+        "function_name": "search_impl",
+        "vulnerability": "Arithmetic Error",
+        "criticism": "The reasoning for arithmetic error is incorrect. The line 'if (!forward) ptr += count;' is safe because 'count' is calculated as 'r_size(op1) - size', which ensures that 'ptr' does not move beyond the allocated memory buffer. The function checks if 'size' is greater than 'r_size(op1)' and returns early, preventing 'count' from being a large value. Therefore, the risk of memory corruption or crashes due to arithmetic error is minimal.",
+        "correctness": 2,
+        "severity": 1,
+        "profitability": 1,
+        "reason": "The line 'if (!forward) ptr += count;' can lead to an arithmetic error if 'forward' is false and 'count' is calculated to be a large value, causing 'ptr' to move beyond the allocated memory buffer. This could be exploited to cause memory corruption or crashes.",
+        "code": "search_impl(i_ctx_t *i_ctx_p, bool forward)\n{\n    os_ptr op = osp;\n    os_ptr op1 = op - 1;\n    uint size = r_size(op);\n    uint count;\n    byte *pat;\n    byte *ptr;\n    byte ch;\n    int incr = forward ? 1 : -1;\n    check_read_type(*op1, t_string);\n    check_read_type(*op, t_string);\n    if (size > r_size(op1)) {\t\n        make_false(op);\n        return 0;\n    }\n    count = r_size(op1) - size;\n    ptr = op1->value.bytes;\n    if (size == 0)\n        goto found;\n    if (!forward)\n        ptr += count;\n    pat = op->value.bytes;\n    ch = pat[0];\n    do {\n        if (*ptr == ch && (size == 1 || !memcmp(ptr, pat, size)))\n            goto found;\n        ptr += incr;\n    }\n    while (count--);\n    make_false(op);\n    return 0;\nfound:\n    op->tas.type_attrs = op1->tas.type_attrs;\n    op->value.bytes = ptr;\t\t\t\t\n    op->tas.rsize = size;\t\t\t\t\n    push(2);\n    op[-1] = *op1;\t\t\t\t\t\n    op[-3].value.bytes = ptr + size;\t\t\t\n    if (forward) {\n        op[-1].tas.rsize = ptr - op[-1].value.bytes;\t\n        op[-3].tas.rsize = count;\t\t\t\n    } else {\n        op[-1].tas.rsize = count;\t\t\t\n        op[-3].tas.rsize -= count + size;\t\t\n    }\n    make_true(op);\n    return 0;\n}",
+        "file_name": "341817.sol"
+    }
+]

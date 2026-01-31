@@ -1,0 +1,358 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ int snd_pcm_oss_sync(struct snd_pcm_oss_file *pcm_oss_file)\n{\n\tint err =\
+    \ 0;\n\tunsigned int saved_f_flags;\n\tstruct snd_pcm_substream *substream;\n\t\
+    struct snd_pcm_runtime *runtime;\n\tsnd_pcm_format_t format;\n\tunsigned long\
+    \ width;\n\tsize_t size;\n\n\tsubstream = pcm_oss_file->streams[SNDRV_PCM_STREAM_PLAYBACK];\n\
+    \tif (substream != NULL) {\n\t\truntime = substream->runtime;\n\t\tif (atomic_read(&substream->mmap_count))\n\
+    \t\t\tgoto __direct;\n\t\tatomic_inc(&runtime->oss.rw_ref);\n\t\tif (mutex_lock_interruptible(&runtime->oss.params_lock))\
+    \ {\n\t\t\tatomic_dec(&runtime->oss.rw_ref);\n\t\t\treturn -ERESTARTSYS;\n\t\t\
+    }\n\t\terr = snd_pcm_oss_make_ready_locked(substream);\n\t\tif (err < 0)\n\t\t\
+    \tgoto unlock;\n\t\tformat = snd_pcm_oss_format_from(runtime->oss.format);\n\t\
+    \twidth = snd_pcm_format_physical_width(format);\n\t\tif (runtime->oss.buffer_used\
+    \ > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm, \"sync: buffer_used\\\
+    n\");\n#endif\n\t\t\tsize = (8 * (runtime->oss.period_bytes - runtime->oss.buffer_used)\
+    \ + 7) / width;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\t\t   runtime->oss.buffer\
+    \ + runtime->oss.buffer_used,\n\t\t\t\t\t\t   size);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ runtime->oss.period_bytes);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t\
+    } else if (runtime->oss.period_ptr > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm,\
+    \ \"sync: period_ptr\\n\");\n#endif\n\t\t\tsize = runtime->oss.period_bytes -\
+    \ runtime->oss.period_ptr;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\
+    \t\t   runtime->oss.buffer,\n\t\t\t\t\t\t   size * 8 / width);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ size);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t}\n\t\t/*\n\t\t * The\
+    \ ALSA's period might be a bit large than OSS one.\n\t\t * Fill the remain portion\
+    \ of ALSA period with zeros.\n\t\t */\n\t\tsize = runtime->control->appl_ptr %\
+    \ runtime->period_size;\n\t\tif (size > 0) {\n\t\t\tsize = runtime->period_size\
+    \ - size;\n\t\t\tif (runtime->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED)\n\t\t\
+    \t\tsnd_pcm_lib_write(substream, NULL, size);\n\t\t\telse if (runtime->access\
+    \ == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED)\n\t\t\t\tsnd_pcm_lib_writev(substream,\
+    \ NULL, size);\n\t\t}\nunlock:\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t\tatomic_dec(&runtime->oss.rw_ref);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\
+    \t/*\n\t\t * finish sync: drain the buffer\n\t\t */\n\t      __direct:\n\t\tsaved_f_flags\
+    \ = substream->f_flags;\n\t\tsubstream->f_flags &= ~O_NONBLOCK;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DRAIN, NULL);\n\t\tsubstream->f_flags = saved_f_flags;\n\t\t\
+    if (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\t\
+    \truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\t\
+    }\n\n\tsubstream = pcm_oss_file->streams[SNDRV_PCM_STREAM_CAPTURE];\n\tif (substream\
+    \ != NULL) {\n\t\terr = snd_pcm_oss_make_ready(substream);\n\t\tif (err < 0)\n\
+    \t\t\treturn err;\n\t\truntime = substream->runtime;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DROP, NULL);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\
+    \t\truntime->oss.buffer_used = 0;\n\t\truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t}\n\treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic int snd_pcm_oss_sync(struct\
+    \ snd_pcm_oss_file *pcm_oss_file)\n{\n\tint err = 0;\n\tunsigned int saved_f_flags;\n\
+    \tstruct snd_pcm_substream *substream;\n\tstruct snd_pcm_runtime *runtime;\n\t\
+    snd_pcm_format_t format;\n\tunsigned long width;\n\tsize_t size;\n\n\tsubstream\
+    \ = pcm_oss_file->streams[SNDRV_PCM_STREAM_PLAYBACK];\n\tif (substream != NULL)\
+    \ {\n\t\truntime = substream->runtime;\n\t\tif (atomic_read(&substream->mmap_count))\n\
+    \t\t\tgoto __direct;\n\t\tatomic_inc(&runtime->oss.rw_ref);\n\t\tif (mutex_lock_interruptible(&runtime->oss.params_lock))\
+    \ {\n\t\t\tatomic_dec(&runtime->oss.rw_ref);\n\t\t\treturn -ERESTARTSYS;\n\t\t\
+    }\n\t\terr = snd_pcm_oss_make_ready_locked(substream);\n\t\tif (err < 0)\n\t\t\
+    \tgoto unlock;\n\t\tformat = snd_pcm_oss_format_from(runtime->oss.format);\n\t\
+    \twidth = snd_pcm_format_physical_width(format);\n\t\tif (runtime->oss.buffer_used\
+    \ > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm, \"sync: buffer_used\\\
+    n\");\n#endif\n\t\t\tsize = (8 * (runtime->oss.period_bytes - runtime->oss.buffer_used)\
+    \ + 7) / width;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\t\t   runtime->oss.buffer\
+    \ + runtime->oss.buffer_used,\n\t\t\t\t\t\t   size);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ runtime->oss.period_bytes);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t\
+    } else if (runtime->oss.period_ptr > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm,\
+    \ \"sync: period_ptr\\n\");\n#endif\n\t\t\tsize = runtime->oss.period_bytes -\
+    \ runtime->oss.period_ptr;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\
+    \t\t   runtime->oss.buffer,\n\t\t\t\t\t\t   size * 8 / width);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ size);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t}\n\t\t/*\n\t\t * The\
+    \ ALSA's period might be a bit large than OSS one.\n\t\t * Fill the remain portion\
+    \ of ALSA period with zeros.\n\t\t */\n\t\tsize = runtime->control->appl_ptr %\
+    \ runtime->period_size;\n\t\tif (size > 0) {\n\t\t\tsize = runtime->period_size\
+    \ - size;\n\t\t\tif (runtime->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED)\n\t\t\
+    \t\tsnd_pcm_lib_write(substream, NULL, size);\n\t\t\telse if (runtime->access\
+    \ == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED)\n\t\t\t\tsnd_pcm_lib_writev(substream,\
+    \ NULL, size);\n\t\t}\nunlock:\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t\tatomic_dec(&runtime->oss.rw_ref);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\
+    \t/*\n\t\t * finish sync: drain the buffer\n\t\t */\n\t      __direct:\n\t\tsaved_f_flags\
+    \ = substream->f_flags;\n\t\tsubstream->f_flags &= ~O_NONBLOCK;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DRAIN, NULL);\n\t\tsubstream->f_flags = saved_f_flags;\n\t\t\
+    if (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\t\
+    \truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\t\
+    }\n\n\tsubstream = pcm_oss_file->streams[SNDRV_PCM_STREAM_CAPTURE];\n\tif (substream\
+    \ != NULL) {\n\t\terr = snd_pcm_oss_make_ready(substream);\n\t\tif (err < 0)\n\
+    \t\t\treturn err;\n\t\truntime = substream->runtime;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DROP, NULL);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\
+    \t\truntime->oss.buffer_used = 0;\n\t\truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t}\n\treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic int snd_pcm_oss_sync(struct snd_pcm_oss_file\
+    \ *pcm_oss_file)\n{\n\tint err = 0;\n\tunsigned int saved_f_flags;\n\tstruct snd_pcm_substream\
+    \ *substream;\n\tstruct snd_pcm_runtime *runtime;\n\tsnd_pcm_format_t format;\n\
+    \tunsigned long width;\n\tsize_t size;\n\n\tsubstream = pcm_oss_file->streams[SNDRV_PCM_STREAM_PLAYBACK];\n\
+    \tif (substream != NULL) {\n\t\truntime = substream->runtime;\n\t\tif (atomic_read(&substream->mmap_count))\n\
+    \t\t\tgoto __direct;\n\t\tatomic_inc(&runtime->oss.rw_ref);\n\t\tif (mutex_lock_interruptible(&runtime->oss.params_lock))\
+    \ {\n\t\t\tatomic_dec(&runtime->oss.rw_ref);\n\t\t\treturn -ERESTARTSYS;\n\t\t\
+    }\n\t\terr = snd_pcm_oss_make_ready_locked(substream);\n\t\tif (err < 0)\n\t\t\
+    \tgoto unlock;\n\t\tformat = snd_pcm_oss_format_from(runtime->oss.format);\n\t\
+    \twidth = snd_pcm_format_physical_width(format);\n\t\tif (runtime->oss.buffer_used\
+    \ > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm, \"sync: buffer_used\\\
+    n\");\n#endif\n\t\t\tsize = (8 * (runtime->oss.period_bytes - runtime->oss.buffer_used)\
+    \ + 7) / width;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\t\t   runtime->oss.buffer\
+    \ + runtime->oss.buffer_used,\n\t\t\t\t\t\t   size);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ runtime->oss.period_bytes);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t\
+    } else if (runtime->oss.period_ptr > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm,\
+    \ \"sync: period_ptr\\n\");\n#endif\n\t\t\tsize = runtime->oss.period_bytes -\
+    \ runtime->oss.period_ptr;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\
+    \t\t   runtime->oss.buffer,\n\t\t\t\t\t\t   size * 8 / width);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ size);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t}\n\t\t/*\n\t\t * The\
+    \ ALSA's period might be a bit large than OSS one.\n\t\t * Fill the remain portion\
+    \ of ALSA period with zeros.\n\t\t */\n\t\tsize = runtime->control->appl_ptr %\
+    \ runtime->period_size;\n\t\tif (size > 0) {\n\t\t\tsize = runtime->period_size\
+    \ - size;\n\t\t\tif (runtime->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED)\n\t\t\
+    \t\tsnd_pcm_lib_write(substream, NULL, size);\n\t\t\telse if (runtime->access\
+    \ == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED)\n\t\t\t\tsnd_pcm_lib_writev(substream,\
+    \ NULL, size);\n\t\t}\nunlock:\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t\tatomic_dec(&runtime->oss.rw_ref);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\
+    \t/*\n\t\t * finish sync: drain the buffer\n\t\t */\n\t      __direct:\n\t\tsaved_f_flags\
+    \ = substream->f_flags;\n\t\tsubstream->f_flags &= ~O_NONBLOCK;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DRAIN, NULL);\n\t\tsubstream->f_flags = saved_f_flags;\n\t\t\
+    if (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\t\
+    \truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\t\
+    }\n\n\tsubstream = pcm_oss_file->streams[SNDRV_PCM_STREAM_CAPTURE];\n\tif (substream\
+    \ != NULL) {\n\t\terr = snd_pcm_oss_make_ready(substream);\n\t\tif (err < 0)\n\
+    \t\t\treturn err;\n\t\truntime = substream->runtime;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DROP, NULL);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\
+    \t\truntime->oss.buffer_used = 0;\n\t\truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t}\n\treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic int snd_pcm_oss_sync(struct\
+    \ snd_pcm_oss_file *pcm_oss_file)\n{\n\tint err = 0;\n\tunsigned int saved_f_flags;\n\
+    \tstruct snd_pcm_substream *substream;\n\tstruct snd_pcm_runtime *runtime;\n\t\
+    snd_pcm_format_t format;\n\tunsigned long width;\n\tsize_t size;\n\n\tsubstream\
+    \ = pcm_oss_file->streams[SNDRV_PCM_STREAM_PLAYBACK];\n\tif (substream != NULL)\
+    \ {\n\t\truntime = substream->runtime;\n\t\tif (atomic_read(&substream->mmap_count))\n\
+    \t\t\tgoto __direct;\n\t\tatomic_inc(&runtime->oss.rw_ref);\n\t\tif (mutex_lock_interruptible(&runtime->oss.params_lock))\
+    \ {\n\t\t\tatomic_dec(&runtime->oss.rw_ref);\n\t\t\treturn -ERESTARTSYS;\n\t\t\
+    }\n\t\terr = snd_pcm_oss_make_ready_locked(substream);\n\t\tif (err < 0)\n\t\t\
+    \tgoto unlock;\n\t\tformat = snd_pcm_oss_format_from(runtime->oss.format);\n\t\
+    \twidth = snd_pcm_format_physical_width(format);\n\t\tif (runtime->oss.buffer_used\
+    \ > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm, \"sync: buffer_used\\\
+    n\");\n#endif\n\t\t\tsize = (8 * (runtime->oss.period_bytes - runtime->oss.buffer_used)\
+    \ + 7) / width;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\t\t   runtime->oss.buffer\
+    \ + runtime->oss.buffer_used,\n\t\t\t\t\t\t   size);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ runtime->oss.period_bytes);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t\
+    } else if (runtime->oss.period_ptr > 0) {\n#ifdef OSS_DEBUG\n\t\t\tpcm_dbg(substream->pcm,\
+    \ \"sync: period_ptr\\n\");\n#endif\n\t\t\tsize = runtime->oss.period_bytes -\
+    \ runtime->oss.period_ptr;\n\t\t\tsnd_pcm_format_set_silence(format,\n\t\t\t\t\
+    \t\t   runtime->oss.buffer,\n\t\t\t\t\t\t   size * 8 / width);\n\t\t\terr = snd_pcm_oss_sync1(substream,\
+    \ size);\n\t\t\tif (err < 0)\n\t\t\t\tgoto unlock;\n\t\t}\n\t\t/*\n\t\t * The\
+    \ ALSA's period might be a bit large than OSS one.\n\t\t * Fill the remain portion\
+    \ of ALSA period with zeros.\n\t\t */\n\t\tsize = runtime->control->appl_ptr %\
+    \ runtime->period_size;\n\t\tif (size > 0) {\n\t\t\tsize = runtime->period_size\
+    \ - size;\n\t\t\tif (runtime->access == SNDRV_PCM_ACCESS_RW_INTERLEAVED)\n\t\t\
+    \t\tsnd_pcm_lib_write(substream, NULL, size);\n\t\t\telse if (runtime->access\
+    \ == SNDRV_PCM_ACCESS_RW_NONINTERLEAVED)\n\t\t\t\tsnd_pcm_lib_writev(substream,\
+    \ NULL, size);\n\t\t}\nunlock:\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t\tatomic_dec(&runtime->oss.rw_ref);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\
+    \t/*\n\t\t * finish sync: drain the buffer\n\t\t */\n\t      __direct:\n\t\tsaved_f_flags\
+    \ = substream->f_flags;\n\t\tsubstream->f_flags &= ~O_NONBLOCK;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DRAIN, NULL);\n\t\tsubstream->f_flags = saved_f_flags;\n\t\t\
+    if (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\t\
+    \truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\t\
+    }\n\n\tsubstream = pcm_oss_file->streams[SNDRV_PCM_STREAM_CAPTURE];\n\tif (substream\
+    \ != NULL) {\n\t\terr = snd_pcm_oss_make_ready(substream);\n\t\tif (err < 0)\n\
+    \t\t\treturn err;\n\t\truntime = substream->runtime;\n\t\terr = snd_pcm_kernel_ioctl(substream,\
+    \ SNDRV_PCM_IOCTL_DROP, NULL);\n\t\tif (err < 0)\n\t\t\treturn err;\n\t\tmutex_lock(&runtime->oss.params_lock);\n\
+    \t\truntime->oss.buffer_used = 0;\n\t\truntime->oss.prepare = 1;\n\t\tmutex_unlock(&runtime->oss.params_lock);\n\
+    \t}\n\treturn 0;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 289293
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

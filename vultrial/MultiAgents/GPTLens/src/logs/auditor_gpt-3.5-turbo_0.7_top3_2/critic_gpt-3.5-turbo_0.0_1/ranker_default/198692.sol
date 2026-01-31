@@ -1,0 +1,38 @@
+[
+    {
+        "function_name": "xfrm_migrate",
+        "vulnerability": "Memory leak",
+        "criticism": "The reasoning provided for the memory leak vulnerability is valid. The vulnerability occurs when 'x_cur' and 'x_new' arrays are not freed if an error occurs in xfrm_policy_migrate(). The severity of this vulnerability is moderate as it can lead to resource exhaustion. The correctness score is 8 as the vulnerability is correctly identified. The profitability score is 7 as memory leaks can be exploited to degrade system performance.",
+        "correctness": 8,
+        "severity": 7,
+        "profitability": 7,
+        "reason": "In the code snippet, if the xfrm_policy_migrate() function returns an error (err < 0), the function exits without releasing the memory allocated for 'x_cur' and 'x_new' arrays. This can lead to a memory leak as the allocated memory is not freed before returning from the function.",
+        "code": "int xfrm_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,\n\t\t struct xfrm_migrate *m, int num_migrate,\n\t\t struct xfrm_kmaddress *k, struct net *net,\n\t\t struct xfrm_encap_tmpl *encap)\n{\n\tint i, err, nx_cur = 0, nx_new = 0;\n\tstruct xfrm_policy *pol = NULL;\n\tstruct xfrm_state *x, *xc;\n\tstruct xfrm_state *x_cur[XFRM_MAX_DEPTH];\n\tstruct xfrm_state *x_new[XFRM_MAX_DEPTH];\n\tstruct xfrm_migrate *mp;\n\tif ((err = xfrm_migrate_check(m, num_migrate)) < 0)\n\t\tgoto out;\n\tif ((pol = xfrm_migrate_policy_find(sel, dir, type, net)) == NULL) {\n\t\terr = -ENOENT;\n\t\tgoto out;\n\t}\n\tfor (i = 0, mp = m; i < num_migrate; i++, mp++) {\n\t\tif ((x = xfrm_migrate_state_find(mp, net))) {\n\t\t\tx_cur[nx_cur] = x;\n\t\t\tnx_cur++;\n\t\t\txc = xfrm_state_migrate(x, mp, encap);\n\t\t\tif (xc) {\n\t\t\t\tx_new[nx_new] = xc;\n\t\t\t\tnx_new++;\n\t\t\t} else {\n\t\t\t\terr = -ENODATA;\n\t\t\t\tgoto restore_state;\n\t\t\t}\n\t\t}\n\t}\n\tif ((err = xfrm_policy_migrate(pol, m, num_migrate)) < 0)\n\t\tgoto restore_state;\n\tif (nx_cur) {\n\t\txfrm_states_put(x_cur, nx_cur);\n\t\txfrm_states_delete(x_cur, nx_cur);\n\t}\n\tkm_migrate(sel, dir, type, m, num_migrate, k, encap);\n\txfrm_pol_put(pol);\n\treturn 0;\nout:\n\treturn err;\nrestore_state:\n\tif (pol)\n\t\txfrm_pol_put(pol);\n\tif (nx_cur)\n\t\txfrm_states_put(x_cur, nx_cur);\n\tif (nx_new)\n\t\txfrm_states_delete(x_new, nx_new);\n\treturn err;\n}",
+        "file_name": "198692.sol",
+        "final_score": 7.5
+    },
+    {
+        "function_name": "xfrm_migrate",
+        "vulnerability": "Potential NULL pointer dereference",
+        "criticism": "The reasoning provided for the potential NULL pointer dereference vulnerability is accurate. The vulnerability arises from the possibility of accessing 'pol' without checking if it is NULL after the conditional assignment. The severity of this vulnerability is moderate as it can lead to a crash or unexpected behavior. The correctness score is 7 as the vulnerability is correctly identified. The profitability score is 6 as exploiting this vulnerability may require specific conditions.",
+        "correctness": 7,
+        "severity": 6,
+        "profitability": 6,
+        "reason": "In the code snippet, the variable 'pol' is assigned to NULL initially but is conditionally assigned a value in the xfrm_migrate_policy_find() function. If the function returns NULL, then the 'err' variable is set to -ENOENT and a 'goto out' statement is executed, skipping the check for 'pol' being NULL. This could lead to a NULL pointer dereference if 'pol' is accessed later in the code.",
+        "code": "int xfrm_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,\n\t\t struct xfrm_migrate *m, int num_migrate,\n\t\t struct xfrm_kmaddress *k, struct net *net,\n\t\t struct xfrm_encap_tmpl *encap)\n{\n\tint i, err, nx_cur = 0, nx_new = 0;\n\tstruct xfrm_policy *pol = NULL;\n\tstruct xfrm_state *x, *xc;\n\tstruct xfrm_state *x_cur[XFRM_MAX_DEPTH];\n\tstruct xfrm_state *x_new[XFRM_MAX_DEPTH];\n\tstruct xfrm_migrate *mp;\n\tif ((err = xfrm_migrate_check(m, num_migrate)) < 0)\n\t\tgoto out;\n\tif ((pol = xfrm_migrate_policy_find(sel, dir, type, net)) == NULL) {\n\t\terr = -ENOENT;\n\t\tgoto out;\n\t}\n\tfor (i = 0, mp = m; i < num_migrate; i++, mp++) {\n\t\tif ((x = xfrm_migrate_state_find(mp, net))) {\n\t\t\tx_cur[nx_cur] = x;\n\t\t\tnx_cur++;\n\t\t\txc = xfrm_state_migrate(x, mp, encap);\n\t\t\tif (xc) {\n\t\t\t\tx_new[nx_new] = xc;\n\t\t\t\tnx_new++;\n\t\t\t} else {\n\t\t\t\terr = -ENODATA;\n\t\t\t\tgoto restore_state;\n\t\t\t}\n\t\t}\n\t}\n\tif ((err = xfrm_policy_migrate(pol, m, num_migrate)) < 0)\n\t\tgoto restore_state;\n\tif (nx_cur) {\n\t\txfrm_states_put(x_cur, nx_cur);\n\t\txfrm_states_delete(x_cur, nx_cur);\n\t}\n\tkm_migrate(sel, dir, type, m, num_migrate, k, encap);\n\txfrm_pol_put(pol);\n\treturn 0;\nout:\n\treturn err;\nrestore_state:\n\tif (pol)\n\t\txfrm_pol_put(pol);\n\tif (nx_cur)\n\t\txfrm_states_put(x_cur, nx_cur);\n\tif (nx_new)\n\t\txfrm_states_delete(x_new, nx_new);\n\treturn err;\n}",
+        "file_name": "198692.sol",
+        "final_score": 6.5
+    },
+    {
+        "function_name": "xfrm_migrate",
+        "vulnerability": "Potential use-after-free",
+        "criticism": "The reasoning provided for the potential use-after-free vulnerability is sound. The vulnerability arises from attempting to delete 'x_new' without resetting it to NULL, potentially leading to accessing freed memory. The severity of this vulnerability is moderate as it can result in crashes or unexpected behavior. The correctness score is 7 as the vulnerability is correctly identified. The profitability score is 6 as use-after-free vulnerabilities can be exploited in certain scenarios.",
+        "correctness": 7,
+        "severity": 6,
+        "profitability": 6,
+        "reason": "In the 'restore_state' block of code, if the 'xfrm_policy_migrate()' function returns an error, the function attempts to delete 'x_new' array elements using 'xfrm_states_delete(x_new, nx_new)' without resetting the 'x_new' array to NULL. This can lead to a potential use-after-free scenario where the memory pointed to by 'x_new' may be accessed after it has been freed.",
+        "code": "int xfrm_migrate(const struct xfrm_selector *sel, u8 dir, u8 type,\n\t\t struct xfrm_migrate *m, int num_migrate,\n\t\t struct xfrm_kmaddress *k, struct net *net,\n\t\t struct xfrm_encap_tmpl *encap)\n{\n\tint i, err, nx_cur = 0, nx_new = 0;\n\tstruct xfrm_policy *pol = NULL;\n\tstruct xfrm_state *x, *xc;\n\tstruct xfrm_state *x_cur[XFRM_MAX_DEPTH];\n\tstruct xfrm_state *x_new[XFRM_MAX_DEPTH];\n\tstruct xfrm_migrate *mp;\n\tif ((err = xfrm_migrate_check(m, num_migrate)) < 0)\n\t\tgoto out;\n\tif ((pol = xfrm_migrate_policy_find(sel, dir, type, net)) == NULL) {\n\t\terr = -ENOENT;\n\t\tgoto out;\n\t}\n\tfor (i = 0, mp = m; i < num_migrate; i++, mp++) {\n\t\tif ((x = xfrm_migrate_state_find(mp, net))) {\n\t\t\tx_cur[nx_cur] = x;\n\t\t\tnx_cur++;\n\t\t\txc = xfrm_state_migrate(x, mp, encap);\n\t\t\tif (xc) {\n\t\t\t\tx_new[nx_new] = xc;\n\t\t\t\tnx_new++;\n\t\t\t} else {\n\t\t\t\terr = -ENODATA;\n\t\t\t\tgoto restore_state;\n\t\t\t}\n\t\t}\n\t}\n\tif ((err = xfrm_policy_migrate(pol, m, num_migrate)) < 0)\n\t\tgoto restore_state;\n\tif (nx_cur) {\n\t\txfrm_states_put(x_cur, nx_cur);\n\t\txfrm_states_delete(x_cur, nx_cur);\n\t}\n\tkm_migrate(sel, dir, type, m, num_migrate, k, encap);\n\txfrm_pol_put(pol);\n\treturn 0;\nout:\n\treturn err;\nrestore_state:\n\tif (pol)\n\t\txfrm_pol_put(pol);\n\tif (nx_cur)\n\t\txfrm_states_put(x_cur, nx_cur);\n\tif (nx_new)\n\t\txfrm_states_delete(x_new, nx_new);\n\treturn err;\n}",
+        "file_name": "198692.sol",
+        "final_score": 6.5
+    }
+]

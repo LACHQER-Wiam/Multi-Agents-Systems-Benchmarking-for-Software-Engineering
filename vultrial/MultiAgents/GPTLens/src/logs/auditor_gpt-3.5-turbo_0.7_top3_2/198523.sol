@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Potential NULL pointer dereference",
+        "reason": "The code does not check if the input \"stamp_token\" is NULL before attempting to dereference it. This could lead to a NULL pointer dereference vulnerability, allowing an attacker to crash the application.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Memory corruption",
+        "reason": "The result pointer is used before being properly initialized or validated. This could lead to memory corruption vulnerabilities, potentially allowing an attacker to execute arbitrary code or manipulate data structures.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Resource leakage",
+        "reason": "The code does not properly handle resource cleanup in case the status code is not tensorflow::error::ALREADY_EXISTS. This could lead to a resource leakage vulnerability, allowing an attacker to exhaust system resources and potentially disrupt the application.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Potential Memory Corruption",
+        "reason": "The code snippet shows the initialization of a unique pointer 'result' with a new BoostedTreesEnsembleResource object. However, if the InitFromSerialized function fails, the result object is not properly handled. This can lead to a potential memory leak or corruption, as the Unref() function is called without proper resource cleanup.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Resource Exhaustion",
+        "reason": "The code snippet shows the creation of a resource using CreateResource function. However, there is no check for resource exhaustion before creating the resource. This can lead to a denial of service attack where an attacker can exhaust system resources by creating multiple resources, impacting the availability of the system.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Integer Overflow",
+        "reason": "The code snippet shows the conversion of stamp_token_t to int64_t using scalar<int64>() function. If the stamp_token_t value is larger than the maximum value that can be represented by int64_t, an integer overflow can occur. This can lead to unexpected behavior or security vulnerabilities in the system.",
+        "file_name": "198523.sol"
+    }
+]

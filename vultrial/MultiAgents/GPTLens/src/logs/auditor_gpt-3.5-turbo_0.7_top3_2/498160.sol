@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "ecc_256_modp",
+        "code": "ecc_256_modp (const struct ecc_modulo *p, mp_limb_t *rp)\n{\n  mp_limb_t u1, u0;\n  mp_size_t n;\n  n = 2*p->size;\n  u1 = rp[--n];\n  u0 = rp[n-1];\n  for (; n >= p->size; n--)\n    {\n      mp_limb_t q2, q1, q0, t, cy;\n      q1 = u1 - (u1 > u0);\n      q0 = u0 - u1;\n      t = u1 << 32;\n      q0 += t;\n      t = (u1 >> 32) + (q0 < t) + 1;\n      q1 += t;\n      q2 = q1 < t;\n      u1 = u0 + (q1 << 32) - q1;\n      t = -(mp_limb_t) (u1 > q0);\n      u1 -= t & 0xffffffff;\n      q1 += t;\n      q2 += t + (q1 < t);\n      assert (q2 < 2);\n      t = mpn_submul_1 (rp + n - 4, p->m, 2, q1);\n      t += cnd_sub_n (q2, rp + n - 3, p->m, 1);\n      t += (-q2) & 0xffffffff;\n      u0 = rp[n-2];\n      cy = (u0 < t);\n      u0 -= t;\n      t = (u1 < cy);\n      u1 -= cy;\n      cy = cnd_add_n (t, rp + n - 4, p->m, 2);\n      u0 += cy;\n      u1 += (u0 < cy);\n      u1 -= (-t) & 0xffffffff;\n    }\n  rp[2] = u0;\n  rp[3] = u1;\n}",
+        "vulnerability": "Potential Buffer Overflow",
+        "reason": "The code does not perform bounds checking when accessing elements in the 'rp' array. This could potentially lead to buffer overflow vulnerabilities if the loop iterations exceed the size of the array 'rp'. An attacker could exploit this vulnerability to overwrite adjacent memory locations and potentially execute arbitrary code.",
+        "file_name": "498160.sol"
+    },
+    {
+        "function_name": "ecc_256_modp",
+        "code": "ecc_256_modp (const struct ecc_modulo *p, mp_limb_t *rp)\n{\n  mp_limb_t u1, u0;\n  mp_size_t n;\n  n = 2*p->size;\n  u1 = rp[--n];\n  u0 = rp[n-1];\n  for (; n >= p->size; n--)\n    {\n      mp_limb_t q2, q1, q0, t, cy;\n      q1 = u1 - (u1 > u0);\n      q0 = u0 - u1;\n      t = u1 << 32;\n      q0 += t;\n      t = (u1 >> 32) + (q0 < t) + 1;\n      q1 += t;\n      q2 = q1 < t;\n      u1 = u0 + (q1 << 32) - q1;\n      t = -(mp_limb_t) (u1 > q0);\n      u1 -= t & 0xffffffff;\n      q1 += t;\n      q2 += t + (q1 < t);\n      assert (q2 < 2);\n      t = mpn_submul_1 (rp + n - 4, p->m, 2, q1);\n      t += cnd_sub_n (q2, rp + n - 3, p->m, 1);\n      t += (-q2) & 0xffffffff;\n      u0 = rp[n-2];\n      cy = (u0 < t);\n      u0 -= t;\n      t = (u1 < cy);\n      u1 -= cy;\n      cy = cnd_add_n (t, rp + n - 4, p->m, 2);\n      u0 += cy;\n      u1 += (u0 < cy);\n      u1 -= (-t) & 0xffffffff;\n    }\n  rp[2] = u0;\n  rp[3] = u1;\n}",
+        "vulnerability": "Integer Overflow",
+        "reason": "The code performs arithmetic operations on unsigned integers without checking for potential integer overflow. This could lead to unexpected behavior or security vulnerabilities if the result of the operations exceeds the maximum value that can be represented by the data type. An attacker could potentially exploit this vulnerability to manipulate the control flow of the program or cause a denial of service.",
+        "file_name": "498160.sol"
+    },
+    {
+        "function_name": "ecc_256_modp",
+        "code": "ecc_256_modp (const struct ecc_modulo *p, mp_limb_t *rp)\n{\n  mp_limb_t u1, u0;\n  mp_size_t n;\n  n = 2*p->size;\n  u1 = rp[--n];\n  u0 = rp[n-1];\n  for (; n >= p->size; n--)\n    {\n      mp_limb_t q2, q1, q0, t, cy;\n      q1 = u1 - (u1 > u0);\n      q0 = u0 - u1;\n      t = u1 << 32;\n      q0 += t;\n      t = (u1 >> 32) + (q0 < t) + 1;\n      q1 += t;\n      q2 = q1 < t;\n      u1 = u0 + (q1 << 32) - q1;\n      t = -(mp_limb_t) (u1 > q0);\n      u1 -= t & 0xffffffff;\n      q1 += t;\n      q2 += t + (q1 < t);\n      assert (q2 < 2);\n      t = mpn_submul_1 (rp + n - 4, p->m, 2, q1);\n      t += cnd_sub_n (q2, rp + n - 3, p->m, 1);\n      t += (-q2) & 0xffffffff;\n      u0 = rp[n-2];\n      cy = (u0 < t);\n      u0 -= t;\n      t = (u1 < cy);\n      u1 -= cy;\n      cy = cnd_add_n (t, rp + n - 4, p->m, 2);\n      u0 += cy;\n      u1 += (u0 < cy);\n      u1 -= (-t) & 0xffffffff;\n    }\n  rp[2] = u0;\n  rp[3] = u1;\n}",
+        "vulnerability": "Lack of Input Validation",
+        "reason": "The code does not validate the input parameters, such as the 'p' and 'rp' pointers. This lack of input validation could lead to unexpected behavior or security vulnerabilities if the input is not as expected. An attacker could exploit this vulnerability by providing malicious input to the function, potentially leading to a variety of attacks such as buffer overflows, memory corruption, or code execution.",
+        "file_name": "498160.sol"
+    },
+    {
+        "function_name": "ecc_256_modp",
+        "code": "ecc_256_modp (const struct ecc_modulo *p, mp_limb_t *rp)\n{\n  mp_limb_t u1, u0;\n  mp_size_t n;\n  n = 2*p->size;\n  u1 = rp[--n];\n  u0 = rp[n-1];\n  for (; n >= p->size; n--)\n    {\n      mp_limb_t q2, q1, q0, t, cy;\n      q1 = u1 - (u1 > u0);\n      q0 = u0 - u1;\n      t = u1 << 32;\n      q0 += t;\n      t = (u1 >> 32) + (q0 < t) + 1;\n      q1 += t;\n      q2 = q1 < t;\n      u1 = u0 + (q1 << 32) - q1;\n      t = -(mp_limb_t) (u1 > q0);\n      u1 -= t & 0xffffffff;\n      q1 += t;\n      q2 += t + (q1 < t);\n      assert (q2 < 2);\n      t = mpn_submul_1 (rp + n - 4, p->m, 2, q1);\n      t += cnd_sub_n (q2, rp + n - 3, p->m, 1);\n      t += (-q2) & 0xffffffff;\n      u0 = rp[n-2];\n      cy = (u0 < t);\n      u0 -= t;\n      t = (u1 < cy);\n      u1 -= cy;\n      cy = cnd_add_n (t, rp + n - 4, p->m, 2);\n      u0 += cy;\n      u1 += (u0 < cy);\n      u1 -= (-t) & 0xffffffff;\n    }\n  rp[2] = u0;\n  rp[3] = u1;\n}",
+        "vulnerability": "Buffer Overflow",
+        "reason": "The code does not perform proper bounds checking when accessing elements of the 'rp' array. This could lead to buffer overflow vulnerabilities if the 'rp' array is not properly sized or if the loop variable 'n' is manipulated to access elements outside the bounds of the array.",
+        "file_name": "498160.sol"
+    },
+    {
+        "function_name": "ecc_256_modp",
+        "code": "ecc_256_modp (const struct ecc_modulo *p, mp_limb_t *rp)\n{\n  mp_limb_t u1, u0;\n  mp_size_t n;\n  n = 2*p->size;\n  u1 = rp[--n];\n  u0 = rp[n-1];\n  for (; n >= p->size; n--)\n    {\n      mp_limb_t q2, q1, q0, t, cy;\n      q1 = u1 - (u1 > u0);\n      q0 = u0 - u1;\n      t = u1 << 32;\n      q0 += t;\n      t = (u1 >> 32) + (q0 < t) + 1;\n      q1 += t;\n      q2 = q1 < t;\n      u1 = u0 + (q1 << 32) - q1;\n      t = -(mp_limb_t) (u1 > q0);\n      u1 -= t & 0xffffffff;\n      q1 += t;\n      q2 += t + (q1 < t);\n      assert (q2 < 2);\n      t = mpn_submul_1 (rp + n - 4, p->m, 2, q1);\n      t += cnd_sub_n (q2, rp + n - 3, p->m, 1);\n      t += (-q2) & 0xffffffff;\n      u0 = rp[n-2];\n      cy = (u0 < t);\n      u0 -= t;\n      t = (u1 < cy);\n      u1 -= cy;\n      cy = cnd_add_n (t, rp + n - 4, p->m, 2);\n      u0 += cy;\n      u1 += (u0 < cy);\n      u1 -= (-t) & 0xffffffff;\n    }\n  rp[2] = u0;\n  rp[3] = u1;\n}",
+        "vulnerability": "Integer Overflow",
+        "reason": "There are multiple instances where arithmetic operations are performed without proper bounds checking, leading to potential integer overflow vulnerabilities. For example, the left shift operation 'u1 << 32' could result in an overflow if 'u1' is too large, leading to unexpected behavior and potential security issues.",
+        "file_name": "498160.sol"
+    },
+    {
+        "function_name": "ecc_256_modp",
+        "code": "ecc_256_modp (const struct ecc_modulo *p, mp_limb_t *rp)\n{\n  mp_limb_t u1, u0;\n  mp_size_t n;\n  n = 2*p->size;\n  u1 = rp[--n];\n  u0 = rp[n-1];\n  for (; n >= p->size; n--)\n    {\n      mp_limb_t q2, q1, q0, t, cy;\n      q1 = u1 - (u1 > u0);\n      q0 = u0 - u1;\n      t = u1 << 32;\n      q0 += t;\n      t = (u1 >> 32) + (q0 < t) + 1;\n      q1 += t;\n      q2 = q1 < t;\n      u1 = u0 + (q1 << 32) - q1;\n      t = -(mp_limb_t) (u1 > q0);\n      u1 -= t & 0xffffffff;\n      q1 += t;\n      q2 += t + (q1 < t);\n      assert (q2 < 2);\n      t = mpn_submul_1 (rp + n - 4, p->m, 2, q1);\n      t += cnd_sub_n (q2, rp + n - 3, p->m, 1);\n      t += (-q2) & 0xffffffff;\n      u0 = rp[n-2];\n      cy = (u0 < t);\n      u0 -= t;\n      t = (u1 < cy);\n      u1 -= cy;\n      cy = cnd_add_n (t, rp + n - 4, p->m, 2);\n      u0 += cy;\n      u1 += (u0 < cy);\n      u1 -= (-t) & 0xffffffff;\n    }\n  rp[2] = u0;\n  rp[3] = u1;\n}",
+        "vulnerability": "Assertion Failure",
+        "reason": "The code includes an 'assert' statement which is used for debugging purposes to check a condition that is expected to be true. If the condition evaluates to false, the program will terminate. An attacker could potentially manipulate the program flow to trigger this assertion failure, leading to a denial of service or other security issues.",
+        "file_name": "498160.sol"
+    }
+]

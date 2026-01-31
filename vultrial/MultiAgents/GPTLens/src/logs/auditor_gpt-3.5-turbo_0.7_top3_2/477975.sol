@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "simplestring_addn",
+        "code": "void simplestring_addn(simplestring* target, const char* source, size_t add_len) {\n   size_t newsize = target->size, incr = 0;\n   if(target && source) {\n      if(!target->str) {\n         simplestring_init_str(target);\n      }\n      if((SIZE_MAX - add_len) < target->len || (SIZE_MAX - add_len - 1) < target->len) {\n    \t  return;\n      }\n      if(target->len + add_len + 1 > target->size) {\n         newsize = target->len + add_len + 1;\n         incr = target->size * 2;\n         if (incr) {\n            newsize = newsize - (newsize % incr) + incr;\n         }\n         if(newsize < (target->len + add_len + 1)) {\n        \t return;\n         }\n         target->str = (char*)realloc(target->str, newsize);\n         target->size = target->str ? newsize : 0;\n      }\n      if(target->str) {\n         if(add_len) {\n            memcpy(target->str + target->len, source, add_len);\n         }\n         target->len += add_len;\n         target->str[target->len] = 0; \n      }\n   }\n}",
+        "vulnerability": "Potential Buffer Overflow",
+        "reason": "The function does not check the size of the input 'source' before copying it using memcpy. If the 'add_len' provided is larger than the allocated space in 'target->str', it can lead to buffer overflow, allowing an attacker to overwrite adjacent memory and potentially execute arbitrary code.",
+        "file_name": "477975.sol"
+    },
+    {
+        "function_name": "simplestring_addn",
+        "code": "void simplestring_addn(simplestring* target, const char* source, size_t add_len) {\n   size_t newsize = target->size, incr = 0;\n   if(target && source) {\n      if(!target->str) {\n         simplestring_init_str(target);\n      }\n      if((SIZE_MAX - add_len) < target->len || (SIZE_MAX - add_len - 1) < target->len) {\n    \t  return;\n      }\n      if(target->len + add_len + 1 > target->size) {\n         newsize = target->len + add_len + 1;\n         incr = target->size * 2;\n         if (incr) {\n            newsize = newsize - (newsize % incr) + incr;\n         }\n         if(newsize < (target->len + add_len + 1)) {\n        \t return;\n         }\n         target->str = (char*)realloc(target->str, newsize);\n         target->size = target->str ? newsize : 0;\n      }\n      if(target->str) {\n         if(add_len) {\n            memcpy(target->str + target->len, source, add_len);\n         }\n         target->len += add_len;\n         target->str[target->len] = 0; \n      }\n   }\n}",
+        "vulnerability": "Memory Leak",
+        "reason": "If the realloc operation fails, the function does not free the previously allocated memory for 'target->str', leading to a memory leak. This can be exploited by an attacker to exhaust system resources and potentially cause a denial of service.",
+        "file_name": "477975.sol"
+    },
+    {
+        "function_name": "simplestring_addn",
+        "code": "void simplestring_addn(simplestring* target, const char* source, size_t add_len) {\n   size_t newsize = target->size, incr = 0;\n   if(target && source) {\n      if(!target->str) {\n         simplestring_init_str(target);\n      }\n      if((SIZE_MAX - add_len) < target->len || (SIZE_MAX - add_len - 1) < target->len) {\n    \t  return;\n      }\n      if(target->len + add_len + 1 > target->size) {\n         newsize = target->len + add_len + 1;\n         incr = target->size * 2;\n         if (incr) {\n            newsize = newsize - (newsize % incr) + incr;\n         }\n         if(newsize < (target->len + add_len + 1)) {\n        \t return;\n         }\n         target->str = (char*)realloc(target->str, newsize);\n         target->size = target->str ? newsize : 0;\n      }\n      if(target->str) {\n         if(add_len) {\n            memcpy(target->str + target->len, source, add_len);\n         }\n         target->len += add_len;\n         target->str[target->len] = 0; \n      }\n   }\n}",
+        "vulnerability": "Null Pointer Dereference",
+        "reason": "The function does not check if 'target' is NULL before accessing its members, leading to potential null pointer dereference. An attacker can exploit this by passing a NULL pointer as 'target', causing a crash or undefined behavior.",
+        "file_name": "477975.sol"
+    },
+    {
+        "function_name": "simplestring_addn",
+        "code": "void simplestring_addn(simplestring* target, const char* source, size_t add_len) {\n   size_t newsize = target->size, incr = 0;\n   if(target && source) {\n      if(!target->str) {\n         simplestring_init_str(target);\n      }\n      if((SIZE_MAX - add_len) < target->len || (SIZE_MAX - add_len - 1) < target->len) {\n    \t  return;\n      }\n      if(target->len + add_len + 1 > target->size) {\n         newsize = target->len + add_len + 1;\n         incr = target->size * 2;\n         if (incr) {\n            newsize = newsize - (newsize % incr) + incr;\n         }\n         if(newsize < (target->len + add_len + 1)) {\n        \t return;\n         }\n         target->str = (char*)realloc(target->str, newsize);\n         target->size = target->str ? newsize : 0;\n      }\n      if(target->str) {\n         if(add_len) {\n            memcpy(target->str + target->len, source, add_len);\n         }\n         target->len += add_len;\n         target->str[target->len] = 0; \n      }\n   }\n}",
+        "vulnerability": "Memory Corruption Vulnerability",
+        "reason": "The code does not perform proper bounds checking on the target->str buffer when adding new data. An attacker could provide a large add_len value that exceeds the allocated buffer size, leading to buffer overflow and potential memory corruption.",
+        "file_name": "477975.sol"
+    },
+    {
+        "function_name": "simplestring_addn",
+        "code": "void simplestring_addn(simplestring* target, const char* source, size_t add_len) {\n   size_t newsize = target->size, incr = 0;\n   if(target && source) {\n      if(!target->str) {\n         simplestring_init_str(target);\n      }\n      if((SIZE_MAX - add_len) < target->len || (SIZE_MAX - add_len - 1) < target->len) {\n    \t  return;\n      }\n      if(target->len + add_len + 1 > target->size) {\n         newsize = target->len + add_len + 1;\n         incr = target->size * 2;\n         if (incr) {\n            newsize = newsize - (newsize % incr) + incr;\n         }\n         if(newsize < (target->len + add_len + 1)) {\n        \t return;\n         }\n         target->str = (char*)realloc(target->str, newsize);\n         target->size = target->str ? newsize : 0;\n      }\n      if(target->str) {\n         if(add_len) {\n            memcpy(target->str + target->len, source, add_len);\n         }\n         target->len += add_len;\n         target->str[target->len] = 0; \n      }\n   }\n}",
+        "vulnerability": "Double Free Vulnerability",
+        "reason": "The code does not handle the case where target->str is already allocated and then reallocated using realloc. If an attacker can control the add_len value to trigger the realloc on an already allocated buffer, it can lead to a double free vulnerability.",
+        "file_name": "477975.sol"
+    },
+    {
+        "function_name": "simplestring_addn",
+        "code": "void simplestring_addn(simplestring* target, const char* source, size_t add_len) {\n   size_t newsize = target->size, incr = 0;\n   if(target && source) {\n      if(!target->str) {\n         simplestring_init_str(target);\n      }\n      if((SIZE_MAX - add_len) < target->len || (SIZE_MAX - add_len - 1) < target->len) {\n    \t  return;\n      }\n      if(target->len + add_len + 1 > target->size) {\n         newsize = target->len + add_len + 1;\n         incr = target->size * 2;\n         if (incr) {\n            newsize = newsize - (newsize % incr) + incr;\n         }\n         if(newsize < (target->len + add_len + 1)) {\n        \t return;\n         }\n         target->str = (char*)realloc(target->str, newsize);\n         target->size = target->str ? newsize : 0;\n      }\n      if(target->str) {\n         if(add_len) {\n            memcpy(target->str + target->len, source, add_len);\n         }\n         target->len += add_len;\n         target->str[target->len] = 0; \n      }\n   }\n}",
+        "vulnerability": "Null Pointer Dereference Vulnerability",
+        "reason": "The code does not check if target->str is null before performing operations on it, which can lead to a null pointer dereference vulnerability. An attacker could exploit this by passing a null target->str.",
+        "file_name": "477975.sol"
+    }
+]

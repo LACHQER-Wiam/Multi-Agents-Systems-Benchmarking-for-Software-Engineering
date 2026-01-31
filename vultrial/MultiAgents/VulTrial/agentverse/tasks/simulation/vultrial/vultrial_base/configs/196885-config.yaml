@@ -1,0 +1,363 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\n  void\
+    \ Compute(OpKernelContext* ctx) override {\n    const Tensor& input = ctx->input(kInputTensorIndex);\n\
+    \    const Tensor& input_min = ctx->input(kInputMinIndex);\n    const Tensor&\
+    \ input_max = ctx->input(kInputMaxIndex);\n\n    const size_t depth = input_max.NumElements();\n\
+    \    OP_REQUIRES(\n        ctx, input_min.dim_size(0) == depth,\n        errors::InvalidArgument(\"\
+    input_min has incorrect size, expected \",\n                                depth,\
+    \ \" was \", input_min.dim_size(0)));\n    OP_REQUIRES(\n        ctx, input_max.dim_size(0)\
+    \ == depth,\n        errors::InvalidArgument(\"input_max has incorrect size, expected\
+    \ \",\n                                depth, \" was \", input_max.dim_size(0)));\n\
+    \n    const float* input_min_data = input_min.flat<float>().data();\n    const\
+    \ float* input_max_data = input_max.flat<float>().data();\n    std::vector<float>\
+    \ ranges(depth);\n    bool is_non_negative = true;\n    Eigen::array<int, 2> shuffling({1,\
+    \ 0});\n    auto input_matrix = input.flat_inner_dims<qint32>();\n\n    // TODO:\
+    \ verify performance of not transposing and finding the min max\n    // directly\
+    \ from input_matrix vs the one presented below of transposing and\n    // using\
+    \ the transposed matrix as the transposing operation in itself might\n    // be\
+    \ more costly.\n    // Note that this operation is a calibration step for quantization\
+    \ and will\n    // cease to exist in the final inference graph(will exist as a\
+    \ const node).\n    auto transposed_input = input_matrix.shuffle(shuffling);\n\
+    \n    // Find the ranges of each channel in parallel.\n    float out_min_max =\
+    \ std::numeric_limits<float>::min();\n\n#ifdef ENABLE_ONEDNN_OPENMP\n#ifdef _MSC_VER\n\
+    #pragma omp parallel for\n#else\n#pragma omp parallel for reduction(max : out_min_max)\n\
+    #endif\n#endif  // ENABLE_ONEDNN_OPENMP\n    // TODO: Add eigen parallel_for\n\
+    \    for (int64_t i = 0; i < depth; ++i) {\n      Eigen::Tensor<qint32, 0, Eigen::RowMajor>\
+    \ min =\n          transposed_input.chip<0>(i).minimum();\n      Eigen::Tensor<qint32,\
+    \ 0, Eigen::RowMajor> max =\n          transposed_input.chip<0>(i).maximum();\n\
+    \      const int32_t min_per_channel = min();\n      const int32_t max_per_channel\
+    \ = max();\n      const int32_t abs_max =\n          std::max(std::abs(min_per_channel),\
+    \ std::abs(max_per_channel));\n      float scale =\n          std::max(std::abs(input_min_data[i]),\
+    \ std::abs(input_max_data[i]));\n      ranges[i] =\n          scale * static_cast<float>(abs_max)\
+    \ / static_cast<float>(1L << 31);\n      if (min_per_channel < 0) is_non_negative\
+    \ = false;\n\n      // Thread-local out_min_max.\n      out_min_max = std::max(out_min_max,\
+    \ ranges[i]);\n    }\n\n    // All local out_min_max gets max-reduced into one\
+    \ global out_min_max at\n    // the end of the loop by specifying reduction(max:out_min_max)\
+    \ along with\n    // omp parallel for.\n\n    // Fixing max to clip_value_max_\
+    \ (example 6.0 to support relu6)\n    if (out_min_max > clip_value_max_) out_min_max\
+    \ = clip_value_max_;\n\n    Tensor* output_min = nullptr;\n    Tensor* output_max\
+    \ = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMinIndex, {},\
+    \ &output_min));\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMaxIndex,\
+    \ {}, &output_max));\n    output_min->flat<float>()(0) = is_non_negative ? 0.0f\
+    \ : -out_min_max;\n    output_max->flat<float>()(0) = out_min_max;\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor& input = ctx->input(kInputTensorIndex);\n\
+    \    const Tensor& input_min = ctx->input(kInputMinIndex);\n    const Tensor&\
+    \ input_max = ctx->input(kInputMaxIndex);\n\n    const size_t depth = input_max.NumElements();\n\
+    \    OP_REQUIRES(\n        ctx, input_min.dim_size(0) == depth,\n        errors::InvalidArgument(\"\
+    input_min has incorrect size, expected \",\n                                depth,\
+    \ \" was \", input_min.dim_size(0)));\n    OP_REQUIRES(\n        ctx, input_max.dim_size(0)\
+    \ == depth,\n        errors::InvalidArgument(\"input_max has incorrect size, expected\
+    \ \",\n                                depth, \" was \", input_max.dim_size(0)));\n\
+    \n    const float* input_min_data = input_min.flat<float>().data();\n    const\
+    \ float* input_max_data = input_max.flat<float>().data();\n    std::vector<float>\
+    \ ranges(depth);\n    bool is_non_negative = true;\n    Eigen::array<int, 2> shuffling({1,\
+    \ 0});\n    auto input_matrix = input.flat_inner_dims<qint32>();\n\n    // TODO:\
+    \ verify performance of not transposing and finding the min max\n    // directly\
+    \ from input_matrix vs the one presented below of transposing and\n    // using\
+    \ the transposed matrix as the transposing operation in itself might\n    // be\
+    \ more costly.\n    // Note that this operation is a calibration step for quantization\
+    \ and will\n    // cease to exist in the final inference graph(will exist as a\
+    \ const node).\n    auto transposed_input = input_matrix.shuffle(shuffling);\n\
+    \n    // Find the ranges of each channel in parallel.\n    float out_min_max =\
+    \ std::numeric_limits<float>::min();\n\n#ifdef ENABLE_ONEDNN_OPENMP\n#ifdef _MSC_VER\n\
+    #pragma omp parallel for\n#else\n#pragma omp parallel for reduction(max : out_min_max)\n\
+    #endif\n#endif  // ENABLE_ONEDNN_OPENMP\n    // TODO: Add eigen parallel_for\n\
+    \    for (int64_t i = 0; i < depth; ++i) {\n      Eigen::Tensor<qint32, 0, Eigen::RowMajor>\
+    \ min =\n          transposed_input.chip<0>(i).minimum();\n      Eigen::Tensor<qint32,\
+    \ 0, Eigen::RowMajor> max =\n          transposed_input.chip<0>(i).maximum();\n\
+    \      const int32_t min_per_channel = min();\n      const int32_t max_per_channel\
+    \ = max();\n      const int32_t abs_max =\n          std::max(std::abs(min_per_channel),\
+    \ std::abs(max_per_channel));\n      float scale =\n          std::max(std::abs(input_min_data[i]),\
+    \ std::abs(input_max_data[i]));\n      ranges[i] =\n          scale * static_cast<float>(abs_max)\
+    \ / static_cast<float>(1L << 31);\n      if (min_per_channel < 0) is_non_negative\
+    \ = false;\n\n      // Thread-local out_min_max.\n      out_min_max = std::max(out_min_max,\
+    \ ranges[i]);\n    }\n\n    // All local out_min_max gets max-reduced into one\
+    \ global out_min_max at\n    // the end of the loop by specifying reduction(max:out_min_max)\
+    \ along with\n    // omp parallel for.\n\n    // Fixing max to clip_value_max_\
+    \ (example 6.0 to support relu6)\n    if (out_min_max > clip_value_max_) out_min_max\
+    \ = clip_value_max_;\n\n    Tensor* output_min = nullptr;\n    Tensor* output_max\
+    \ = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMinIndex, {},\
+    \ &output_min));\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMaxIndex,\
+    \ {}, &output_max));\n    output_min->flat<float>()(0) = is_non_negative ? 0.0f\
+    \ : -out_min_max;\n    output_max->flat<float>()(0) = out_min_max;\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\n  void Compute(OpKernelContext* ctx) override\
+    \ {\n    const Tensor& input = ctx->input(kInputTensorIndex);\n    const Tensor&\
+    \ input_min = ctx->input(kInputMinIndex);\n    const Tensor& input_max = ctx->input(kInputMaxIndex);\n\
+    \n    const size_t depth = input_max.NumElements();\n    OP_REQUIRES(\n      \
+    \  ctx, input_min.dim_size(0) == depth,\n        errors::InvalidArgument(\"input_min\
+    \ has incorrect size, expected \",\n                                depth, \"\
+    \ was \", input_min.dim_size(0)));\n    OP_REQUIRES(\n        ctx, input_max.dim_size(0)\
+    \ == depth,\n        errors::InvalidArgument(\"input_max has incorrect size, expected\
+    \ \",\n                                depth, \" was \", input_max.dim_size(0)));\n\
+    \n    const float* input_min_data = input_min.flat<float>().data();\n    const\
+    \ float* input_max_data = input_max.flat<float>().data();\n    std::vector<float>\
+    \ ranges(depth);\n    bool is_non_negative = true;\n    Eigen::array<int, 2> shuffling({1,\
+    \ 0});\n    auto input_matrix = input.flat_inner_dims<qint32>();\n\n    // TODO:\
+    \ verify performance of not transposing and finding the min max\n    // directly\
+    \ from input_matrix vs the one presented below of transposing and\n    // using\
+    \ the transposed matrix as the transposing operation in itself might\n    // be\
+    \ more costly.\n    // Note that this operation is a calibration step for quantization\
+    \ and will\n    // cease to exist in the final inference graph(will exist as a\
+    \ const node).\n    auto transposed_input = input_matrix.shuffle(shuffling);\n\
+    \n    // Find the ranges of each channel in parallel.\n    float out_min_max =\
+    \ std::numeric_limits<float>::min();\n\n#ifdef ENABLE_ONEDNN_OPENMP\n#ifdef _MSC_VER\n\
+    #pragma omp parallel for\n#else\n#pragma omp parallel for reduction(max : out_min_max)\n\
+    #endif\n#endif  // ENABLE_ONEDNN_OPENMP\n    // TODO: Add eigen parallel_for\n\
+    \    for (int64_t i = 0; i < depth; ++i) {\n      Eigen::Tensor<qint32, 0, Eigen::RowMajor>\
+    \ min =\n          transposed_input.chip<0>(i).minimum();\n      Eigen::Tensor<qint32,\
+    \ 0, Eigen::RowMajor> max =\n          transposed_input.chip<0>(i).maximum();\n\
+    \      const int32_t min_per_channel = min();\n      const int32_t max_per_channel\
+    \ = max();\n      const int32_t abs_max =\n          std::max(std::abs(min_per_channel),\
+    \ std::abs(max_per_channel));\n      float scale =\n          std::max(std::abs(input_min_data[i]),\
+    \ std::abs(input_max_data[i]));\n      ranges[i] =\n          scale * static_cast<float>(abs_max)\
+    \ / static_cast<float>(1L << 31);\n      if (min_per_channel < 0) is_non_negative\
+    \ = false;\n\n      // Thread-local out_min_max.\n      out_min_max = std::max(out_min_max,\
+    \ ranges[i]);\n    }\n\n    // All local out_min_max gets max-reduced into one\
+    \ global out_min_max at\n    // the end of the loop by specifying reduction(max:out_min_max)\
+    \ along with\n    // omp parallel for.\n\n    // Fixing max to clip_value_max_\
+    \ (example 6.0 to support relu6)\n    if (out_min_max > clip_value_max_) out_min_max\
+    \ = clip_value_max_;\n\n    Tensor* output_min = nullptr;\n    Tensor* output_max\
+    \ = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMinIndex, {},\
+    \ &output_min));\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMaxIndex,\
+    \ {}, &output_max));\n    output_min->flat<float>()(0) = is_non_negative ? 0.0f\
+    \ : -out_min_max;\n    output_max->flat<float>()(0) = out_min_max;\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor& input = ctx->input(kInputTensorIndex);\n\
+    \    const Tensor& input_min = ctx->input(kInputMinIndex);\n    const Tensor&\
+    \ input_max = ctx->input(kInputMaxIndex);\n\n    const size_t depth = input_max.NumElements();\n\
+    \    OP_REQUIRES(\n        ctx, input_min.dim_size(0) == depth,\n        errors::InvalidArgument(\"\
+    input_min has incorrect size, expected \",\n                                depth,\
+    \ \" was \", input_min.dim_size(0)));\n    OP_REQUIRES(\n        ctx, input_max.dim_size(0)\
+    \ == depth,\n        errors::InvalidArgument(\"input_max has incorrect size, expected\
+    \ \",\n                                depth, \" was \", input_max.dim_size(0)));\n\
+    \n    const float* input_min_data = input_min.flat<float>().data();\n    const\
+    \ float* input_max_data = input_max.flat<float>().data();\n    std::vector<float>\
+    \ ranges(depth);\n    bool is_non_negative = true;\n    Eigen::array<int, 2> shuffling({1,\
+    \ 0});\n    auto input_matrix = input.flat_inner_dims<qint32>();\n\n    // TODO:\
+    \ verify performance of not transposing and finding the min max\n    // directly\
+    \ from input_matrix vs the one presented below of transposing and\n    // using\
+    \ the transposed matrix as the transposing operation in itself might\n    // be\
+    \ more costly.\n    // Note that this operation is a calibration step for quantization\
+    \ and will\n    // cease to exist in the final inference graph(will exist as a\
+    \ const node).\n    auto transposed_input = input_matrix.shuffle(shuffling);\n\
+    \n    // Find the ranges of each channel in parallel.\n    float out_min_max =\
+    \ std::numeric_limits<float>::min();\n\n#ifdef ENABLE_ONEDNN_OPENMP\n#ifdef _MSC_VER\n\
+    #pragma omp parallel for\n#else\n#pragma omp parallel for reduction(max : out_min_max)\n\
+    #endif\n#endif  // ENABLE_ONEDNN_OPENMP\n    // TODO: Add eigen parallel_for\n\
+    \    for (int64_t i = 0; i < depth; ++i) {\n      Eigen::Tensor<qint32, 0, Eigen::RowMajor>\
+    \ min =\n          transposed_input.chip<0>(i).minimum();\n      Eigen::Tensor<qint32,\
+    \ 0, Eigen::RowMajor> max =\n          transposed_input.chip<0>(i).maximum();\n\
+    \      const int32_t min_per_channel = min();\n      const int32_t max_per_channel\
+    \ = max();\n      const int32_t abs_max =\n          std::max(std::abs(min_per_channel),\
+    \ std::abs(max_per_channel));\n      float scale =\n          std::max(std::abs(input_min_data[i]),\
+    \ std::abs(input_max_data[i]));\n      ranges[i] =\n          scale * static_cast<float>(abs_max)\
+    \ / static_cast<float>(1L << 31);\n      if (min_per_channel < 0) is_non_negative\
+    \ = false;\n\n      // Thread-local out_min_max.\n      out_min_max = std::max(out_min_max,\
+    \ ranges[i]);\n    }\n\n    // All local out_min_max gets max-reduced into one\
+    \ global out_min_max at\n    // the end of the loop by specifying reduction(max:out_min_max)\
+    \ along with\n    // omp parallel for.\n\n    // Fixing max to clip_value_max_\
+    \ (example 6.0 to support relu6)\n    if (out_min_max > clip_value_max_) out_min_max\
+    \ = clip_value_max_;\n\n    Tensor* output_min = nullptr;\n    Tensor* output_max\
+    \ = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMinIndex, {},\
+    \ &output_min));\n    OP_REQUIRES_OK(ctx, ctx->allocate_output(kOutputMaxIndex,\
+    \ {}, &output_max));\n    output_min->flat<float>()(0) = is_non_negative ? 0.0f\
+    \ : -out_min_max;\n    output_max->flat<float>()(0) = out_min_max;\n  }"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 196885
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

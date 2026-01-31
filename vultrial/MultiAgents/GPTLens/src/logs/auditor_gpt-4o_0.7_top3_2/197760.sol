@@ -1,0 +1,23 @@
+[
+    {
+        "function_name": "EvalGatherNd",
+        "code": "TfLiteStatus EvalGatherNd(TfLiteContext* context, const TfLiteTensor* params,\n                          const TfLiteTensor* indices, TfLiteTensor* output) {\n  switch (params->type) {\n    case kTfLiteFloat32:\n      return GatherNd<float, IndicesT>(params, indices, output);\n    case kTfLiteUInt8:\n      return GatherNd<uint8_t, IndicesT>(params, indices, output);\n    case kTfLiteInt8:\n      return GatherNd<int8_t, IndicesT>(params, indices, output);\n    case kTfLiteInt16:\n      return GatherNd<int16_t, IndicesT>(params, indices, output);\n    case kTfLiteInt32:\n      return GatherNd<int32_t, IndicesT>(params, indices, output);\n    case kTfLiteInt64:\n      return GatherNd<int64_t, IndicesT>(params, indices, output);\n    case kTfLiteString:\n      return GatherNdString<IndicesT>(params, indices, output);\n    default:\n      context->ReportError(context,\n                           \"Params type '%s' are not supported by gather_nd.\",\n                           TfLiteTypeGetName(params->type));\n      return kTfLiteError;\n  }\n}",
+        "vulnerability": "Missing type check for IndicesT",
+        "reason": "The code does not validate or ensure that the 'IndicesT' type in function templates like GatherNd and GatherNdString is within an expected and safe range. If 'IndicesT' is controlled by an attacker, they could potentially perform type confusion, leading to memory corruption or unauthorized data access.",
+        "file_name": "197760.sol"
+    },
+    {
+        "function_name": "EvalGatherNd",
+        "code": "TfLiteStatus EvalGatherNd(TfLiteContext* context, const TfLiteTensor* params,\n                          const TfLiteTensor* indices, TfLiteTensor* output) {\n  switch (params->type) {\n    case kTfLiteFloat32:\n      return GatherNd<float, IndicesT>(params, indices, output);\n    case kTfLiteUInt8:\n      return GatherNd<uint8_t, IndicesT>(params, indices, output);\n    case kTfLiteInt8:\n      return GatherNd<int8_t, IndicesT>(params, indices, output);\n    case kTfLiteInt16:\n      return GatherNd<int16_t, IndicesT>(params, indices, output);\n    case kTfLiteInt32:\n      return GatherNd<int32_t, IndicesT>(params, indices, output);\n    case kTfLiteInt64:\n      return GatherNd<int64_t, IndicesT>(params, indices, output);\n    case kTfLiteString:\n      return GatherNdString<IndicesT>(params, indices, output);\n    default:\n      context->ReportError(context,\n                           \"Params type '%s' are not supported by gather_nd.\",\n                           TfLiteTypeGetName(params->type));\n      return kTfLiteError;\n  }\n}",
+        "vulnerability": "Potential integer overflow",
+        "reason": "The function does not perform bounds checking on the indices before using them in the GatherNd or GatherNdString functions. If 'indices' are large enough, this might lead to integer overflow when calculating memory offsets, causing memory corruption or crashes.",
+        "file_name": "197760.sol"
+    },
+    {
+        "function_name": "EvalGatherNd",
+        "code": "TfLiteStatus EvalGatherNd(TfLiteContext* context, const TfLiteTensor* params,\n                          const TfLiteTensor* indices, TfLiteTensor* output) {\n  switch (params->type) {\n    case kTfLiteFloat32:\n      return GatherNd<float, IndicesT>(params, indices, output);\n    case kTfLiteUInt8:\n      return GatherNd<uint8_t, IndicesT>(params, indices, output);\n    case kTfLiteInt8:\n      return GatherNd<int8_t, IndicesT>(params, indices, output);\n    case kTfLiteInt16:\n      return GatherNd<int16_t, IndicesT>(params, indices, output);\n    case kTfLiteInt32:\n      return GatherNd<int32_t, IndicesT>(params, indices, output);\n    case kTfLiteInt64:\n      return GatherNd<int64_t, IndicesT>(params, indices, output);\n    case kTfLiteString:\n      return GatherNdString<IndicesT>(params, indices, output);\n    default:\n      context->ReportError(context,\n                           \"Params type '%s' are not supported by gather_nd.\",\n                           TfLiteTypeGetName(params->type));\n      return kTfLiteError;\n  }\n}",
+        "vulnerability": "Error reporting format string vulnerability",
+        "reason": "If an attacker can control the 'params->type', they might be able to exploit a format string vulnerability in the 'ReportError' function call, potentially leading to arbitrary code execution or information disclosure.",
+        "file_name": "197760.sol"
+    }
+]

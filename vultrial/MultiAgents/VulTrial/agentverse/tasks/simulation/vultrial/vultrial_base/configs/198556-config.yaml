@@ -1,0 +1,283 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nfiber_switch(mrb_state\
+    \ *mrb, mrb_value self, mrb_int len, const mrb_value *a, mrb_bool resume, mrb_bool\
+    \ vmexec)\n{\n  struct mrb_context *c = fiber_check(mrb, self);\n  struct mrb_context\
+    \ *old_c = mrb->c;\n  enum mrb_fiber_state status;\n  mrb_value value;\n\n  fiber_check_cfunc(mrb,\
+    \ c);\n  status = c->status;\n  switch (status) {\n  case MRB_FIBER_TRANSFERRED:\n\
+    \    if (resume) {\n      mrb_raise(mrb, E_FIBER_ERROR, \"resuming transferred\
+    \ fiber\");\n    }\n    break;\n  case MRB_FIBER_RUNNING:\n  case MRB_FIBER_RESUMED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"double resume\");\n    break;\n  case MRB_FIBER_TERMINATED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"resuming dead fiber\");\n    break;\n  default:\n\
+    \    break;\n  }\n  old_c->status = resume ? MRB_FIBER_RESUMED : MRB_FIBER_TRANSFERRED;\n\
+    \  c->prev = resume ? mrb->c : (c->prev ? c->prev : mrb->root_c);\n  fiber_switch_context(mrb,\
+    \ c);\n  if (status == MRB_FIBER_CREATED) {\n    mrb_value *b, *e;\n\n    if (!c->ci->proc)\
+    \ {\n      mrb_raise(mrb, E_FIBER_ERROR, \"double resume (current)\");\n    }\n\
+    \    mrb_stack_extend(mrb, len+2); /* for receiver and (optional) block */\n \
+    \   b = c->stbase+1;\n    e = b + len;\n    while (b<e) {\n      *b++ = *a++;\n\
+    \    }\n    if (vmexec) {\n      c->ci--;                    /* pop dummy callinfo\
+    \ */\n    }\n    c->cibase->n = len;\n    value = c->stbase[0] = MRB_PROC_ENV(c->cibase->proc)->stack[0];\n\
+    \  }\n  else {\n    value = fiber_result(mrb, a, len);\n    if (vmexec) {\n  \
+    \    c->ci[1].stack[0] = value;\n    }\n  }\n\n  if (vmexec) {\n    c->vmexec\
+    \ = TRUE;\n    value = mrb_vm_exec(mrb, c->ci->proc, c->ci->pc);\n    mrb->c =\
+    \ old_c;\n  }\n  else {\n    MARK_CONTEXT_MODIFY(c);\n  }\n  return value;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nfiber_switch(mrb_state\
+    \ *mrb, mrb_value self, mrb_int len, const mrb_value *a, mrb_bool resume, mrb_bool\
+    \ vmexec)\n{\n  struct mrb_context *c = fiber_check(mrb, self);\n  struct mrb_context\
+    \ *old_c = mrb->c;\n  enum mrb_fiber_state status;\n  mrb_value value;\n\n  fiber_check_cfunc(mrb,\
+    \ c);\n  status = c->status;\n  switch (status) {\n  case MRB_FIBER_TRANSFERRED:\n\
+    \    if (resume) {\n      mrb_raise(mrb, E_FIBER_ERROR, \"resuming transferred\
+    \ fiber\");\n    }\n    break;\n  case MRB_FIBER_RUNNING:\n  case MRB_FIBER_RESUMED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"double resume\");\n    break;\n  case MRB_FIBER_TERMINATED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"resuming dead fiber\");\n    break;\n  default:\n\
+    \    break;\n  }\n  old_c->status = resume ? MRB_FIBER_RESUMED : MRB_FIBER_TRANSFERRED;\n\
+    \  c->prev = resume ? mrb->c : (c->prev ? c->prev : mrb->root_c);\n  fiber_switch_context(mrb,\
+    \ c);\n  if (status == MRB_FIBER_CREATED) {\n    mrb_value *b, *e;\n\n    if (!c->ci->proc)\
+    \ {\n      mrb_raise(mrb, E_FIBER_ERROR, \"double resume (current)\");\n    }\n\
+    \    mrb_stack_extend(mrb, len+2); /* for receiver and (optional) block */\n \
+    \   b = c->stbase+1;\n    e = b + len;\n    while (b<e) {\n      *b++ = *a++;\n\
+    \    }\n    if (vmexec) {\n      c->ci--;                    /* pop dummy callinfo\
+    \ */\n    }\n    c->cibase->n = len;\n    value = c->stbase[0] = MRB_PROC_ENV(c->cibase->proc)->stack[0];\n\
+    \  }\n  else {\n    value = fiber_result(mrb, a, len);\n    if (vmexec) {\n  \
+    \    c->ci[1].stack[0] = value;\n    }\n  }\n\n  if (vmexec) {\n    c->vmexec\
+    \ = TRUE;\n    value = mrb_vm_exec(mrb, c->ci->proc, c->ci->pc);\n    mrb->c =\
+    \ old_c;\n  }\n  else {\n    MARK_CONTEXT_MODIFY(c);\n  }\n  return value;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nfiber_switch(mrb_state *mrb, mrb_value\
+    \ self, mrb_int len, const mrb_value *a, mrb_bool resume, mrb_bool vmexec)\n{\n\
+    \  struct mrb_context *c = fiber_check(mrb, self);\n  struct mrb_context *old_c\
+    \ = mrb->c;\n  enum mrb_fiber_state status;\n  mrb_value value;\n\n  fiber_check_cfunc(mrb,\
+    \ c);\n  status = c->status;\n  switch (status) {\n  case MRB_FIBER_TRANSFERRED:\n\
+    \    if (resume) {\n      mrb_raise(mrb, E_FIBER_ERROR, \"resuming transferred\
+    \ fiber\");\n    }\n    break;\n  case MRB_FIBER_RUNNING:\n  case MRB_FIBER_RESUMED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"double resume\");\n    break;\n  case MRB_FIBER_TERMINATED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"resuming dead fiber\");\n    break;\n  default:\n\
+    \    break;\n  }\n  old_c->status = resume ? MRB_FIBER_RESUMED : MRB_FIBER_TRANSFERRED;\n\
+    \  c->prev = resume ? mrb->c : (c->prev ? c->prev : mrb->root_c);\n  fiber_switch_context(mrb,\
+    \ c);\n  if (status == MRB_FIBER_CREATED) {\n    mrb_value *b, *e;\n\n    if (!c->ci->proc)\
+    \ {\n      mrb_raise(mrb, E_FIBER_ERROR, \"double resume (current)\");\n    }\n\
+    \    mrb_stack_extend(mrb, len+2); /* for receiver and (optional) block */\n \
+    \   b = c->stbase+1;\n    e = b + len;\n    while (b<e) {\n      *b++ = *a++;\n\
+    \    }\n    if (vmexec) {\n      c->ci--;                    /* pop dummy callinfo\
+    \ */\n    }\n    c->cibase->n = len;\n    value = c->stbase[0] = MRB_PROC_ENV(c->cibase->proc)->stack[0];\n\
+    \  }\n  else {\n    value = fiber_result(mrb, a, len);\n    if (vmexec) {\n  \
+    \    c->ci[1].stack[0] = value;\n    }\n  }\n\n  if (vmexec) {\n    c->vmexec\
+    \ = TRUE;\n    value = mrb_vm_exec(mrb, c->ci->proc, c->ci->pc);\n    mrb->c =\
+    \ old_c;\n  }\n  else {\n    MARK_CONTEXT_MODIFY(c);\n  }\n  return value;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nfiber_switch(mrb_state *mrb,\
+    \ mrb_value self, mrb_int len, const mrb_value *a, mrb_bool resume, mrb_bool vmexec)\n\
+    {\n  struct mrb_context *c = fiber_check(mrb, self);\n  struct mrb_context *old_c\
+    \ = mrb->c;\n  enum mrb_fiber_state status;\n  mrb_value value;\n\n  fiber_check_cfunc(mrb,\
+    \ c);\n  status = c->status;\n  switch (status) {\n  case MRB_FIBER_TRANSFERRED:\n\
+    \    if (resume) {\n      mrb_raise(mrb, E_FIBER_ERROR, \"resuming transferred\
+    \ fiber\");\n    }\n    break;\n  case MRB_FIBER_RUNNING:\n  case MRB_FIBER_RESUMED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"double resume\");\n    break;\n  case MRB_FIBER_TERMINATED:\n\
+    \    mrb_raise(mrb, E_FIBER_ERROR, \"resuming dead fiber\");\n    break;\n  default:\n\
+    \    break;\n  }\n  old_c->status = resume ? MRB_FIBER_RESUMED : MRB_FIBER_TRANSFERRED;\n\
+    \  c->prev = resume ? mrb->c : (c->prev ? c->prev : mrb->root_c);\n  fiber_switch_context(mrb,\
+    \ c);\n  if (status == MRB_FIBER_CREATED) {\n    mrb_value *b, *e;\n\n    if (!c->ci->proc)\
+    \ {\n      mrb_raise(mrb, E_FIBER_ERROR, \"double resume (current)\");\n    }\n\
+    \    mrb_stack_extend(mrb, len+2); /* for receiver and (optional) block */\n \
+    \   b = c->stbase+1;\n    e = b + len;\n    while (b<e) {\n      *b++ = *a++;\n\
+    \    }\n    if (vmexec) {\n      c->ci--;                    /* pop dummy callinfo\
+    \ */\n    }\n    c->cibase->n = len;\n    value = c->stbase[0] = MRB_PROC_ENV(c->cibase->proc)->stack[0];\n\
+    \  }\n  else {\n    value = fiber_result(mrb, a, len);\n    if (vmexec) {\n  \
+    \    c->ci[1].stack[0] = value;\n    }\n  }\n\n  if (vmexec) {\n    c->vmexec\
+    \ = TRUE;\n    value = mrb_vm_exec(mrb, c->ci->proc, c->ci->pc);\n    mrb->c =\
+    \ old_c;\n  }\n  else {\n    MARK_CONTEXT_MODIFY(c);\n  }\n  return value;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 198556
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

@@ -1,0 +1,271 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\ncall_qftf_func(qf_list_T\
+    \ *qfl, int qf_winid, long start_idx, long end_idx)\n{\n    callback_T\t*cb =\
+    \ &qftf_cb;\n    list_T\t*qftf_list = NULL;\n    static int\trecursive = FALSE;\n\
+    \n    if (recursive)\n\treturn NULL;  // this doesn't work properly recursively\n\
+    \    recursive = TRUE;\n\n    // If 'quickfixtextfunc' is set, then use the user-supplied\
+    \ function to get\n    // the text to display. Use the local value of 'quickfixtextfunc'\
+    \ if it is\n    // set.\n    if (qfl->qf_qftf_cb.cb_name != NULL)\n\tcb = &qfl->qf_qftf_cb;\n\
+    \    if (cb->cb_name != NULL)\n    {\n\ttypval_T\targs[1];\n\tdict_T\t\t*d;\n\t\
+    typval_T\trettv;\n\n\t// create the dict argument\n\tif ((d = dict_alloc_lock(VAR_FIXED))\
+    \ == NULL)\n\t{\n\t    recursive = FALSE;\n\t    return NULL;\n\t}\n\tdict_add_number(d,\
+    \ \"quickfix\", (long)IS_QF_LIST(qfl));\n\tdict_add_number(d, \"winid\", (long)qf_winid);\n\
+    \tdict_add_number(d, \"id\", (long)qfl->qf_id);\n\tdict_add_number(d, \"start_idx\"\
+    , start_idx);\n\tdict_add_number(d, \"end_idx\", end_idx);\n\t++d->dv_refcount;\n\
+    \targs[0].v_type = VAR_DICT;\n\targs[0].vval.v_dict = d;\n\n\tqftf_list = NULL;\n\
+    \tif (call_callback(cb, 0, &rettv, 1, args) != FAIL)\n\t{\n\t    if (rettv.v_type\
+    \ == VAR_LIST)\n\t    {\n\t\tqftf_list = rettv.vval.v_list;\n\t\tqftf_list->lv_refcount++;\n\
+    \t    }\n\t    clear_tv(&rettv);\n\t}\n\tdict_unref(d);\n    }\n\n    recursive\
+    \ = FALSE;\n    return qftf_list;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\ncall_qftf_func(qf_list_T\
+    \ *qfl, int qf_winid, long start_idx, long end_idx)\n{\n    callback_T\t*cb =\
+    \ &qftf_cb;\n    list_T\t*qftf_list = NULL;\n    static int\trecursive = FALSE;\n\
+    \n    if (recursive)\n\treturn NULL;  // this doesn't work properly recursively\n\
+    \    recursive = TRUE;\n\n    // If 'quickfixtextfunc' is set, then use the user-supplied\
+    \ function to get\n    // the text to display. Use the local value of 'quickfixtextfunc'\
+    \ if it is\n    // set.\n    if (qfl->qf_qftf_cb.cb_name != NULL)\n\tcb = &qfl->qf_qftf_cb;\n\
+    \    if (cb->cb_name != NULL)\n    {\n\ttypval_T\targs[1];\n\tdict_T\t\t*d;\n\t\
+    typval_T\trettv;\n\n\t// create the dict argument\n\tif ((d = dict_alloc_lock(VAR_FIXED))\
+    \ == NULL)\n\t{\n\t    recursive = FALSE;\n\t    return NULL;\n\t}\n\tdict_add_number(d,\
+    \ \"quickfix\", (long)IS_QF_LIST(qfl));\n\tdict_add_number(d, \"winid\", (long)qf_winid);\n\
+    \tdict_add_number(d, \"id\", (long)qfl->qf_id);\n\tdict_add_number(d, \"start_idx\"\
+    , start_idx);\n\tdict_add_number(d, \"end_idx\", end_idx);\n\t++d->dv_refcount;\n\
+    \targs[0].v_type = VAR_DICT;\n\targs[0].vval.v_dict = d;\n\n\tqftf_list = NULL;\n\
+    \tif (call_callback(cb, 0, &rettv, 1, args) != FAIL)\n\t{\n\t    if (rettv.v_type\
+    \ == VAR_LIST)\n\t    {\n\t\tqftf_list = rettv.vval.v_list;\n\t\tqftf_list->lv_refcount++;\n\
+    \t    }\n\t    clear_tv(&rettv);\n\t}\n\tdict_unref(d);\n    }\n\n    recursive\
+    \ = FALSE;\n    return qftf_list;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\ncall_qftf_func(qf_list_T *qfl, int qf_winid,\
+    \ long start_idx, long end_idx)\n{\n    callback_T\t*cb = &qftf_cb;\n    list_T\t\
+    *qftf_list = NULL;\n    static int\trecursive = FALSE;\n\n    if (recursive)\n\
+    \treturn NULL;  // this doesn't work properly recursively\n    recursive = TRUE;\n\
+    \n    // If 'quickfixtextfunc' is set, then use the user-supplied function to\
+    \ get\n    // the text to display. Use the local value of 'quickfixtextfunc' if\
+    \ it is\n    // set.\n    if (qfl->qf_qftf_cb.cb_name != NULL)\n\tcb = &qfl->qf_qftf_cb;\n\
+    \    if (cb->cb_name != NULL)\n    {\n\ttypval_T\targs[1];\n\tdict_T\t\t*d;\n\t\
+    typval_T\trettv;\n\n\t// create the dict argument\n\tif ((d = dict_alloc_lock(VAR_FIXED))\
+    \ == NULL)\n\t{\n\t    recursive = FALSE;\n\t    return NULL;\n\t}\n\tdict_add_number(d,\
+    \ \"quickfix\", (long)IS_QF_LIST(qfl));\n\tdict_add_number(d, \"winid\", (long)qf_winid);\n\
+    \tdict_add_number(d, \"id\", (long)qfl->qf_id);\n\tdict_add_number(d, \"start_idx\"\
+    , start_idx);\n\tdict_add_number(d, \"end_idx\", end_idx);\n\t++d->dv_refcount;\n\
+    \targs[0].v_type = VAR_DICT;\n\targs[0].vval.v_dict = d;\n\n\tqftf_list = NULL;\n\
+    \tif (call_callback(cb, 0, &rettv, 1, args) != FAIL)\n\t{\n\t    if (rettv.v_type\
+    \ == VAR_LIST)\n\t    {\n\t\tqftf_list = rettv.vval.v_list;\n\t\tqftf_list->lv_refcount++;\n\
+    \t    }\n\t    clear_tv(&rettv);\n\t}\n\tdict_unref(d);\n    }\n\n    recursive\
+    \ = FALSE;\n    return qftf_list;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\ncall_qftf_func(qf_list_T *qfl,\
+    \ int qf_winid, long start_idx, long end_idx)\n{\n    callback_T\t*cb = &qftf_cb;\n\
+    \    list_T\t*qftf_list = NULL;\n    static int\trecursive = FALSE;\n\n    if\
+    \ (recursive)\n\treturn NULL;  // this doesn't work properly recursively\n   \
+    \ recursive = TRUE;\n\n    // If 'quickfixtextfunc' is set, then use the user-supplied\
+    \ function to get\n    // the text to display. Use the local value of 'quickfixtextfunc'\
+    \ if it is\n    // set.\n    if (qfl->qf_qftf_cb.cb_name != NULL)\n\tcb = &qfl->qf_qftf_cb;\n\
+    \    if (cb->cb_name != NULL)\n    {\n\ttypval_T\targs[1];\n\tdict_T\t\t*d;\n\t\
+    typval_T\trettv;\n\n\t// create the dict argument\n\tif ((d = dict_alloc_lock(VAR_FIXED))\
+    \ == NULL)\n\t{\n\t    recursive = FALSE;\n\t    return NULL;\n\t}\n\tdict_add_number(d,\
+    \ \"quickfix\", (long)IS_QF_LIST(qfl));\n\tdict_add_number(d, \"winid\", (long)qf_winid);\n\
+    \tdict_add_number(d, \"id\", (long)qfl->qf_id);\n\tdict_add_number(d, \"start_idx\"\
+    , start_idx);\n\tdict_add_number(d, \"end_idx\", end_idx);\n\t++d->dv_refcount;\n\
+    \targs[0].v_type = VAR_DICT;\n\targs[0].vval.v_dict = d;\n\n\tqftf_list = NULL;\n\
+    \tif (call_callback(cb, 0, &rettv, 1, args) != FAIL)\n\t{\n\t    if (rettv.v_type\
+    \ == VAR_LIST)\n\t    {\n\t\tqftf_list = rettv.vval.v_list;\n\t\tqftf_list->lv_refcount++;\n\
+    \t    }\n\t    clear_tv(&rettv);\n\t}\n\tdict_unref(d);\n    }\n\n    recursive\
+    \ = FALSE;\n    return qftf_list;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 312399
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."
