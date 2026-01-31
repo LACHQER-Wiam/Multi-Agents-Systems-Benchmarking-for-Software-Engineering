@@ -1,0 +1,327 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nint kvmppc_rtas_hcall(struct\
+    \ kvm_vcpu *vcpu)\n{\n\tstruct rtas_token_definition *d;\n\tstruct rtas_args args;\n\
+    \trtas_arg_t *orig_rets;\n\tgpa_t args_phys;\n\tint rc;\n\n\t/*\n\t * r4 contains\
+    \ the guest physical address of the RTAS args\n\t * Mask off the top 4 bits since\
+    \ this is a guest real address\n\t */\n\targs_phys = kvmppc_get_gpr(vcpu, 4) &\
+    \ KVM_PAM;\n\n\tvcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);\n\trc = kvm_read_guest(vcpu->kvm,\
+    \ args_phys, &args, sizeof(args));\n\tsrcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);\n\
+    \tif (rc)\n\t\tgoto fail;\n\n\t/*\n\t * args->rets is a pointer into args->args.\
+    \ Now that we've\n\t * copied args we need to fix it up to point into our copy,\n\
+    \t * not the guest args. We also need to save the original\n\t * value so we can\
+    \ restore it on the way out.\n\t */\n\torig_rets = args.rets;\n\tif (be32_to_cpu(args.nargs)\
+    \ >= ARRAY_SIZE(args.args)) {\n\t\t/*\n\t\t * Don't overflow our args array: ensure\
+    \ there is room for\n\t\t * at least rets[0] (even if the call specifies 0 nret).\n\
+    \t\t *\n\t\t * Each handler must then check for the correct nargs and nret\n\t\
+    \t * values, but they may always return failure in rets[0].\n\t\t */\n\t\trc =\
+    \ -EINVAL;\n\t\tgoto fail;\n\t}\n\targs.rets = &args.args[be32_to_cpu(args.nargs)];\n\
+    \n\tmutex_lock(&vcpu->kvm->arch.rtas_token_lock);\n\n\trc = -ENOENT;\n\tlist_for_each_entry(d,\
+    \ &vcpu->kvm->arch.rtas_tokens, list) {\n\t\tif (d->token == be32_to_cpu(args.token))\
+    \ {\n\t\t\td->handler->handler(vcpu, &args);\n\t\t\trc = 0;\n\t\t\tbreak;\n\t\t\
+    }\n\t}\n\n\tmutex_unlock(&vcpu->kvm->arch.rtas_token_lock);\n\n\tif (rc == 0)\
+    \ {\n\t\targs.rets = orig_rets;\n\t\trc = kvm_write_guest(vcpu->kvm, args_phys,\
+    \ &args, sizeof(args));\n\t\tif (rc)\n\t\t\tgoto fail;\n\t}\n\n\treturn rc;\n\n\
+    fail:\n\t/*\n\t * We only get here if the guest has called RTAS with a bogus\n\
+    \t * args pointer or nargs/nret values that would overflow the\n\t * array. That\
+    \ means we can't get to the args, and so we can't\n\t * fail the RTAS call. So\
+    \ fail right out to userspace, which\n\t * should kill the guest.\n\t *\n\t *\
+    \ SLOF should actually pass the hcall return value from the\n\t * rtas handler\
+    \ call in r3, so enter_rtas could be modified to\n\t * return a failure indication\
+    \ in r3 and we could return such\n\t * errors to the guest rather than failing\
+    \ to host userspace.\n\t * However old guests that don't test for failure could\
+    \ then\n\t * continue silently after errors, so for now we won't do this.\n\t\
+    \ */\n\treturn rc;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nint kvmppc_rtas_hcall(struct\
+    \ kvm_vcpu *vcpu)\n{\n\tstruct rtas_token_definition *d;\n\tstruct rtas_args args;\n\
+    \trtas_arg_t *orig_rets;\n\tgpa_t args_phys;\n\tint rc;\n\n\t/*\n\t * r4 contains\
+    \ the guest physical address of the RTAS args\n\t * Mask off the top 4 bits since\
+    \ this is a guest real address\n\t */\n\targs_phys = kvmppc_get_gpr(vcpu, 4) &\
+    \ KVM_PAM;\n\n\tvcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);\n\trc = kvm_read_guest(vcpu->kvm,\
+    \ args_phys, &args, sizeof(args));\n\tsrcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);\n\
+    \tif (rc)\n\t\tgoto fail;\n\n\t/*\n\t * args->rets is a pointer into args->args.\
+    \ Now that we've\n\t * copied args we need to fix it up to point into our copy,\n\
+    \t * not the guest args. We also need to save the original\n\t * value so we can\
+    \ restore it on the way out.\n\t */\n\torig_rets = args.rets;\n\tif (be32_to_cpu(args.nargs)\
+    \ >= ARRAY_SIZE(args.args)) {\n\t\t/*\n\t\t * Don't overflow our args array: ensure\
+    \ there is room for\n\t\t * at least rets[0] (even if the call specifies 0 nret).\n\
+    \t\t *\n\t\t * Each handler must then check for the correct nargs and nret\n\t\
+    \t * values, but they may always return failure in rets[0].\n\t\t */\n\t\trc =\
+    \ -EINVAL;\n\t\tgoto fail;\n\t}\n\targs.rets = &args.args[be32_to_cpu(args.nargs)];\n\
+    \n\tmutex_lock(&vcpu->kvm->arch.rtas_token_lock);\n\n\trc = -ENOENT;\n\tlist_for_each_entry(d,\
+    \ &vcpu->kvm->arch.rtas_tokens, list) {\n\t\tif (d->token == be32_to_cpu(args.token))\
+    \ {\n\t\t\td->handler->handler(vcpu, &args);\n\t\t\trc = 0;\n\t\t\tbreak;\n\t\t\
+    }\n\t}\n\n\tmutex_unlock(&vcpu->kvm->arch.rtas_token_lock);\n\n\tif (rc == 0)\
+    \ {\n\t\targs.rets = orig_rets;\n\t\trc = kvm_write_guest(vcpu->kvm, args_phys,\
+    \ &args, sizeof(args));\n\t\tif (rc)\n\t\t\tgoto fail;\n\t}\n\n\treturn rc;\n\n\
+    fail:\n\t/*\n\t * We only get here if the guest has called RTAS with a bogus\n\
+    \t * args pointer or nargs/nret values that would overflow the\n\t * array. That\
+    \ means we can't get to the args, and so we can't\n\t * fail the RTAS call. So\
+    \ fail right out to userspace, which\n\t * should kill the guest.\n\t *\n\t *\
+    \ SLOF should actually pass the hcall return value from the\n\t * rtas handler\
+    \ call in r3, so enter_rtas could be modified to\n\t * return a failure indication\
+    \ in r3 and we could return such\n\t * errors to the guest rather than failing\
+    \ to host userspace.\n\t * However old guests that don't test for failure could\
+    \ then\n\t * continue silently after errors, so for now we won't do this.\n\t\
+    \ */\n\treturn rc;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nint kvmppc_rtas_hcall(struct kvm_vcpu\
+    \ *vcpu)\n{\n\tstruct rtas_token_definition *d;\n\tstruct rtas_args args;\n\t\
+    rtas_arg_t *orig_rets;\n\tgpa_t args_phys;\n\tint rc;\n\n\t/*\n\t * r4 contains\
+    \ the guest physical address of the RTAS args\n\t * Mask off the top 4 bits since\
+    \ this is a guest real address\n\t */\n\targs_phys = kvmppc_get_gpr(vcpu, 4) &\
+    \ KVM_PAM;\n\n\tvcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);\n\trc = kvm_read_guest(vcpu->kvm,\
+    \ args_phys, &args, sizeof(args));\n\tsrcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);\n\
+    \tif (rc)\n\t\tgoto fail;\n\n\t/*\n\t * args->rets is a pointer into args->args.\
+    \ Now that we've\n\t * copied args we need to fix it up to point into our copy,\n\
+    \t * not the guest args. We also need to save the original\n\t * value so we can\
+    \ restore it on the way out.\n\t */\n\torig_rets = args.rets;\n\tif (be32_to_cpu(args.nargs)\
+    \ >= ARRAY_SIZE(args.args)) {\n\t\t/*\n\t\t * Don't overflow our args array: ensure\
+    \ there is room for\n\t\t * at least rets[0] (even if the call specifies 0 nret).\n\
+    \t\t *\n\t\t * Each handler must then check for the correct nargs and nret\n\t\
+    \t * values, but they may always return failure in rets[0].\n\t\t */\n\t\trc =\
+    \ -EINVAL;\n\t\tgoto fail;\n\t}\n\targs.rets = &args.args[be32_to_cpu(args.nargs)];\n\
+    \n\tmutex_lock(&vcpu->kvm->arch.rtas_token_lock);\n\n\trc = -ENOENT;\n\tlist_for_each_entry(d,\
+    \ &vcpu->kvm->arch.rtas_tokens, list) {\n\t\tif (d->token == be32_to_cpu(args.token))\
+    \ {\n\t\t\td->handler->handler(vcpu, &args);\n\t\t\trc = 0;\n\t\t\tbreak;\n\t\t\
+    }\n\t}\n\n\tmutex_unlock(&vcpu->kvm->arch.rtas_token_lock);\n\n\tif (rc == 0)\
+    \ {\n\t\targs.rets = orig_rets;\n\t\trc = kvm_write_guest(vcpu->kvm, args_phys,\
+    \ &args, sizeof(args));\n\t\tif (rc)\n\t\t\tgoto fail;\n\t}\n\n\treturn rc;\n\n\
+    fail:\n\t/*\n\t * We only get here if the guest has called RTAS with a bogus\n\
+    \t * args pointer or nargs/nret values that would overflow the\n\t * array. That\
+    \ means we can't get to the args, and so we can't\n\t * fail the RTAS call. So\
+    \ fail right out to userspace, which\n\t * should kill the guest.\n\t *\n\t *\
+    \ SLOF should actually pass the hcall return value from the\n\t * rtas handler\
+    \ call in r3, so enter_rtas could be modified to\n\t * return a failure indication\
+    \ in r3 and we could return such\n\t * errors to the guest rather than failing\
+    \ to host userspace.\n\t * However old guests that don't test for failure could\
+    \ then\n\t * continue silently after errors, so for now we won't do this.\n\t\
+    \ */\n\treturn rc;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nint kvmppc_rtas_hcall(struct\
+    \ kvm_vcpu *vcpu)\n{\n\tstruct rtas_token_definition *d;\n\tstruct rtas_args args;\n\
+    \trtas_arg_t *orig_rets;\n\tgpa_t args_phys;\n\tint rc;\n\n\t/*\n\t * r4 contains\
+    \ the guest physical address of the RTAS args\n\t * Mask off the top 4 bits since\
+    \ this is a guest real address\n\t */\n\targs_phys = kvmppc_get_gpr(vcpu, 4) &\
+    \ KVM_PAM;\n\n\tvcpu->srcu_idx = srcu_read_lock(&vcpu->kvm->srcu);\n\trc = kvm_read_guest(vcpu->kvm,\
+    \ args_phys, &args, sizeof(args));\n\tsrcu_read_unlock(&vcpu->kvm->srcu, vcpu->srcu_idx);\n\
+    \tif (rc)\n\t\tgoto fail;\n\n\t/*\n\t * args->rets is a pointer into args->args.\
+    \ Now that we've\n\t * copied args we need to fix it up to point into our copy,\n\
+    \t * not the guest args. We also need to save the original\n\t * value so we can\
+    \ restore it on the way out.\n\t */\n\torig_rets = args.rets;\n\tif (be32_to_cpu(args.nargs)\
+    \ >= ARRAY_SIZE(args.args)) {\n\t\t/*\n\t\t * Don't overflow our args array: ensure\
+    \ there is room for\n\t\t * at least rets[0] (even if the call specifies 0 nret).\n\
+    \t\t *\n\t\t * Each handler must then check for the correct nargs and nret\n\t\
+    \t * values, but they may always return failure in rets[0].\n\t\t */\n\t\trc =\
+    \ -EINVAL;\n\t\tgoto fail;\n\t}\n\targs.rets = &args.args[be32_to_cpu(args.nargs)];\n\
+    \n\tmutex_lock(&vcpu->kvm->arch.rtas_token_lock);\n\n\trc = -ENOENT;\n\tlist_for_each_entry(d,\
+    \ &vcpu->kvm->arch.rtas_tokens, list) {\n\t\tif (d->token == be32_to_cpu(args.token))\
+    \ {\n\t\t\td->handler->handler(vcpu, &args);\n\t\t\trc = 0;\n\t\t\tbreak;\n\t\t\
+    }\n\t}\n\n\tmutex_unlock(&vcpu->kvm->arch.rtas_token_lock);\n\n\tif (rc == 0)\
+    \ {\n\t\targs.rets = orig_rets;\n\t\trc = kvm_write_guest(vcpu->kvm, args_phys,\
+    \ &args, sizeof(args));\n\t\tif (rc)\n\t\t\tgoto fail;\n\t}\n\n\treturn rc;\n\n\
+    fail:\n\t/*\n\t * We only get here if the guest has called RTAS with a bogus\n\
+    \t * args pointer or nargs/nret values that would overflow the\n\t * array. That\
+    \ means we can't get to the args, and so we can't\n\t * fail the RTAS call. So\
+    \ fail right out to userspace, which\n\t * should kill the guest.\n\t *\n\t *\
+    \ SLOF should actually pass the hcall return value from the\n\t * rtas handler\
+    \ call in r3, so enter_rtas could be modified to\n\t * return a failure indication\
+    \ in r3 and we could return such\n\t * errors to the guest rather than failing\
+    \ to host userspace.\n\t * However old guests that don't test for failure could\
+    \ then\n\t * continue silently after errors, so for now we won't do this.\n\t\
+    \ */\n\treturn rc;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 477811
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

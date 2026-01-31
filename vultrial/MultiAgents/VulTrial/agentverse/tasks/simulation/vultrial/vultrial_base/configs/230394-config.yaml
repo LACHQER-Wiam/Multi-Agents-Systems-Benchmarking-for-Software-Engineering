@@ -1,0 +1,375 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ pj_xml_node *xml_parse_node( pj_pool_t *pool, pj_scanner *scanner)\n{\n    pj_xml_node\
+    \ *node;\n    pj_str_t end_name;\n\n    PJ_CHECK_STACK();\n\n    if (*scanner->curptr\
+    \ != '<')\n\ton_syntax_error(scanner);\n\n    /* Handle Processing Instructino\
+    \ (PI) construct (i.e. \"<?\") */\n    if (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ == '?') {\n\tpj_scan_advance_n(scanner, 2, PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t\
+    \ dummy;\n\t    pj_scan_get_until_ch(scanner, '?', &dummy);\n\t    if (*scanner->curptr=='?'\
+    \ && *(scanner->curptr+1)=='>') {\n\t\tpj_scan_advance_n(scanner, 2, PJ_TRUE);\n\
+    \t\tbreak;\n\t    } else {\n\t\tpj_scan_advance_n(scanner, 1, PJ_FALSE);\n\t \
+    \   }\n\t}\n\treturn xml_parse_node(pool, scanner);\n    }\n\n    /* Handle comments\
+    \ construct (i.e. \"<!\") */\n    if (pj_scan_strcmp(scanner, \"<!\", 2) == 0)\
+    \ {\n\tpj_scan_advance_n(scanner, 2, PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t\
+    \ dummy;\n\t    pj_scan_get_until_ch(scanner, '>', &dummy);\n\t    if (pj_scan_strcmp(scanner,\
+    \ \">\", 1) == 0) {\n\t\tpj_scan_advance_n(scanner, 1, PJ_TRUE);\n\t\tbreak;\n\
+    \t    } else {\n\t\tpj_scan_advance_n(scanner, 1, PJ_FALSE);\n\t    }\n\t}\n\t\
+    return xml_parse_node(pool, scanner);\n    }\n\n    /* Alloc node. */\n    node\
+    \ = alloc_node(pool);\n\n    /* Get '<' */\n    pj_scan_get_char(scanner);\n\n\
+    \    /* Get node name. */\n    pj_scan_get_until_chr( scanner, \" />\\t\\r\\n\"\
+    , &node->name);\n\n    /* Get attributes. */\n    while (*scanner->curptr != '>'\
+    \ && *scanner->curptr != '/') {\n\tpj_xml_attr *attr = alloc_attr(pool);\n\t\n\
+    \tpj_scan_get_until_chr( scanner, \"=> \\t\\r\\n\", &attr->name);\n\tif (*scanner->curptr\
+    \ == '=') {\n\t    pj_scan_get_char( scanner );\n            pj_scan_get_quotes(scanner,\
+    \ \"\\\"'\", \"\\\"'\", 2, &attr->value);\n\t    /* remove quote characters */\n\
+    \t    ++attr->value.ptr;\n\t    attr->value.slen -= 2;\n\t}\n\t\n\tpj_list_push_back(\
+    \ &node->attr_head, attr );\n    }\n\n    if (*scanner->curptr == '/') {\n\tpj_scan_get_char(scanner);\n\
+    \tif (pj_scan_get_char(scanner) != '>')\n\t    on_syntax_error(scanner);\n\treturn\
+    \ node;\n    }\n\n    /* Enclosing bracket. */\n    if (pj_scan_get_char(scanner)\
+    \ != '>')\n\ton_syntax_error(scanner);\n\n    /* Sub nodes. */\n    while (*scanner->curptr\
+    \ == '<' && *(scanner->curptr+1) != '/'\n\t\t\t\t   && *(scanner->curptr+1) !=\
+    \ '!')\n    {\n\tpj_xml_node *sub_node = xml_parse_node(pool, scanner);\n\tpj_list_push_back(\
+    \ &node->node_head, sub_node );\n    }\n\n    /* Content. */\n    if (!pj_scan_is_eof(scanner)\
+    \ && *scanner->curptr != '<') {\n\tpj_scan_get_until_ch(scanner, '<', &node->content);\n\
+    \    }\n\n    /* CDATA content. */\n    if (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ == '!' &&\n\tpj_scan_strcmp(scanner, \"<![CDATA[\", 9) == 0)\n    {\n\tpj_scan_advance_n(scanner,\
+    \ 9, PJ_FALSE);\n\tpj_scan_get_until_ch(scanner, ']', &node->content);\n\twhile\
+    \ (pj_scan_strcmp(scanner, \"]]>\", 3)) {\n\t    pj_str_t dummy;\n\n\t    pj_scan_advance_n(scanner,\
+    \ 1, PJ_FALSE);\n\t    pj_scan_get_until_ch(scanner, ']', &dummy);\n\t}\n\tnode->content.slen\
+    \ = scanner->curptr - node->content.ptr;\n\tpj_scan_advance_n(scanner, 3, PJ_TRUE);\n\
+    \    }\n\n    /* Enclosing node. */\n    if (pj_scan_get_char(scanner) != '<'\
+    \ || pj_scan_get_char(scanner) != '/')\n\ton_syntax_error(scanner);\n\n    pj_scan_get_until_chr(scanner,\
+    \ \" \\t>\", &end_name);\n\n    /* Compare name. */\n    if (pj_stricmp(&node->name,\
+    \ &end_name) != 0)\n\ton_syntax_error(scanner);\n\n    /* Enclosing '>' */\n \
+    \   if (pj_scan_get_char(scanner) != '>')\n\ton_syntax_error(scanner);\n\n   \
+    \ return node;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic pj_xml_node\
+    \ *xml_parse_node( pj_pool_t *pool, pj_scanner *scanner)\n{\n    pj_xml_node *node;\n\
+    \    pj_str_t end_name;\n\n    PJ_CHECK_STACK();\n\n    if (*scanner->curptr !=\
+    \ '<')\n\ton_syntax_error(scanner);\n\n    /* Handle Processing Instructino (PI)\
+    \ construct (i.e. \"<?\") */\n    if (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ == '?') {\n\tpj_scan_advance_n(scanner, 2, PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t\
+    \ dummy;\n\t    pj_scan_get_until_ch(scanner, '?', &dummy);\n\t    if (*scanner->curptr=='?'\
+    \ && *(scanner->curptr+1)=='>') {\n\t\tpj_scan_advance_n(scanner, 2, PJ_TRUE);\n\
+    \t\tbreak;\n\t    } else {\n\t\tpj_scan_advance_n(scanner, 1, PJ_FALSE);\n\t \
+    \   }\n\t}\n\treturn xml_parse_node(pool, scanner);\n    }\n\n    /* Handle comments\
+    \ construct (i.e. \"<!\") */\n    if (pj_scan_strcmp(scanner, \"<!\", 2) == 0)\
+    \ {\n\tpj_scan_advance_n(scanner, 2, PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t\
+    \ dummy;\n\t    pj_scan_get_until_ch(scanner, '>', &dummy);\n\t    if (pj_scan_strcmp(scanner,\
+    \ \">\", 1) == 0) {\n\t\tpj_scan_advance_n(scanner, 1, PJ_TRUE);\n\t\tbreak;\n\
+    \t    } else {\n\t\tpj_scan_advance_n(scanner, 1, PJ_FALSE);\n\t    }\n\t}\n\t\
+    return xml_parse_node(pool, scanner);\n    }\n\n    /* Alloc node. */\n    node\
+    \ = alloc_node(pool);\n\n    /* Get '<' */\n    pj_scan_get_char(scanner);\n\n\
+    \    /* Get node name. */\n    pj_scan_get_until_chr( scanner, \" />\\t\\r\\n\"\
+    , &node->name);\n\n    /* Get attributes. */\n    while (*scanner->curptr != '>'\
+    \ && *scanner->curptr != '/') {\n\tpj_xml_attr *attr = alloc_attr(pool);\n\t\n\
+    \tpj_scan_get_until_chr( scanner, \"=> \\t\\r\\n\", &attr->name);\n\tif (*scanner->curptr\
+    \ == '=') {\n\t    pj_scan_get_char( scanner );\n            pj_scan_get_quotes(scanner,\
+    \ \"\\\"'\", \"\\\"'\", 2, &attr->value);\n\t    /* remove quote characters */\n\
+    \t    ++attr->value.ptr;\n\t    attr->value.slen -= 2;\n\t}\n\t\n\tpj_list_push_back(\
+    \ &node->attr_head, attr );\n    }\n\n    if (*scanner->curptr == '/') {\n\tpj_scan_get_char(scanner);\n\
+    \tif (pj_scan_get_char(scanner) != '>')\n\t    on_syntax_error(scanner);\n\treturn\
+    \ node;\n    }\n\n    /* Enclosing bracket. */\n    if (pj_scan_get_char(scanner)\
+    \ != '>')\n\ton_syntax_error(scanner);\n\n    /* Sub nodes. */\n    while (*scanner->curptr\
+    \ == '<' && *(scanner->curptr+1) != '/'\n\t\t\t\t   && *(scanner->curptr+1) !=\
+    \ '!')\n    {\n\tpj_xml_node *sub_node = xml_parse_node(pool, scanner);\n\tpj_list_push_back(\
+    \ &node->node_head, sub_node );\n    }\n\n    /* Content. */\n    if (!pj_scan_is_eof(scanner)\
+    \ && *scanner->curptr != '<') {\n\tpj_scan_get_until_ch(scanner, '<', &node->content);\n\
+    \    }\n\n    /* CDATA content. */\n    if (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ == '!' &&\n\tpj_scan_strcmp(scanner, \"<![CDATA[\", 9) == 0)\n    {\n\tpj_scan_advance_n(scanner,\
+    \ 9, PJ_FALSE);\n\tpj_scan_get_until_ch(scanner, ']', &node->content);\n\twhile\
+    \ (pj_scan_strcmp(scanner, \"]]>\", 3)) {\n\t    pj_str_t dummy;\n\n\t    pj_scan_advance_n(scanner,\
+    \ 1, PJ_FALSE);\n\t    pj_scan_get_until_ch(scanner, ']', &dummy);\n\t}\n\tnode->content.slen\
+    \ = scanner->curptr - node->content.ptr;\n\tpj_scan_advance_n(scanner, 3, PJ_TRUE);\n\
+    \    }\n\n    /* Enclosing node. */\n    if (pj_scan_get_char(scanner) != '<'\
+    \ || pj_scan_get_char(scanner) != '/')\n\ton_syntax_error(scanner);\n\n    pj_scan_get_until_chr(scanner,\
+    \ \" \\t>\", &end_name);\n\n    /* Compare name. */\n    if (pj_stricmp(&node->name,\
+    \ &end_name) != 0)\n\ton_syntax_error(scanner);\n\n    /* Enclosing '>' */\n \
+    \   if (pj_scan_get_char(scanner) != '>')\n\ton_syntax_error(scanner);\n\n   \
+    \ return node;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic pj_xml_node *xml_parse_node( pj_pool_t\
+    \ *pool, pj_scanner *scanner)\n{\n    pj_xml_node *node;\n    pj_str_t end_name;\n\
+    \n    PJ_CHECK_STACK();\n\n    if (*scanner->curptr != '<')\n\ton_syntax_error(scanner);\n\
+    \n    /* Handle Processing Instructino (PI) construct (i.e. \"<?\") */\n    if\
+    \ (*scanner->curptr == '<' && *(scanner->curptr+1) == '?') {\n\tpj_scan_advance_n(scanner,\
+    \ 2, PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t dummy;\n\t    pj_scan_get_until_ch(scanner,\
+    \ '?', &dummy);\n\t    if (*scanner->curptr=='?' && *(scanner->curptr+1)=='>')\
+    \ {\n\t\tpj_scan_advance_n(scanner, 2, PJ_TRUE);\n\t\tbreak;\n\t    } else {\n\
+    \t\tpj_scan_advance_n(scanner, 1, PJ_FALSE);\n\t    }\n\t}\n\treturn xml_parse_node(pool,\
+    \ scanner);\n    }\n\n    /* Handle comments construct (i.e. \"<!\") */\n    if\
+    \ (pj_scan_strcmp(scanner, \"<!\", 2) == 0) {\n\tpj_scan_advance_n(scanner, 2,\
+    \ PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t dummy;\n\t    pj_scan_get_until_ch(scanner,\
+    \ '>', &dummy);\n\t    if (pj_scan_strcmp(scanner, \">\", 1) == 0) {\n\t\tpj_scan_advance_n(scanner,\
+    \ 1, PJ_TRUE);\n\t\tbreak;\n\t    } else {\n\t\tpj_scan_advance_n(scanner, 1,\
+    \ PJ_FALSE);\n\t    }\n\t}\n\treturn xml_parse_node(pool, scanner);\n    }\n\n\
+    \    /* Alloc node. */\n    node = alloc_node(pool);\n\n    /* Get '<' */\n  \
+    \  pj_scan_get_char(scanner);\n\n    /* Get node name. */\n    pj_scan_get_until_chr(\
+    \ scanner, \" />\\t\\r\\n\", &node->name);\n\n    /* Get attributes. */\n    while\
+    \ (*scanner->curptr != '>' && *scanner->curptr != '/') {\n\tpj_xml_attr *attr\
+    \ = alloc_attr(pool);\n\t\n\tpj_scan_get_until_chr( scanner, \"=> \\t\\r\\n\"\
+    , &attr->name);\n\tif (*scanner->curptr == '=') {\n\t    pj_scan_get_char( scanner\
+    \ );\n            pj_scan_get_quotes(scanner, \"\\\"'\", \"\\\"'\", 2, &attr->value);\n\
+    \t    /* remove quote characters */\n\t    ++attr->value.ptr;\n\t    attr->value.slen\
+    \ -= 2;\n\t}\n\t\n\tpj_list_push_back( &node->attr_head, attr );\n    }\n\n  \
+    \  if (*scanner->curptr == '/') {\n\tpj_scan_get_char(scanner);\n\tif (pj_scan_get_char(scanner)\
+    \ != '>')\n\t    on_syntax_error(scanner);\n\treturn node;\n    }\n\n    /* Enclosing\
+    \ bracket. */\n    if (pj_scan_get_char(scanner) != '>')\n\ton_syntax_error(scanner);\n\
+    \n    /* Sub nodes. */\n    while (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ != '/'\n\t\t\t\t   && *(scanner->curptr+1) != '!')\n    {\n\tpj_xml_node *sub_node\
+    \ = xml_parse_node(pool, scanner);\n\tpj_list_push_back( &node->node_head, sub_node\
+    \ );\n    }\n\n    /* Content. */\n    if (!pj_scan_is_eof(scanner) && *scanner->curptr\
+    \ != '<') {\n\tpj_scan_get_until_ch(scanner, '<', &node->content);\n    }\n\n\
+    \    /* CDATA content. */\n    if (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ == '!' &&\n\tpj_scan_strcmp(scanner, \"<![CDATA[\", 9) == 0)\n    {\n\tpj_scan_advance_n(scanner,\
+    \ 9, PJ_FALSE);\n\tpj_scan_get_until_ch(scanner, ']', &node->content);\n\twhile\
+    \ (pj_scan_strcmp(scanner, \"]]>\", 3)) {\n\t    pj_str_t dummy;\n\n\t    pj_scan_advance_n(scanner,\
+    \ 1, PJ_FALSE);\n\t    pj_scan_get_until_ch(scanner, ']', &dummy);\n\t}\n\tnode->content.slen\
+    \ = scanner->curptr - node->content.ptr;\n\tpj_scan_advance_n(scanner, 3, PJ_TRUE);\n\
+    \    }\n\n    /* Enclosing node. */\n    if (pj_scan_get_char(scanner) != '<'\
+    \ || pj_scan_get_char(scanner) != '/')\n\ton_syntax_error(scanner);\n\n    pj_scan_get_until_chr(scanner,\
+    \ \" \\t>\", &end_name);\n\n    /* Compare name. */\n    if (pj_stricmp(&node->name,\
+    \ &end_name) != 0)\n\ton_syntax_error(scanner);\n\n    /* Enclosing '>' */\n \
+    \   if (pj_scan_get_char(scanner) != '>')\n\ton_syntax_error(scanner);\n\n   \
+    \ return node;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic pj_xml_node *xml_parse_node(\
+    \ pj_pool_t *pool, pj_scanner *scanner)\n{\n    pj_xml_node *node;\n    pj_str_t\
+    \ end_name;\n\n    PJ_CHECK_STACK();\n\n    if (*scanner->curptr != '<')\n\ton_syntax_error(scanner);\n\
+    \n    /* Handle Processing Instructino (PI) construct (i.e. \"<?\") */\n    if\
+    \ (*scanner->curptr == '<' && *(scanner->curptr+1) == '?') {\n\tpj_scan_advance_n(scanner,\
+    \ 2, PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t dummy;\n\t    pj_scan_get_until_ch(scanner,\
+    \ '?', &dummy);\n\t    if (*scanner->curptr=='?' && *(scanner->curptr+1)=='>')\
+    \ {\n\t\tpj_scan_advance_n(scanner, 2, PJ_TRUE);\n\t\tbreak;\n\t    } else {\n\
+    \t\tpj_scan_advance_n(scanner, 1, PJ_FALSE);\n\t    }\n\t}\n\treturn xml_parse_node(pool,\
+    \ scanner);\n    }\n\n    /* Handle comments construct (i.e. \"<!\") */\n    if\
+    \ (pj_scan_strcmp(scanner, \"<!\", 2) == 0) {\n\tpj_scan_advance_n(scanner, 2,\
+    \ PJ_FALSE);\n\tfor (;;) {\n\t    pj_str_t dummy;\n\t    pj_scan_get_until_ch(scanner,\
+    \ '>', &dummy);\n\t    if (pj_scan_strcmp(scanner, \">\", 1) == 0) {\n\t\tpj_scan_advance_n(scanner,\
+    \ 1, PJ_TRUE);\n\t\tbreak;\n\t    } else {\n\t\tpj_scan_advance_n(scanner, 1,\
+    \ PJ_FALSE);\n\t    }\n\t}\n\treturn xml_parse_node(pool, scanner);\n    }\n\n\
+    \    /* Alloc node. */\n    node = alloc_node(pool);\n\n    /* Get '<' */\n  \
+    \  pj_scan_get_char(scanner);\n\n    /* Get node name. */\n    pj_scan_get_until_chr(\
+    \ scanner, \" />\\t\\r\\n\", &node->name);\n\n    /* Get attributes. */\n    while\
+    \ (*scanner->curptr != '>' && *scanner->curptr != '/') {\n\tpj_xml_attr *attr\
+    \ = alloc_attr(pool);\n\t\n\tpj_scan_get_until_chr( scanner, \"=> \\t\\r\\n\"\
+    , &attr->name);\n\tif (*scanner->curptr == '=') {\n\t    pj_scan_get_char( scanner\
+    \ );\n            pj_scan_get_quotes(scanner, \"\\\"'\", \"\\\"'\", 2, &attr->value);\n\
+    \t    /* remove quote characters */\n\t    ++attr->value.ptr;\n\t    attr->value.slen\
+    \ -= 2;\n\t}\n\t\n\tpj_list_push_back( &node->attr_head, attr );\n    }\n\n  \
+    \  if (*scanner->curptr == '/') {\n\tpj_scan_get_char(scanner);\n\tif (pj_scan_get_char(scanner)\
+    \ != '>')\n\t    on_syntax_error(scanner);\n\treturn node;\n    }\n\n    /* Enclosing\
+    \ bracket. */\n    if (pj_scan_get_char(scanner) != '>')\n\ton_syntax_error(scanner);\n\
+    \n    /* Sub nodes. */\n    while (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ != '/'\n\t\t\t\t   && *(scanner->curptr+1) != '!')\n    {\n\tpj_xml_node *sub_node\
+    \ = xml_parse_node(pool, scanner);\n\tpj_list_push_back( &node->node_head, sub_node\
+    \ );\n    }\n\n    /* Content. */\n    if (!pj_scan_is_eof(scanner) && *scanner->curptr\
+    \ != '<') {\n\tpj_scan_get_until_ch(scanner, '<', &node->content);\n    }\n\n\
+    \    /* CDATA content. */\n    if (*scanner->curptr == '<' && *(scanner->curptr+1)\
+    \ == '!' &&\n\tpj_scan_strcmp(scanner, \"<![CDATA[\", 9) == 0)\n    {\n\tpj_scan_advance_n(scanner,\
+    \ 9, PJ_FALSE);\n\tpj_scan_get_until_ch(scanner, ']', &node->content);\n\twhile\
+    \ (pj_scan_strcmp(scanner, \"]]>\", 3)) {\n\t    pj_str_t dummy;\n\n\t    pj_scan_advance_n(scanner,\
+    \ 1, PJ_FALSE);\n\t    pj_scan_get_until_ch(scanner, ']', &dummy);\n\t}\n\tnode->content.slen\
+    \ = scanner->curptr - node->content.ptr;\n\tpj_scan_advance_n(scanner, 3, PJ_TRUE);\n\
+    \    }\n\n    /* Enclosing node. */\n    if (pj_scan_get_char(scanner) != '<'\
+    \ || pj_scan_get_char(scanner) != '/')\n\ton_syntax_error(scanner);\n\n    pj_scan_get_until_chr(scanner,\
+    \ \" \\t>\", &end_name);\n\n    /* Compare name. */\n    if (pj_stricmp(&node->name,\
+    \ &end_name) != 0)\n\ton_syntax_error(scanner);\n\n    /* Enclosing '>' */\n \
+    \   if (pj_scan_get_char(scanner) != '>')\n\ton_syntax_error(scanner);\n\n   \
+    \ return node;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 230394
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

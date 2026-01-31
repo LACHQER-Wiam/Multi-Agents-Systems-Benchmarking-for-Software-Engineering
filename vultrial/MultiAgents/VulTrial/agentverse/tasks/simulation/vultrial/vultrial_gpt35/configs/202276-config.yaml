@@ -1,0 +1,383 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nblock_insert(\n\
+    \    oparg_T\t\t*oap,\n    char_u\t\t*s,\n    int\t\t\tb_insert,\n    struct block_def\t\
+    *bdp)\n{\n    int\t\tts_val;\n    int\t\tcount = 0;\t// extra spaces to replace\
+    \ a cut TAB\n    int\t\tspaces = 0;\t// non-zero if cutting a TAB\n    colnr_T\t\
+    offset;\t\t// pointer along new line\n    colnr_T\tstartcol;\t// column where\
+    \ insert starts\n    unsigned\ts_len;\t\t// STRLEN(s)\n    char_u\t*newp, *oldp;\t\
+    // new, old lines\n    linenr_T\tlnum;\t\t// loop var\n    int\t\toldstate = State;\n\
+    \n    State = INSERT;\t\t// don't want REPLACE for State\n    s_len = (unsigned)STRLEN(s);\n\
+    \n    for (lnum = oap->start.lnum + 1; lnum <= oap->end.lnum; lnum++)\n    {\n\
+    \tblock_prep(oap, bdp, lnum, TRUE);\n\tif (bdp->is_short && b_insert)\n\t    continue;\t\
+    // OP_INSERT, line ends before block start\n\n\toldp = ml_get(lnum);\n\n\tif (b_insert)\n\
+    \t{\n\t    ts_val = bdp->start_char_vcols;\n\t    spaces = bdp->startspaces;\n\
+    \t    if (spaces != 0)\n\t\tcount = ts_val - 1; // we're cutting a TAB\n\t   \
+    \ offset = bdp->textcol;\n\t}\n\telse // append\n\t{\n\t    ts_val = bdp->end_char_vcols;\n\
+    \t    if (!bdp->is_short) // spaces = padding after block\n\t    {\n\t\tspaces\
+    \ = (bdp->endspaces ? ts_val - bdp->endspaces : 0);\n\t\tif (spaces != 0)\n\t\t\
+    \    count = ts_val - 1; // we're cutting a TAB\n\t\toffset = bdp->textcol + bdp->textlen\
+    \ - (spaces != 0);\n\t    }\n\t    else // spaces = padding to block edge\n\t\
+    \    {\n\t\t// if $ used, just append to EOL (ie spaces==0)\n\t\tif (!bdp->is_MAX)\n\
+    \t\t    spaces = (oap->end_vcol - bdp->end_vcol) + 1;\n\t\tcount = spaces;\n\t\
+    \toffset = bdp->textcol + bdp->textlen;\n\t    }\n\t}\n\n\tif (has_mbyte && spaces\
+    \ > 0)\n\t{\n\t    int off;\n\n\t    // Avoid starting halfway a multi-byte character.\n\
+    \t    if (b_insert)\n\t    {\n\t\toff = (*mb_head_off)(oldp, oldp + offset + spaces);\n\
+    \t\tspaces -= off;\n\t\tcount -= off;\n\t    }\n\t    else\n\t    {\n\t\t// spaces\
+    \ fill the gap, the character that's at the edge moves\n\t\t// right\n\t\toff\
+    \ = (*mb_head_off)(oldp, oldp + offset);\n\t\toffset -= off;\n\t    }\n\t}\n\t\
+    if (spaces < 0)  // can happen when the cursor was moved\n\t    spaces = 0;\n\n\
+    \t// Make sure the allocated size matches what is actually copied below.\n\tnewp\
+    \ = alloc(STRLEN(oldp) + spaces + s_len\n\t\t    + (spaces > 0 && !bdp->is_short\
+    \ ? ts_val - spaces : 0)\n\t\t\t\t\t\t\t\t  + count + 1);\n\tif (newp == NULL)\n\
+    \t    continue;\n\n\t// copy up to shifted part\n\tmch_memmove(newp, oldp, (size_t)offset);\n\
+    \toldp += offset;\n\n\t// insert pre-padding\n\tvim_memset(newp + offset, ' ',\
+    \ (size_t)spaces);\n\tstartcol = offset + spaces;\n\n\t// copy the new text\n\t\
+    mch_memmove(newp + startcol, s, (size_t)s_len);\n\toffset += s_len;\n\n\tif (spaces\
+    \ > 0 && !bdp->is_short)\n\t{\n\t    if (*oldp == TAB)\n\t    {\n\t\t// insert\
+    \ post-padding\n\t\tvim_memset(newp + offset + spaces, ' ',\n\t\t\t\t\t\t    (size_t)(ts_val\
+    \ - spaces));\n\t\t// we're splitting a TAB, don't copy it\n\t\toldp++;\n\t\t\
+    // We allowed for that TAB, remember this now\n\t\tcount++;\n\t    }\n\t    else\n\
+    \t\t// Not a TAB, no extra spaces\n\t\tcount = spaces;\n\t}\n\n\tif (spaces >\
+    \ 0)\n\t    offset += count;\n\tSTRMOVE(newp + offset, oldp);\n\n\tml_replace(lnum,\
+    \ newp, FALSE);\n\n\tif (b_insert)\n\t    // correct any text properties\n\t \
+    \   inserted_bytes(lnum, startcol, s_len);\n\n\tif (lnum == oap->end.lnum)\n\t\
+    {\n\t    // Set \"']\" mark to the end of the block instead of the end of\n\t\
+    \    // the insert in the first line.\n\t    curbuf->b_op_end.lnum = oap->end.lnum;\n\
+    \t    curbuf->b_op_end.col = offset;\n\t}\n    } // for all lnum\n\n    changed_lines(oap->start.lnum\
+    \ + 1, 0, oap->end.lnum + 1, 0L);\n\n    State = oldstate;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nblock_insert(\n  \
+    \  oparg_T\t\t*oap,\n    char_u\t\t*s,\n    int\t\t\tb_insert,\n    struct block_def\t\
+    *bdp)\n{\n    int\t\tts_val;\n    int\t\tcount = 0;\t// extra spaces to replace\
+    \ a cut TAB\n    int\t\tspaces = 0;\t// non-zero if cutting a TAB\n    colnr_T\t\
+    offset;\t\t// pointer along new line\n    colnr_T\tstartcol;\t// column where\
+    \ insert starts\n    unsigned\ts_len;\t\t// STRLEN(s)\n    char_u\t*newp, *oldp;\t\
+    // new, old lines\n    linenr_T\tlnum;\t\t// loop var\n    int\t\toldstate = State;\n\
+    \n    State = INSERT;\t\t// don't want REPLACE for State\n    s_len = (unsigned)STRLEN(s);\n\
+    \n    for (lnum = oap->start.lnum + 1; lnum <= oap->end.lnum; lnum++)\n    {\n\
+    \tblock_prep(oap, bdp, lnum, TRUE);\n\tif (bdp->is_short && b_insert)\n\t    continue;\t\
+    // OP_INSERT, line ends before block start\n\n\toldp = ml_get(lnum);\n\n\tif (b_insert)\n\
+    \t{\n\t    ts_val = bdp->start_char_vcols;\n\t    spaces = bdp->startspaces;\n\
+    \t    if (spaces != 0)\n\t\tcount = ts_val - 1; // we're cutting a TAB\n\t   \
+    \ offset = bdp->textcol;\n\t}\n\telse // append\n\t{\n\t    ts_val = bdp->end_char_vcols;\n\
+    \t    if (!bdp->is_short) // spaces = padding after block\n\t    {\n\t\tspaces\
+    \ = (bdp->endspaces ? ts_val - bdp->endspaces : 0);\n\t\tif (spaces != 0)\n\t\t\
+    \    count = ts_val - 1; // we're cutting a TAB\n\t\toffset = bdp->textcol + bdp->textlen\
+    \ - (spaces != 0);\n\t    }\n\t    else // spaces = padding to block edge\n\t\
+    \    {\n\t\t// if $ used, just append to EOL (ie spaces==0)\n\t\tif (!bdp->is_MAX)\n\
+    \t\t    spaces = (oap->end_vcol - bdp->end_vcol) + 1;\n\t\tcount = spaces;\n\t\
+    \toffset = bdp->textcol + bdp->textlen;\n\t    }\n\t}\n\n\tif (has_mbyte && spaces\
+    \ > 0)\n\t{\n\t    int off;\n\n\t    // Avoid starting halfway a multi-byte character.\n\
+    \t    if (b_insert)\n\t    {\n\t\toff = (*mb_head_off)(oldp, oldp + offset + spaces);\n\
+    \t\tspaces -= off;\n\t\tcount -= off;\n\t    }\n\t    else\n\t    {\n\t\t// spaces\
+    \ fill the gap, the character that's at the edge moves\n\t\t// right\n\t\toff\
+    \ = (*mb_head_off)(oldp, oldp + offset);\n\t\toffset -= off;\n\t    }\n\t}\n\t\
+    if (spaces < 0)  // can happen when the cursor was moved\n\t    spaces = 0;\n\n\
+    \t// Make sure the allocated size matches what is actually copied below.\n\tnewp\
+    \ = alloc(STRLEN(oldp) + spaces + s_len\n\t\t    + (spaces > 0 && !bdp->is_short\
+    \ ? ts_val - spaces : 0)\n\t\t\t\t\t\t\t\t  + count + 1);\n\tif (newp == NULL)\n\
+    \t    continue;\n\n\t// copy up to shifted part\n\tmch_memmove(newp, oldp, (size_t)offset);\n\
+    \toldp += offset;\n\n\t// insert pre-padding\n\tvim_memset(newp + offset, ' ',\
+    \ (size_t)spaces);\n\tstartcol = offset + spaces;\n\n\t// copy the new text\n\t\
+    mch_memmove(newp + startcol, s, (size_t)s_len);\n\toffset += s_len;\n\n\tif (spaces\
+    \ > 0 && !bdp->is_short)\n\t{\n\t    if (*oldp == TAB)\n\t    {\n\t\t// insert\
+    \ post-padding\n\t\tvim_memset(newp + offset + spaces, ' ',\n\t\t\t\t\t\t    (size_t)(ts_val\
+    \ - spaces));\n\t\t// we're splitting a TAB, don't copy it\n\t\toldp++;\n\t\t\
+    // We allowed for that TAB, remember this now\n\t\tcount++;\n\t    }\n\t    else\n\
+    \t\t// Not a TAB, no extra spaces\n\t\tcount = spaces;\n\t}\n\n\tif (spaces >\
+    \ 0)\n\t    offset += count;\n\tSTRMOVE(newp + offset, oldp);\n\n\tml_replace(lnum,\
+    \ newp, FALSE);\n\n\tif (b_insert)\n\t    // correct any text properties\n\t \
+    \   inserted_bytes(lnum, startcol, s_len);\n\n\tif (lnum == oap->end.lnum)\n\t\
+    {\n\t    // Set \"']\" mark to the end of the block instead of the end of\n\t\
+    \    // the insert in the first line.\n\t    curbuf->b_op_end.lnum = oap->end.lnum;\n\
+    \t    curbuf->b_op_end.col = offset;\n\t}\n    } // for all lnum\n\n    changed_lines(oap->start.lnum\
+    \ + 1, 0, oap->end.lnum + 1, 0L);\n\n    State = oldstate;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nblock_insert(\n    oparg_T\t\t*oap,\n\
+    \    char_u\t\t*s,\n    int\t\t\tb_insert,\n    struct block_def\t*bdp)\n{\n \
+    \   int\t\tts_val;\n    int\t\tcount = 0;\t// extra spaces to replace a cut TAB\n\
+    \    int\t\tspaces = 0;\t// non-zero if cutting a TAB\n    colnr_T\toffset;\t\t\
+    // pointer along new line\n    colnr_T\tstartcol;\t// column where insert starts\n\
+    \    unsigned\ts_len;\t\t// STRLEN(s)\n    char_u\t*newp, *oldp;\t// new, old\
+    \ lines\n    linenr_T\tlnum;\t\t// loop var\n    int\t\toldstate = State;\n\n\
+    \    State = INSERT;\t\t// don't want REPLACE for State\n    s_len = (unsigned)STRLEN(s);\n\
+    \n    for (lnum = oap->start.lnum + 1; lnum <= oap->end.lnum; lnum++)\n    {\n\
+    \tblock_prep(oap, bdp, lnum, TRUE);\n\tif (bdp->is_short && b_insert)\n\t    continue;\t\
+    // OP_INSERT, line ends before block start\n\n\toldp = ml_get(lnum);\n\n\tif (b_insert)\n\
+    \t{\n\t    ts_val = bdp->start_char_vcols;\n\t    spaces = bdp->startspaces;\n\
+    \t    if (spaces != 0)\n\t\tcount = ts_val - 1; // we're cutting a TAB\n\t   \
+    \ offset = bdp->textcol;\n\t}\n\telse // append\n\t{\n\t    ts_val = bdp->end_char_vcols;\n\
+    \t    if (!bdp->is_short) // spaces = padding after block\n\t    {\n\t\tspaces\
+    \ = (bdp->endspaces ? ts_val - bdp->endspaces : 0);\n\t\tif (spaces != 0)\n\t\t\
+    \    count = ts_val - 1; // we're cutting a TAB\n\t\toffset = bdp->textcol + bdp->textlen\
+    \ - (spaces != 0);\n\t    }\n\t    else // spaces = padding to block edge\n\t\
+    \    {\n\t\t// if $ used, just append to EOL (ie spaces==0)\n\t\tif (!bdp->is_MAX)\n\
+    \t\t    spaces = (oap->end_vcol - bdp->end_vcol) + 1;\n\t\tcount = spaces;\n\t\
+    \toffset = bdp->textcol + bdp->textlen;\n\t    }\n\t}\n\n\tif (has_mbyte && spaces\
+    \ > 0)\n\t{\n\t    int off;\n\n\t    // Avoid starting halfway a multi-byte character.\n\
+    \t    if (b_insert)\n\t    {\n\t\toff = (*mb_head_off)(oldp, oldp + offset + spaces);\n\
+    \t\tspaces -= off;\n\t\tcount -= off;\n\t    }\n\t    else\n\t    {\n\t\t// spaces\
+    \ fill the gap, the character that's at the edge moves\n\t\t// right\n\t\toff\
+    \ = (*mb_head_off)(oldp, oldp + offset);\n\t\toffset -= off;\n\t    }\n\t}\n\t\
+    if (spaces < 0)  // can happen when the cursor was moved\n\t    spaces = 0;\n\n\
+    \t// Make sure the allocated size matches what is actually copied below.\n\tnewp\
+    \ = alloc(STRLEN(oldp) + spaces + s_len\n\t\t    + (spaces > 0 && !bdp->is_short\
+    \ ? ts_val - spaces : 0)\n\t\t\t\t\t\t\t\t  + count + 1);\n\tif (newp == NULL)\n\
+    \t    continue;\n\n\t// copy up to shifted part\n\tmch_memmove(newp, oldp, (size_t)offset);\n\
+    \toldp += offset;\n\n\t// insert pre-padding\n\tvim_memset(newp + offset, ' ',\
+    \ (size_t)spaces);\n\tstartcol = offset + spaces;\n\n\t// copy the new text\n\t\
+    mch_memmove(newp + startcol, s, (size_t)s_len);\n\toffset += s_len;\n\n\tif (spaces\
+    \ > 0 && !bdp->is_short)\n\t{\n\t    if (*oldp == TAB)\n\t    {\n\t\t// insert\
+    \ post-padding\n\t\tvim_memset(newp + offset + spaces, ' ',\n\t\t\t\t\t\t    (size_t)(ts_val\
+    \ - spaces));\n\t\t// we're splitting a TAB, don't copy it\n\t\toldp++;\n\t\t\
+    // We allowed for that TAB, remember this now\n\t\tcount++;\n\t    }\n\t    else\n\
+    \t\t// Not a TAB, no extra spaces\n\t\tcount = spaces;\n\t}\n\n\tif (spaces >\
+    \ 0)\n\t    offset += count;\n\tSTRMOVE(newp + offset, oldp);\n\n\tml_replace(lnum,\
+    \ newp, FALSE);\n\n\tif (b_insert)\n\t    // correct any text properties\n\t \
+    \   inserted_bytes(lnum, startcol, s_len);\n\n\tif (lnum == oap->end.lnum)\n\t\
+    {\n\t    // Set \"']\" mark to the end of the block instead of the end of\n\t\
+    \    // the insert in the first line.\n\t    curbuf->b_op_end.lnum = oap->end.lnum;\n\
+    \t    curbuf->b_op_end.col = offset;\n\t}\n    } // for all lnum\n\n    changed_lines(oap->start.lnum\
+    \ + 1, 0, oap->end.lnum + 1, 0L);\n\n    State = oldstate;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nblock_insert(\n    oparg_T\t\
+    \t*oap,\n    char_u\t\t*s,\n    int\t\t\tb_insert,\n    struct block_def\t*bdp)\n\
+    {\n    int\t\tts_val;\n    int\t\tcount = 0;\t// extra spaces to replace a cut\
+    \ TAB\n    int\t\tspaces = 0;\t// non-zero if cutting a TAB\n    colnr_T\toffset;\t\
+    \t// pointer along new line\n    colnr_T\tstartcol;\t// column where insert starts\n\
+    \    unsigned\ts_len;\t\t// STRLEN(s)\n    char_u\t*newp, *oldp;\t// new, old\
+    \ lines\n    linenr_T\tlnum;\t\t// loop var\n    int\t\toldstate = State;\n\n\
+    \    State = INSERT;\t\t// don't want REPLACE for State\n    s_len = (unsigned)STRLEN(s);\n\
+    \n    for (lnum = oap->start.lnum + 1; lnum <= oap->end.lnum; lnum++)\n    {\n\
+    \tblock_prep(oap, bdp, lnum, TRUE);\n\tif (bdp->is_short && b_insert)\n\t    continue;\t\
+    // OP_INSERT, line ends before block start\n\n\toldp = ml_get(lnum);\n\n\tif (b_insert)\n\
+    \t{\n\t    ts_val = bdp->start_char_vcols;\n\t    spaces = bdp->startspaces;\n\
+    \t    if (spaces != 0)\n\t\tcount = ts_val - 1; // we're cutting a TAB\n\t   \
+    \ offset = bdp->textcol;\n\t}\n\telse // append\n\t{\n\t    ts_val = bdp->end_char_vcols;\n\
+    \t    if (!bdp->is_short) // spaces = padding after block\n\t    {\n\t\tspaces\
+    \ = (bdp->endspaces ? ts_val - bdp->endspaces : 0);\n\t\tif (spaces != 0)\n\t\t\
+    \    count = ts_val - 1; // we're cutting a TAB\n\t\toffset = bdp->textcol + bdp->textlen\
+    \ - (spaces != 0);\n\t    }\n\t    else // spaces = padding to block edge\n\t\
+    \    {\n\t\t// if $ used, just append to EOL (ie spaces==0)\n\t\tif (!bdp->is_MAX)\n\
+    \t\t    spaces = (oap->end_vcol - bdp->end_vcol) + 1;\n\t\tcount = spaces;\n\t\
+    \toffset = bdp->textcol + bdp->textlen;\n\t    }\n\t}\n\n\tif (has_mbyte && spaces\
+    \ > 0)\n\t{\n\t    int off;\n\n\t    // Avoid starting halfway a multi-byte character.\n\
+    \t    if (b_insert)\n\t    {\n\t\toff = (*mb_head_off)(oldp, oldp + offset + spaces);\n\
+    \t\tspaces -= off;\n\t\tcount -= off;\n\t    }\n\t    else\n\t    {\n\t\t// spaces\
+    \ fill the gap, the character that's at the edge moves\n\t\t// right\n\t\toff\
+    \ = (*mb_head_off)(oldp, oldp + offset);\n\t\toffset -= off;\n\t    }\n\t}\n\t\
+    if (spaces < 0)  // can happen when the cursor was moved\n\t    spaces = 0;\n\n\
+    \t// Make sure the allocated size matches what is actually copied below.\n\tnewp\
+    \ = alloc(STRLEN(oldp) + spaces + s_len\n\t\t    + (spaces > 0 && !bdp->is_short\
+    \ ? ts_val - spaces : 0)\n\t\t\t\t\t\t\t\t  + count + 1);\n\tif (newp == NULL)\n\
+    \t    continue;\n\n\t// copy up to shifted part\n\tmch_memmove(newp, oldp, (size_t)offset);\n\
+    \toldp += offset;\n\n\t// insert pre-padding\n\tvim_memset(newp + offset, ' ',\
+    \ (size_t)spaces);\n\tstartcol = offset + spaces;\n\n\t// copy the new text\n\t\
+    mch_memmove(newp + startcol, s, (size_t)s_len);\n\toffset += s_len;\n\n\tif (spaces\
+    \ > 0 && !bdp->is_short)\n\t{\n\t    if (*oldp == TAB)\n\t    {\n\t\t// insert\
+    \ post-padding\n\t\tvim_memset(newp + offset + spaces, ' ',\n\t\t\t\t\t\t    (size_t)(ts_val\
+    \ - spaces));\n\t\t// we're splitting a TAB, don't copy it\n\t\toldp++;\n\t\t\
+    // We allowed for that TAB, remember this now\n\t\tcount++;\n\t    }\n\t    else\n\
+    \t\t// Not a TAB, no extra spaces\n\t\tcount = spaces;\n\t}\n\n\tif (spaces >\
+    \ 0)\n\t    offset += count;\n\tSTRMOVE(newp + offset, oldp);\n\n\tml_replace(lnum,\
+    \ newp, FALSE);\n\n\tif (b_insert)\n\t    // correct any text properties\n\t \
+    \   inserted_bytes(lnum, startcol, s_len);\n\n\tif (lnum == oap->end.lnum)\n\t\
+    {\n\t    // Set \"']\" mark to the end of the block instead of the end of\n\t\
+    \    // the insert in the first line.\n\t    curbuf->b_op_end.lnum = oap->end.lnum;\n\
+    \t    curbuf->b_op_end.col = offset;\n\t}\n    } // for all lnum\n\n    changed_lines(oap->start.lnum\
+    \ + 1, 0, oap->end.lnum + 1, 0L);\n\n    State = oldstate;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 202276
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

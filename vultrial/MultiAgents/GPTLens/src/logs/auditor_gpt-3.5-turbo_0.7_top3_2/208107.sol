@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "xfrm_expand_policies",
+        "code": "static int xfrm_expand_policies(const struct flowi *fl, u16 family,\n\t\t\t\tstruct xfrm_policy **pols,\n\t\t\t\tint *num_pols, int *num_xfrms)\n{\n\tint i;\n\tif (*num_pols == 0 || !pols[0]) {\n\t\t*num_pols = 0;\n\t\t*num_xfrms = 0;\n\t\treturn 0;\n\t}\n\tif (IS_ERR(pols[0]))\n\t\treturn PTR_ERR(pols[0]);\n\t*num_xfrms = pols[0]->xfrm_nr;\n#ifdef CONFIG_XFRM_SUB_POLICY\n\tif (pols[0]->action == XFRM_POLICY_ALLOW &&\n\t    pols[0]->type != XFRM_POLICY_TYPE_MAIN) {\n\t\tpols[1] = xfrm_policy_lookup_bytype(xp_net(pols[0]),\n\t\t\t\t\t\t    XFRM_POLICY_TYPE_MAIN,\n\t\t\t\t\t\t    fl, family,\n\t\t\t\t\t\t    XFRM_POLICY_OUT,\n\t\t\t\t\t\t    pols[0]->if_id);\n\t\tif (pols[1]) {\n\t\t\tif (IS_ERR(pols[1])) {\n\t\t\t\txfrm_pols_put(pols, *num_pols);\n\t\t\t\treturn PTR_ERR(pols[1]);\n\t\t\t}\n\t\t\t(*num_pols)++;\n\t\t\t(*num_xfrms) += pols[1]->xfrm_nr;\n\t\t}\n\t}\n#endif\n\tfor (i = 0; i < *num_pols; i++) {\n\t\tif (pols[i]->action != XFRM_POLICY_ALLOW) {\n\t\t\t*num_xfrms = -1;\n\t\t\tbreak;\n\t\t}\n\t}\n\treturn 0;\n}",
+        "vulnerability": "Potential Null Pointer Dereference",
+        "reason": "The code does not perform proper validation checks before accessing the 'pols' array. If 'pols[0]' is NULL, the code will still try to access its fields which can lead to a null pointer dereference vulnerability.",
+        "file_name": "208107.sol"
+    },
+    {
+        "function_name": "xfrm_expand_policies",
+        "code": "static int xfrm_expand_policies(const struct flowi *fl, u16 family,\n\t\t\t\tstruct xfrm_policy **pols,\n\t\t\t\tint *num_pols, int *num_xfrms)\n{\n\tint i;\n\tif (*num_pols == 0 || !pols[0]) {\n\t\t*num_pols = 0;\n\t\t*num_xfrms = 0;\n\t\treturn 0;\n\t}\n\tif (IS_ERR(pols[0]))\n\t\treturn PTR_ERR(pols[0]);\n\t*num_xfrms = pols[0]->xfrm_nr;\n#ifdef CONFIG_XFRM_SUB_POLICY\n\tif (pols[0]->action == XFRM_POLICY_ALLOW &&\n\t    pols[0]->type != XFRM_POLICY_TYPE_MAIN) {\n\t\tpols[1] = xfrm_policy_lookup_bytype(xp_net(pols[0]),\n\t\t\t\t\t\t    XFRM_POLICY_TYPE_MAIN,\n\t\t\t\t\t\t    fl, family,\n\t\t\t\t\t\t    XFRM_POLICY_OUT,\n\t\t\t\t\t\t    pols[0]->if_id);\n\t\tif (pols[1]) {\n\t\t\tif (IS_ERR(pols[1])) {\n\t\t\t\txfrm_pols_put(pols, *num_pols);\n\t\t\t\treturn PTR_ERR(pols[1]);\n\t\t\t}\n\t\t\t(*num_pols)++;\n\t\t\t(*num_xfrms) += pols[1]->xfrm_nr;\n\t\t}\n\t}\n#endif\n\tfor (i = 0; i < *num_pols; i++) {\n\t\tif (pols[i]->action != XFRM_POLICY_ALLOW) {\n\t\t\t*num_xfrms = -1;\n\t\t\tbreak;\n\t\t}\n\t}\n\treturn 0;\n}",
+        "vulnerability": "Potential Integer Overflow",
+        "reason": "The code does not check for integer overflow when incrementing '*num_xfrms' by 'pols[1]->xfrm_nr'. An attacker could provide a large value for 'pols[1]->xfrm_nr' to trigger an overflow leading to unexpected behavior or a potential security risk.",
+        "file_name": "208107.sol"
+    },
+    {
+        "function_name": "xfrm_expand_policies",
+        "code": "static int xfrm_expand_policies(const struct flowi *fl, u16 family,\n\t\t\t\tstruct xfrm_policy **pols,\n\t\t\t\tint *num_pols, int *num_xfrms)\n{\n\tint i;\n\tif (*num_pols == 0 || !pols[0]) {\n\t\t*num_pols = 0;\n\t\t*num_xfrms = 0;\n\t\treturn 0;\n\t}\n\tif (IS_ERR(pols[0]))\n\t\treturn PTR_ERR(pols[0]);\n\t*num_xfrms = pols[0]->xfrm_nr;\n#ifdef CONFIG_XFRM_SUB_POLICY\n\tif (pols[0]->action == XFRM_POLICY_ALLOW &&\n\t    pols[0]->type != XFRM_POLICY_TYPE_MAIN) {\n\t\tpols[1] = xfrm_policy_lookup_bytype(xp_net(pols[0]),\n\t\t\t\t\t\t    XFRM_POLICY_TYPE_MAIN,\n\t\t\t\t\t\t    fl, family,\n\t\t\t\t\t\t    XFRM_POLICY_OUT,\n\t\t\t\t\t\t    pols[0]->if_id);\n\t\tif (pols[1]) {\n\t\t\tif (IS_ERR(pols[1])) {\n\t\t\t\txfrm_pols_put(pols, *num_pols);\n\t\t\t\treturn PTR_ERR(pols[1]);\n\t\t\t}\n\t\t\t(*num_pols)++;\n\t\t\t(*num_xfrms) += pols[1]->xfrm_nr;\n\t\t}\n\t}\n#endif\n\tfor (i = 0; i < *num_pols; i++) {\n\t\tif (pols[i]->action != XFRM_POLICY_ALLOW) {\n\t\t\t*num_xfrms = -1;\n\t\t\tbreak;\n\t\t}\n\t}\n\treturn 0;\n}",
+        "vulnerability": "Improper Handling of Loop Condition",
+        "reason": "The loop condition 'i < *num_pols' is used to iterate through 'pols' array. However, the loop does not have any boundary check or validation which could lead to accessing memory out of bounds and potentially result in a buffer overflow or other memory corruption vulnerabilities.",
+        "file_name": "208107.sol"
+    },
+    {
+        "function_name": "xfrm_expand_policies",
+        "code": "static int xfrm_expand_policies(const struct flowi *fl, u16 family,\n\t\t\t\tstruct xfrm_policy **pols,\n\t\t\t\tint *num_pols, int *num_xfrms)\n{\n\tint i;\n\tif (*num_pols == 0 || !pols[0]) {\n\t\t*num_pols = 0;\n\t\t*num_xfrms = 0;\n\t\treturn 0;\n\t}\n\tif (IS_ERR(pols[0]))\n\t\treturn PTR_ERR(pols[0]);\n\t*num_xfrms = pols[0]->xfrm_nr;\n#ifdef CONFIG_XFRM_SUB_POLICY\n\tif (pols[0]->action == XFRM_POLICY_ALLOW &&\n\t    pols[0]->type != XFRM_POLICY_TYPE_MAIN) {\n\t\tpols[1] = xfrm_policy_lookup_bytype(xp_net(pols[0]),\n\t\t\t\t\t\t    XFRM_POLICY_TYPE_MAIN,\n\t\t\t\t\t\t    fl, family,\n\t\t\t\t\t\t    XFRM_POLICY_OUT,\n\t\t\t\t\t\t    pols[0]->if_id);\n\t\tif (pols[1]) {\n\t\t\tif (IS_ERR(pols[1])) {\n\t\t\t\txfrm_pols_put(pols, *num_pols);\n\t\t\t\treturn PTR_ERR(pols[1]);\n\t\t\t}\n\t\t\t(*num_pols)++;\n\t\t\t(*num_xfrms) += pols[1]->xfrm_nr;\n\t\t}\n\t}\n#endif\n\tfor (i = 0; i < *num_pols; i++) {\n\t\tif (pols[i]->action != XFRM_POLICY_ALLOW) {\n\t\t\t*num_xfrms = -1;\n\t\t\tbreak;\n\t\t}\n\t}\n\treturn 0;\n}",
+        "vulnerability": "Potential Array Index Out of Bounds",
+        "reason": "The code snippet accesses pols[1] without checking if it is a valid memory location. This can lead to a potential array index out of bounds vulnerability, where an attacker can exploit this to access or modify memory outside the bounds of the array.",
+        "file_name": "208107.sol"
+    },
+    {
+        "function_name": "xfrm_expand_policies",
+        "code": "static int xfrm_expand_policies(const struct flowi *fl, u16 family,\n\t\t\t\tstruct xfrm_policy **pols,\n\t\t\t\tint *num_pols, int *num_xfrms)\n{\n\tint i;\n\tif (*num_pols == 0 || !pols[0]) {\n\t\t*num_pols = 0;\n\t\t*num_xfrms = 0;\n\t\treturn 0;\n\t}\n\tif (IS_ERR(pols[0]))\n\t\treturn PTR_ERR(pols[0]);\n\t*num_xfrms = pols[0]->xfrm_nr;\n#ifdef CONFIG_XFRM_SUB_POLICY\n\tif (pols[0]->action == XFRM_POLICY_ALLOW &&\n\t    pols[0]->type != XFRM_POLICY_TYPE_MAIN) {\n\t\tpols[1] = xfrm_policy_lookup_bytype(xp_net(pols[0]),\n\t\t\t\t\t\t    XFRM_POLICY_TYPE_MAIN,\n\t\t\t\t\t\t    fl, family,\n\t\t\t\t\t\t    XFRM_POLICY_OUT,\n\t\t\t\t\t\t    pols[0]->if_id);\n\t\tif (pols[1]) {\n\t\t\tif (IS_ERR(pols[1])) {\n\t\t\t\txfrm_pols_put(pols, *num_pols);\n\t\t\t\treturn PTR_ERR(pols[1]);\n\t\t\t}\n\t\t\t(*num_pols)++;\n\t\t\t(*num_xfrms) += pols[1]->xfrm_nr;\n\t\t}\n\t}\n#endif\n\tfor (i = 0; i < *num_pols; i++) {\n\t\tif (pols[i]->action != XFRM_POLICY_ALLOW) {\n\t\t\t*num_xfrms = -1;\n\t\t\tbreak;\n\t\t}\n\t}\n\treturn 0;\n}",
+        "vulnerability": "Dereference of NULL Pointer",
+        "reason": "The code snippet does not check if pols[0] is a NULL pointer before dereferencing it. This can lead to a dereference of a NULL pointer vulnerability, where an attacker can exploit this to crash the application or potentially execute arbitrary code.",
+        "file_name": "208107.sol"
+    },
+    {
+        "function_name": "xfrm_expand_policies",
+        "code": "static int xfrm_expand_policies(const struct flowi *fl, u16 family,\n\t\t\t\tstruct xfrm_policy **pols,\n\t\t\t\tint *num_pols, int *num_xfrms)\n{\n\tint i;\n\tif (*num_pols == 0 || !pols[0]) {\n\t\t*num_pols = 0;\n\t\t*num_xfrms = 0;\n\t\treturn 0;\n\t}\n\tif (IS_ERR(pols[0]))\n\t\treturn PTR_ERR(pols[0]);\n\t*num_xfrms = pols[0]->xfrm_nr;\n#ifdef CONFIG_XFRM_SUB_POLICY\n\tif (pols[0]->action == XFRM_POLICY_ALLOW &&\n\t    pols[0]->type != XFRM_POLICY_TYPE_MAIN) {\n\t\tpols[1] = xfrm_policy_lookup_bytype(xp_net(pols[0]),\n\t\t\t\t\t\t    XFRM_POLICY_TYPE_MAIN,\n\t\t\t\t\t\t    fl, family,\n\t\t\t\t\t\t    XFRM_POLICY_OUT,\n\t\t\t\t\t\t    pols[0]->if_id);\n\t\tif (pols[1]) {\n\t\t\tif (IS_ERR(pols[1])) {\n\t\t\t\txfrm_pols_put(pols, *num_pols);\n\t\t\t\treturn PTR_ERR(pols[1]);\n\t\t\t}\n\t\t\t(*num_pols)++;\n\t\t\t(*num_xfrms) += pols[1]->xfrm_nr;\n\t\t}\n\t}\n#endif\n\tfor (i = 0; i < *num_pols; i++) {\n\t\tif (pols[i]->action != XFRM_POLICY_ALLOW) {\n\t\t\t*num_xfrms = -1;\n\t\t\tbreak;\n\t\t}\n\t}\n\treturn 0;\n}",
+        "vulnerability": "Insecure Direct Object Reference",
+        "reason": "The code snippet does not properly validate the input before accessing and using it. This can lead to an insecure direct object reference vulnerability, where an attacker can manipulate the input to access unauthorized resources or perform unintended actions.",
+        "file_name": "208107.sol"
+    }
+]

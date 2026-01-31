@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "mrb_ary_shift_m",
+        "code": "mrb_ary_shift_m(mrb_state *mrb, mrb_value self)\n{\n  mrb_int n;\n  if (mrb_get_args(mrb, \"|i\", &n) == 0) {\n    return mrb_ary_shift(mrb, self);\n  }\n  struct RArray *a = mrb_ary_ptr(self);\n  mrb_int len = ARY_LEN(a);\n  mrb_value val;\n  ary_modify_check(mrb, a);\n  if (len == 0 || n == 0) return mrb_ary_new(mrb);\n  if (n < 0) mrb_raise(mrb, E_ARGUMENT_ERROR, \"negative array shift\");\n  if (n > len) n = len;\n  val = mrb_ary_new_from_values(mrb, n, ARY_PTR(a));\n  if (ARY_SHARED_P(a)) {\n  L_SHIFT:\n    a->as.heap.ptr+=n;\n    a->as.heap.len-=n;\n    return val;\n  }\n  if (len > ARY_SHIFT_SHARED_MIN) {\n    ary_make_shared(mrb, a);\n    goto L_SHIFT;\n  }\n  else if (len == n) {\n    ARY_SET_LEN(a, 0);\n  }\n  else {\n    mrb_value *ptr = ARY_PTR(a);\n    mrb_int size = len-n;\n    while (size--) {\n      *ptr = *(ptr+n);\n      ++ptr;\n    }\n    ARY_SET_LEN(a, len-n);\n  }\n  return val;\n}",
+        "vulnerability": "Potential format string vulnerability",
+        "reason": "The use of format string \"|i\" in mrb_get_args function can lead to a format string vulnerability if the input is not properly sanitized. An attacker could potentially exploit this vulnerability to read or write arbitrary memory locations, leading to a potential code execution.",
+        "file_name": "220442.sol"
+    },
+    {
+        "function_name": "mrb_ary_shift_m",
+        "code": "mrb_ary_shift_m(mrb_state *mrb, mrb_value self)\n{\n  mrb_int n;\n  if (mrb_get_args(mrb, \"|i\", &n) == 0) {\n    return mrb_ary_shift(mrb, self);\n  }\n  struct RArray *a = mrb_ary_ptr(self);\n  mrb_int len = ARY_LEN(a);\n  mrb_value val;\n  ary_modify_check(mrb, a);\n  if (len == 0 || n == 0) return mrb_ary_new(mrb);\n  if (n < 0) mrb_raise(mrb, E_ARGUMENT_ERROR, \"negative array shift\");\n  if (n > len) n = len;\n  val = mrb_ary_new_from_values(mrb, n, ARY_PTR(a));\n  if (ARY_SHARED_P(a)) {\n  L_SHIFT:\n    a->as.heap.ptr+=n;\n    a->as.heap.len-=n;\n    return val;\n  }\n  if (len > ARY_SHIFT_SHARED_MIN) {\n    ary_make_shared(mrb, a);\n    goto L_SHIFT;\n  }\n  else if (len == n) {\n    ARY_SET_LEN(a, 0);\n  }\n  else {\n    mrb_value *ptr = ARY_PTR(a);\n    mrb_int size = len-n;\n    while (size--) {\n      *ptr = *(ptr+n);\n      ++ptr;\n    }\n    ARY_SET_LEN(a, len-n);\n  }\n  return val;\n}",
+        "vulnerability": "Unsanitized user input",
+        "reason": "The input 'n' is not properly validated and sanitized before being used in the comparison. An attacker could supply a negative value for 'n', causing the function to raise an exception. This can potentially disrupt the normal execution flow and lead to denial of service or other unexpected behavior.",
+        "file_name": "220442.sol"
+    },
+    {
+        "function_name": "mrb_ary_shift_m",
+        "code": "mrb_ary_shift_m(mrb_state *mrb, mrb_value self)\n{\n  mrb_int n;\n  if (mrb_get_args(mrb, \"|i\", &n) == 0) {\n    return mrb_ary_shift(mrb, self);\n  }\n  struct RArray *a = mrb_ary_ptr(self);\n  mrb_int len = ARY_LEN(a);\n  mrb_value val;\n  ary_modify_check(mrb, a);\n  if (len == 0 || n == 0) return mrb_ary_new(mrb);\n  if (n < 0) mrb_raise(mrb, E_ARGUMENT_ERROR, \"negative array shift\");\n  if (n > len) n = len;\n  val = mrb_ary_new_from_values(mrb, n, ARY_PTR(a));\n  if (ARY_SHARED_P(a)) {\n  L_SHIFT:\n    a->as.heap.ptr+=n;\n    a->as.heap.len-=n;\n    return val;\n  }\n  if (len > ARY_SHIFT_SHARED_MIN) {\n    ary_make_shared(mrb, a);\n    goto L_SHIFT;\n  }\n  else if (len == n) {\n    ARY_SET_LEN(a, 0);\n  }\n  else {\n    mrb_value *ptr = ARY_PTR(a);\n    mrb_int size = len-n;\n    while (size--) {\n      *ptr = *(ptr+n);\n      ++ptr;\n    }\n    ARY_SET_LEN(a, len-n);\n  }\n  return val;\n}",
+        "vulnerability": "Unsanitized user input",
+        "reason": "The inputs 'len' and 'n' are not properly validated and sanitized before being used in the comparison. An attacker could supply a value of 0 for either 'len' or 'n', causing the function to return a new array. This behavior may not be intended and could potentially be exploited by an attacker.",
+        "file_name": "220442.sol"
+    },
+    {
+        "function_name": "mrb_ary_shift_m",
+        "code": "mrb_ary_shift_m(mrb_state *mrb, mrb_value self)\n{\n  mrb_int n;\n  if (mrb_get_args(mrb, \"|i\", &n) == 0) {\n    return mrb_ary_shift(mrb, self);\n  }\n  struct RArray *a = mrb_ary_ptr(self);\n  mrb_int len = ARY_LEN(a);\n  mrb_value val;\n  ary_modify_check(mrb, a);\n  if (len == 0 || n == 0) return mrb_ary_new(mrb);\n  if (n < 0) mrb_raise(mrb, E_ARGUMENT_ERROR, \"negative array shift\");\n  if (n > len) n = len;\n  val = mrb_ary_new_from_values(mrb, n, ARY_PTR(a));\n  if (ARY_SHARED_P(a)) {\n  L_SHIFT:\n    a->as.heap.ptr+=n;\n    a->as.heap.len-=n;\n    return val;\n  }\n  if (len > ARY_SHIFT_SHARED_MIN) {\n    ary_make_shared(mrb, a);\n    goto L_SHIFT;\n  }\n  else if (len == n) {\n    ARY_SET_LEN(a, 0);\n  }\n  else {\n    mrb_value *ptr = ARY_PTR(a);\n    mrb_int size = len-n;\n    while (size--) {\n      *ptr = *(ptr+n);\n      ++ptr;\n    }\n    ARY_SET_LEN(a, len-n);\n  }\n  return val;\n}",
+        "vulnerability": "Potential Integer Overflow",
+        "reason": "The code does not perform proper input validation on the variable 'n', which represents the number of elements to shift in the array. If an attacker provides a large negative value for 'n', it could potentially lead to an integer overflow when calculating 'len-n'. This could result in unexpected behavior or memory corruption, making it exploitable by an attacker.",
+        "file_name": "220442.sol"
+    },
+    {
+        "function_name": "mrb_ary_shift_m",
+        "code": "mrb_ary_shift_m(mrb_state *mrb, mrb_value self)\n{\n  mrb_int n;\n  if (mrb_get_args(mrb, \"|i\", &n) == 0) {\n    return mrb_ary_shift(mrb, self);\n  }\n  struct RArray *a = mrb_ary_ptr(self);\n  mrb_int len = ARY_LEN(a);\n  mrb_value val;\n  ary_modify_check(mrb, a);\n  if (len == 0 || n == 0) return mrb_ary_new(mrb);\n  if (n < 0) mrb_raise(mrb, E_ARGUMENT_ERROR, \"negative array shift\");\n  if (n > len) n = len;\n  val = mrb_ary_new_from_values(mrb, n, ARY_PTR(a));\n  if (ARY_SHARED_P(a)) {\n  L_SHIFT:\n    a->as.heap.ptr+=n;\n    a->as.heap.len-=n;\n    return val;\n  }\n  if (len > ARY_SHIFT_SHARED_MIN) {\n    ary_make_shared(mrb, a);\n    goto L_SHIFT;\n  }\n  else if (len == n) {\n    ARY_SET_LEN(a, 0);\n  }\n  else {\n    mrb_value *ptr = ARY_PTR(a);\n    mrb_int size = len-n;\n    while (size--) {\n      *ptr = *(ptr+n);\n      ++ptr;\n    }\n    ARY_SET_LEN(a, len-n);\n  }\n  return val;\n}",
+        "vulnerability": "Potential Use-After-Free Vulnerability",
+        "reason": "When the array is shared (ARY_SHARED_P(a) evaluates to true), the function directly modifies the pointer and length of the array without proper checks or safeguards. This could lead to a use-after-free vulnerability where the memory previously pointed to by 'a' could be accessed after being freed. An attacker could exploit this vulnerability to manipulate memory contents and potentially execute arbitrary code.",
+        "file_name": "220442.sol"
+    },
+    {
+        "function_name": "mrb_ary_shift_m",
+        "code": "mrb_ary_shift_m(mrb_state *mrb, mrb_value self)\n{\n  mrb_int n;\n  if (mrb_get_args(mrb, \"|i\", &n) == 0) {\n    return mrb_ary_shift(mrb, self);\n  }\n  struct RArray *a = mrb_ary_ptr(self);\n  mrb_int len = ARY_LEN(a);\n  mrb_value val;\n  ary_modify_check(mrb, a);\n  if (len == 0 || n == 0) return mrb_ary_new(mrb);\n  if (n < 0) mrb_raise(mrb, E_ARGUMENT_ERROR, \"negative array shift\");\n  if (n > len) n = len;\n  val = mrb_ary_new_from_values(mrb, n, ARY_PTR(a));\n  if (ARY_SHARED_P(a)) {\n  L_SHIFT:\n    a->as.heap.ptr+=n;\n    a->as.heap.len-=n;\n    return val;\n  }\n  if (len > ARY_SHIFT_SHARED_MIN) {\n    ary_make_shared(mrb, a);\n    goto L_SHIFT;\n  }\n  else if (len == n) {\n    ARY_SET_LEN(a, 0);\n  }\n  else {\n    mrb_value *ptr = ARY_PTR(a);\n    mrb_int size = len-n;\n    while (size--) {\n      *ptr = *(ptr+n);\n      ++ptr;\n    }\n    ARY_SET_LEN(a, len-n);\n  }\n  return val;\n}",
+        "vulnerability": "Potential Memory Corruption",
+        "reason": "If the length of the array 'len' exceeds a certain threshold defined by ARY_SHIFT_SHARED_MIN, the function calls 'ary_make_shared' which can potentially create a shared array. By then jumping to the label 'L_SHIFT', the function continues execution with the assumption that 'a' is now shared. However, if 'ary_make_shared' fails or behaves unexpectedly, it could lead to memory corruption or undefined behavior, allowing an attacker to exploit this vulnerability for malicious purposes.",
+        "file_name": "220442.sol"
+    }
+]

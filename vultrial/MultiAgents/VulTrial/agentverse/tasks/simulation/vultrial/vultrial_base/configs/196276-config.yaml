@@ -1,0 +1,263 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nlsquic_qeh_settings\
+    \ (struct qpack_enc_hdl *qeh, unsigned max_table_size,\n             unsigned\
+    \ dyn_table_size, unsigned max_risked_streams, int server)\n{\n    enum lsqpack_enc_opts\
+    \ enc_opts;\n\n    assert(qeh->qeh_flags & QEH_INITIALIZED);\n\n    if (qeh->qeh_flags\
+    \ & QEH_HAVE_SETTINGS)\n    {\n        LSQ_WARN(\"settings already set\");\n \
+    \       return -1;\n    }\n\n    enc_opts = LSQPACK_ENC_OPT_STAGE_2\n        \
+    \     | (server ? LSQPACK_ENC_OPT_SERVER : 0);\n    qeh->qeh_tsu_sz = sizeof(qeh->qeh_tsu_buf);\n\
+    \    if (0 != lsqpack_enc_init(&qeh->qeh_encoder, (void *) qeh->qeh_conn,\n  \
+    \              max_table_size, dyn_table_size, max_risked_streams, enc_opts,\n\
+    \                qeh->qeh_tsu_buf, &qeh->qeh_tsu_sz))\n    {\n        LSQ_INFO(\"\
+    could not initialize QPACK encoder\");\n        return -1;\n    }\n    LSQ_DEBUG(\"\
+    %zu-byte post-init TSU\", qeh->qeh_tsu_sz);\n    qeh->qeh_flags |= QEH_HAVE_SETTINGS;\n\
+    \    qeh->qeh_max_prefix_size =\n                        lsqpack_enc_header_block_prefix_size(&qeh->qeh_encoder);\n\
+    \    LSQ_DEBUG(\"have settings: max table size=%u; dyn table size=%u; max risked\
+    \ \"\n        \"streams=%u\", max_table_size, dyn_table_size, max_risked_streams);\n\
+    \    if (qeh->qeh_enc_sm_out)\n        qeh_begin_out(qeh);\n    return 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nlsquic_qeh_settings\
+    \ (struct qpack_enc_hdl *qeh, unsigned max_table_size,\n             unsigned\
+    \ dyn_table_size, unsigned max_risked_streams, int server)\n{\n    enum lsqpack_enc_opts\
+    \ enc_opts;\n\n    assert(qeh->qeh_flags & QEH_INITIALIZED);\n\n    if (qeh->qeh_flags\
+    \ & QEH_HAVE_SETTINGS)\n    {\n        LSQ_WARN(\"settings already set\");\n \
+    \       return -1;\n    }\n\n    enc_opts = LSQPACK_ENC_OPT_STAGE_2\n        \
+    \     | (server ? LSQPACK_ENC_OPT_SERVER : 0);\n    qeh->qeh_tsu_sz = sizeof(qeh->qeh_tsu_buf);\n\
+    \    if (0 != lsqpack_enc_init(&qeh->qeh_encoder, (void *) qeh->qeh_conn,\n  \
+    \              max_table_size, dyn_table_size, max_risked_streams, enc_opts,\n\
+    \                qeh->qeh_tsu_buf, &qeh->qeh_tsu_sz))\n    {\n        LSQ_INFO(\"\
+    could not initialize QPACK encoder\");\n        return -1;\n    }\n    LSQ_DEBUG(\"\
+    %zu-byte post-init TSU\", qeh->qeh_tsu_sz);\n    qeh->qeh_flags |= QEH_HAVE_SETTINGS;\n\
+    \    qeh->qeh_max_prefix_size =\n                        lsqpack_enc_header_block_prefix_size(&qeh->qeh_encoder);\n\
+    \    LSQ_DEBUG(\"have settings: max table size=%u; dyn table size=%u; max risked\
+    \ \"\n        \"streams=%u\", max_table_size, dyn_table_size, max_risked_streams);\n\
+    \    if (qeh->qeh_enc_sm_out)\n        qeh_begin_out(qeh);\n    return 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nlsquic_qeh_settings (struct qpack_enc_hdl\
+    \ *qeh, unsigned max_table_size,\n             unsigned dyn_table_size, unsigned\
+    \ max_risked_streams, int server)\n{\n    enum lsqpack_enc_opts enc_opts;\n\n\
+    \    assert(qeh->qeh_flags & QEH_INITIALIZED);\n\n    if (qeh->qeh_flags & QEH_HAVE_SETTINGS)\n\
+    \    {\n        LSQ_WARN(\"settings already set\");\n        return -1;\n    }\n\
+    \n    enc_opts = LSQPACK_ENC_OPT_STAGE_2\n             | (server ? LSQPACK_ENC_OPT_SERVER\
+    \ : 0);\n    qeh->qeh_tsu_sz = sizeof(qeh->qeh_tsu_buf);\n    if (0 != lsqpack_enc_init(&qeh->qeh_encoder,\
+    \ (void *) qeh->qeh_conn,\n                max_table_size, dyn_table_size, max_risked_streams,\
+    \ enc_opts,\n                qeh->qeh_tsu_buf, &qeh->qeh_tsu_sz))\n    {\n   \
+    \     LSQ_INFO(\"could not initialize QPACK encoder\");\n        return -1;\n\
+    \    }\n    LSQ_DEBUG(\"%zu-byte post-init TSU\", qeh->qeh_tsu_sz);\n    qeh->qeh_flags\
+    \ |= QEH_HAVE_SETTINGS;\n    qeh->qeh_max_prefix_size =\n                    \
+    \    lsqpack_enc_header_block_prefix_size(&qeh->qeh_encoder);\n    LSQ_DEBUG(\"\
+    have settings: max table size=%u; dyn table size=%u; max risked \"\n        \"\
+    streams=%u\", max_table_size, dyn_table_size, max_risked_streams);\n    if (qeh->qeh_enc_sm_out)\n\
+    \        qeh_begin_out(qeh);\n    return 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nlsquic_qeh_settings (struct\
+    \ qpack_enc_hdl *qeh, unsigned max_table_size,\n             unsigned dyn_table_size,\
+    \ unsigned max_risked_streams, int server)\n{\n    enum lsqpack_enc_opts enc_opts;\n\
+    \n    assert(qeh->qeh_flags & QEH_INITIALIZED);\n\n    if (qeh->qeh_flags & QEH_HAVE_SETTINGS)\n\
+    \    {\n        LSQ_WARN(\"settings already set\");\n        return -1;\n    }\n\
+    \n    enc_opts = LSQPACK_ENC_OPT_STAGE_2\n             | (server ? LSQPACK_ENC_OPT_SERVER\
+    \ : 0);\n    qeh->qeh_tsu_sz = sizeof(qeh->qeh_tsu_buf);\n    if (0 != lsqpack_enc_init(&qeh->qeh_encoder,\
+    \ (void *) qeh->qeh_conn,\n                max_table_size, dyn_table_size, max_risked_streams,\
+    \ enc_opts,\n                qeh->qeh_tsu_buf, &qeh->qeh_tsu_sz))\n    {\n   \
+    \     LSQ_INFO(\"could not initialize QPACK encoder\");\n        return -1;\n\
+    \    }\n    LSQ_DEBUG(\"%zu-byte post-init TSU\", qeh->qeh_tsu_sz);\n    qeh->qeh_flags\
+    \ |= QEH_HAVE_SETTINGS;\n    qeh->qeh_max_prefix_size =\n                    \
+    \    lsqpack_enc_header_block_prefix_size(&qeh->qeh_encoder);\n    LSQ_DEBUG(\"\
+    have settings: max table size=%u; dyn table size=%u; max risked \"\n        \"\
+    streams=%u\", max_table_size, dyn_table_size, max_risked_streams);\n    if (qeh->qeh_enc_sm_out)\n\
+    \        qeh_begin_out(qeh);\n    return 0;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 196276
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

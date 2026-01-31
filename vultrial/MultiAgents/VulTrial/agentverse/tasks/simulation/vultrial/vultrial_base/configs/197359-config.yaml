@@ -1,0 +1,455 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nStatus\
+    \ AutoParallel::Initialize(const GrapplerItem& item) {\n  num_gpus_ = GetNumAvailableGPUs();\n\
+    \  LOG(INFO) << \"Number of GPUs: \" << num_gpus_;\n  item_ = &item;\n  graph_\
+    \ = item.graph;\n  LOG(INFO) << \"Original graph size: \" << graph_.node_size();\n\
+    \  if (item.fetch.empty()) {\n    return Status(error::INVALID_ARGUMENT, \"No\
+    \ fetch nodes provided.\");\n  }\n\n  if (item.MainVariables().empty()) {\n  \
+    \  return Status(error::INVALID_ARGUMENT, \"No variables provided.\");\n  }\n\n\
+    \  for (const auto& init : item.init_ops) {\n    VLOG(1) << \"Init node: \" <<\
+    \ init;\n  }\n\n  for (const auto& fetch : item.fetch) {\n    VLOG(1) << \"Fetch\
+    \ node: \" << fetch;\n  }\n\n  for (const auto& var : item.MainVariables()) {\n\
+    \    VLOG(2) << \"Variable: \" << var->name();\n  }\n\n  const std::set<string>\
+    \ apply_gradients_ops = {\"ApplyGradientDescent\",\n                         \
+    \                       \"ApplyProximalGradientDescent\",\n                  \
+    \                              \"ApplyAdadelta\",\n                          \
+    \                      \"ApplyAdagrad\",\n                                   \
+    \             \"ApplyProximalAdagrad\",\n                                    \
+    \            \"ApplyAdagradDA\",\n                                           \
+    \     \"ApplyFtrl\",\n                                                \"ApplyMomentum\"\
+    ,\n                                                \"ApplyAdam\",\n          \
+    \                                      \"ApplyRMSProp\",\n                   \
+    \                             \"ApplyCenteredRMSProp\"};\n  for (int i = 0; i\
+    \ < graph_.node_size(); i++) {\n    all_nodes_.insert(\n        std::make_pair(graph_.node(i).name(),\
+    \ graph_.mutable_node(i)));\n    if (apply_gradients_ops.find(graph_.node(i).op())\
+    \ !=\n        apply_gradients_ops.end()) {\n      apply_gradients_nodes_.insert(graph_.node(i).name());\n\
+    \      VLOG(2) << \"Apply gradients node: \" << graph_.node(i).name();\n    }\n\
+    \  }\n\n  auto div_const_node = AddNodeDivConst();\n  all_nodes_.insert(std::make_pair(div_const_node->name(),\
+    \ div_const_node));\n  std::map<string, int> gradient_pos = {{\"ApplyGradientDescent\"\
+    , 2},\n                                        {\"ApplyProximalGradientDescent\"\
+    , 4},\n                                        {\"ApplyAdadelta\", 6},\n     \
+    \                                   {\"ApplyAdagrad\", 3},\n                 \
+    \                       {\"ApplyProximalAdagrad\", 5},\n                     \
+    \                   {\"ApplyAdagradDA\", 3},\n                               \
+    \         {\"ApplyFtrl\", 3},\n                                        {\"ApplyMomentum\"\
+    , 3},\n                                        {\"ApplyAdam\", 9},\n         \
+    \                               {\"ApplyRMSProp\", 7},\n                     \
+    \                   {\"ApplyCenteredRMSProp\", 8}};\n  for (const auto& apply_gradient_node_name\
+    \ : apply_gradients_nodes_) {\n    auto apply_gradients_op = all_nodes_[apply_gradient_node_name]->op();\n\
+    \    auto apply_gradients_node = all_nodes_[apply_gradient_node_name];\n\n   \
+    \ auto div_node = AddNodeDiv(\n        apply_gradient_node_name,\n        apply_gradients_node->input(gradient_pos[apply_gradients_op]),\n\
+    \        div_const_node->name());\n    all_nodes_.insert(std::make_pair(div_node->name(),\
+    \ div_node));\n    *apply_gradients_node->mutable_input(gradient_pos[apply_gradients_op])\
+    \ =\n        div_node->name();\n  }\n  LOG(INFO) << \"Graph size after adding\
+    \ div nodes: \" << all_nodes_.size();\n\n  std::vector<const NodeDef*> train_nodes;\n\
+    \  TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_, item.fetch, &train_nodes));\n\
+    \  LOG(INFO) << \"Number of training nodes: \" << train_nodes.size();\n\n  const\
+    \ NodeDef* dequeue_node;\n  for (const auto& train_node : train_nodes) {\n   \
+    \ if (IsDequeueOp(*train_node)) {\n      dequeue_node = train_node;\n      break;\n\
+    \    }\n  }\n\n  std::vector<const NodeDef*> input_nodes;\n  if (dequeue_node)\
+    \ {\n    LOG(INFO) << \"Dequeue node: \" << dequeue_node->name();\n    TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_,\
+    \ {dequeue_node->name()},\n                                              {}, &input_nodes));\n\
+    \  }\n  LOG(INFO) << \"Number of input nodes: \" << input_nodes.size();\n\n  std::set<string>\
+    \ dont_replicate_nodes;\n  for (const auto& variable : item.MainVariables()) {\n\
+    \    dont_replicate_nodes.insert(variable->name());\n  }\n\n  for (const auto&\
+    \ init : item.init_ops) {\n    dont_replicate_nodes.insert(NodeName(init));\n\
+    \  }\n\n  // Don't replicate all input nodes, except the dequeue node.\n  for\
+    \ (const auto& input_node : input_nodes) {\n    if (input_node->name() != dequeue_node->name())\
+    \ {\n      dont_replicate_nodes.insert(input_node->name());\n    }\n  }\n\n  for\
+    \ (const auto& node : train_nodes) {\n    if (dont_replicate_nodes.find(node->name())\
+    \ == dont_replicate_nodes.end()) {\n      replica_nodes_.insert(node->name());\n\
+    \    }\n  }\n  LOG(INFO) << \"Number of replica nodes: \" << replica_nodes_.size();\n\
+    \n  for (const auto& node : all_nodes_) {\n    if (replica_nodes_.find(node.first)\
+    \ == replica_nodes_.end()) {\n      shared_nodes_.insert(node.first);\n    }\n\
+    \  }\n  LOG(INFO) << \"Number of shared nodes: \" << shared_nodes_.size();\n \
+    \ return Status::OK();\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nStatus AutoParallel::Initialize(const\
+    \ GrapplerItem& item) {\n  num_gpus_ = GetNumAvailableGPUs();\n  LOG(INFO) <<\
+    \ \"Number of GPUs: \" << num_gpus_;\n  item_ = &item;\n  graph_ = item.graph;\n\
+    \  LOG(INFO) << \"Original graph size: \" << graph_.node_size();\n  if (item.fetch.empty())\
+    \ {\n    return Status(error::INVALID_ARGUMENT, \"No fetch nodes provided.\");\n\
+    \  }\n\n  if (item.MainVariables().empty()) {\n    return Status(error::INVALID_ARGUMENT,\
+    \ \"No variables provided.\");\n  }\n\n  for (const auto& init : item.init_ops)\
+    \ {\n    VLOG(1) << \"Init node: \" << init;\n  }\n\n  for (const auto& fetch\
+    \ : item.fetch) {\n    VLOG(1) << \"Fetch node: \" << fetch;\n  }\n\n  for (const\
+    \ auto& var : item.MainVariables()) {\n    VLOG(2) << \"Variable: \" << var->name();\n\
+    \  }\n\n  const std::set<string> apply_gradients_ops = {\"ApplyGradientDescent\"\
+    ,\n                                                \"ApplyProximalGradientDescent\"\
+    ,\n                                                \"ApplyAdadelta\",\n      \
+    \                                          \"ApplyAdagrad\",\n               \
+    \                                 \"ApplyProximalAdagrad\",\n                \
+    \                                \"ApplyAdagradDA\",\n                       \
+    \                         \"ApplyFtrl\",\n                                   \
+    \             \"ApplyMomentum\",\n                                           \
+    \     \"ApplyAdam\",\n                                                \"ApplyRMSProp\"\
+    ,\n                                                \"ApplyCenteredRMSProp\"};\n\
+    \  for (int i = 0; i < graph_.node_size(); i++) {\n    all_nodes_.insert(\n  \
+    \      std::make_pair(graph_.node(i).name(), graph_.mutable_node(i)));\n    if\
+    \ (apply_gradients_ops.find(graph_.node(i).op()) !=\n        apply_gradients_ops.end())\
+    \ {\n      apply_gradients_nodes_.insert(graph_.node(i).name());\n      VLOG(2)\
+    \ << \"Apply gradients node: \" << graph_.node(i).name();\n    }\n  }\n\n  auto\
+    \ div_const_node = AddNodeDivConst();\n  all_nodes_.insert(std::make_pair(div_const_node->name(),\
+    \ div_const_node));\n  std::map<string, int> gradient_pos = {{\"ApplyGradientDescent\"\
+    , 2},\n                                        {\"ApplyProximalGradientDescent\"\
+    , 4},\n                                        {\"ApplyAdadelta\", 6},\n     \
+    \                                   {\"ApplyAdagrad\", 3},\n                 \
+    \                       {\"ApplyProximalAdagrad\", 5},\n                     \
+    \                   {\"ApplyAdagradDA\", 3},\n                               \
+    \         {\"ApplyFtrl\", 3},\n                                        {\"ApplyMomentum\"\
+    , 3},\n                                        {\"ApplyAdam\", 9},\n         \
+    \                               {\"ApplyRMSProp\", 7},\n                     \
+    \                   {\"ApplyCenteredRMSProp\", 8}};\n  for (const auto& apply_gradient_node_name\
+    \ : apply_gradients_nodes_) {\n    auto apply_gradients_op = all_nodes_[apply_gradient_node_name]->op();\n\
+    \    auto apply_gradients_node = all_nodes_[apply_gradient_node_name];\n\n   \
+    \ auto div_node = AddNodeDiv(\n        apply_gradient_node_name,\n        apply_gradients_node->input(gradient_pos[apply_gradients_op]),\n\
+    \        div_const_node->name());\n    all_nodes_.insert(std::make_pair(div_node->name(),\
+    \ div_node));\n    *apply_gradients_node->mutable_input(gradient_pos[apply_gradients_op])\
+    \ =\n        div_node->name();\n  }\n  LOG(INFO) << \"Graph size after adding\
+    \ div nodes: \" << all_nodes_.size();\n\n  std::vector<const NodeDef*> train_nodes;\n\
+    \  TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_, item.fetch, &train_nodes));\n\
+    \  LOG(INFO) << \"Number of training nodes: \" << train_nodes.size();\n\n  const\
+    \ NodeDef* dequeue_node;\n  for (const auto& train_node : train_nodes) {\n   \
+    \ if (IsDequeueOp(*train_node)) {\n      dequeue_node = train_node;\n      break;\n\
+    \    }\n  }\n\n  std::vector<const NodeDef*> input_nodes;\n  if (dequeue_node)\
+    \ {\n    LOG(INFO) << \"Dequeue node: \" << dequeue_node->name();\n    TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_,\
+    \ {dequeue_node->name()},\n                                              {}, &input_nodes));\n\
+    \  }\n  LOG(INFO) << \"Number of input nodes: \" << input_nodes.size();\n\n  std::set<string>\
+    \ dont_replicate_nodes;\n  for (const auto& variable : item.MainVariables()) {\n\
+    \    dont_replicate_nodes.insert(variable->name());\n  }\n\n  for (const auto&\
+    \ init : item.init_ops) {\n    dont_replicate_nodes.insert(NodeName(init));\n\
+    \  }\n\n  // Don't replicate all input nodes, except the dequeue node.\n  for\
+    \ (const auto& input_node : input_nodes) {\n    if (input_node->name() != dequeue_node->name())\
+    \ {\n      dont_replicate_nodes.insert(input_node->name());\n    }\n  }\n\n  for\
+    \ (const auto& node : train_nodes) {\n    if (dont_replicate_nodes.find(node->name())\
+    \ == dont_replicate_nodes.end()) {\n      replica_nodes_.insert(node->name());\n\
+    \    }\n  }\n  LOG(INFO) << \"Number of replica nodes: \" << replica_nodes_.size();\n\
+    \n  for (const auto& node : all_nodes_) {\n    if (replica_nodes_.find(node.first)\
+    \ == replica_nodes_.end()) {\n      shared_nodes_.insert(node.first);\n    }\n\
+    \  }\n  LOG(INFO) << \"Number of shared nodes: \" << shared_nodes_.size();\n \
+    \ return Status::OK();\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nStatus AutoParallel::Initialize(const\
+    \ GrapplerItem& item) {\n  num_gpus_ = GetNumAvailableGPUs();\n  LOG(INFO) <<\
+    \ \"Number of GPUs: \" << num_gpus_;\n  item_ = &item;\n  graph_ = item.graph;\n\
+    \  LOG(INFO) << \"Original graph size: \" << graph_.node_size();\n  if (item.fetch.empty())\
+    \ {\n    return Status(error::INVALID_ARGUMENT, \"No fetch nodes provided.\");\n\
+    \  }\n\n  if (item.MainVariables().empty()) {\n    return Status(error::INVALID_ARGUMENT,\
+    \ \"No variables provided.\");\n  }\n\n  for (const auto& init : item.init_ops)\
+    \ {\n    VLOG(1) << \"Init node: \" << init;\n  }\n\n  for (const auto& fetch\
+    \ : item.fetch) {\n    VLOG(1) << \"Fetch node: \" << fetch;\n  }\n\n  for (const\
+    \ auto& var : item.MainVariables()) {\n    VLOG(2) << \"Variable: \" << var->name();\n\
+    \  }\n\n  const std::set<string> apply_gradients_ops = {\"ApplyGradientDescent\"\
+    ,\n                                                \"ApplyProximalGradientDescent\"\
+    ,\n                                                \"ApplyAdadelta\",\n      \
+    \                                          \"ApplyAdagrad\",\n               \
+    \                                 \"ApplyProximalAdagrad\",\n                \
+    \                                \"ApplyAdagradDA\",\n                       \
+    \                         \"ApplyFtrl\",\n                                   \
+    \             \"ApplyMomentum\",\n                                           \
+    \     \"ApplyAdam\",\n                                                \"ApplyRMSProp\"\
+    ,\n                                                \"ApplyCenteredRMSProp\"};\n\
+    \  for (int i = 0; i < graph_.node_size(); i++) {\n    all_nodes_.insert(\n  \
+    \      std::make_pair(graph_.node(i).name(), graph_.mutable_node(i)));\n    if\
+    \ (apply_gradients_ops.find(graph_.node(i).op()) !=\n        apply_gradients_ops.end())\
+    \ {\n      apply_gradients_nodes_.insert(graph_.node(i).name());\n      VLOG(2)\
+    \ << \"Apply gradients node: \" << graph_.node(i).name();\n    }\n  }\n\n  auto\
+    \ div_const_node = AddNodeDivConst();\n  all_nodes_.insert(std::make_pair(div_const_node->name(),\
+    \ div_const_node));\n  std::map<string, int> gradient_pos = {{\"ApplyGradientDescent\"\
+    , 2},\n                                        {\"ApplyProximalGradientDescent\"\
+    , 4},\n                                        {\"ApplyAdadelta\", 6},\n     \
+    \                                   {\"ApplyAdagrad\", 3},\n                 \
+    \                       {\"ApplyProximalAdagrad\", 5},\n                     \
+    \                   {\"ApplyAdagradDA\", 3},\n                               \
+    \         {\"ApplyFtrl\", 3},\n                                        {\"ApplyMomentum\"\
+    , 3},\n                                        {\"ApplyAdam\", 9},\n         \
+    \                               {\"ApplyRMSProp\", 7},\n                     \
+    \                   {\"ApplyCenteredRMSProp\", 8}};\n  for (const auto& apply_gradient_node_name\
+    \ : apply_gradients_nodes_) {\n    auto apply_gradients_op = all_nodes_[apply_gradient_node_name]->op();\n\
+    \    auto apply_gradients_node = all_nodes_[apply_gradient_node_name];\n\n   \
+    \ auto div_node = AddNodeDiv(\n        apply_gradient_node_name,\n        apply_gradients_node->input(gradient_pos[apply_gradients_op]),\n\
+    \        div_const_node->name());\n    all_nodes_.insert(std::make_pair(div_node->name(),\
+    \ div_node));\n    *apply_gradients_node->mutable_input(gradient_pos[apply_gradients_op])\
+    \ =\n        div_node->name();\n  }\n  LOG(INFO) << \"Graph size after adding\
+    \ div nodes: \" << all_nodes_.size();\n\n  std::vector<const NodeDef*> train_nodes;\n\
+    \  TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_, item.fetch, &train_nodes));\n\
+    \  LOG(INFO) << \"Number of training nodes: \" << train_nodes.size();\n\n  const\
+    \ NodeDef* dequeue_node;\n  for (const auto& train_node : train_nodes) {\n   \
+    \ if (IsDequeueOp(*train_node)) {\n      dequeue_node = train_node;\n      break;\n\
+    \    }\n  }\n\n  std::vector<const NodeDef*> input_nodes;\n  if (dequeue_node)\
+    \ {\n    LOG(INFO) << \"Dequeue node: \" << dequeue_node->name();\n    TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_,\
+    \ {dequeue_node->name()},\n                                              {}, &input_nodes));\n\
+    \  }\n  LOG(INFO) << \"Number of input nodes: \" << input_nodes.size();\n\n  std::set<string>\
+    \ dont_replicate_nodes;\n  for (const auto& variable : item.MainVariables()) {\n\
+    \    dont_replicate_nodes.insert(variable->name());\n  }\n\n  for (const auto&\
+    \ init : item.init_ops) {\n    dont_replicate_nodes.insert(NodeName(init));\n\
+    \  }\n\n  // Don't replicate all input nodes, except the dequeue node.\n  for\
+    \ (const auto& input_node : input_nodes) {\n    if (input_node->name() != dequeue_node->name())\
+    \ {\n      dont_replicate_nodes.insert(input_node->name());\n    }\n  }\n\n  for\
+    \ (const auto& node : train_nodes) {\n    if (dont_replicate_nodes.find(node->name())\
+    \ == dont_replicate_nodes.end()) {\n      replica_nodes_.insert(node->name());\n\
+    \    }\n  }\n  LOG(INFO) << \"Number of replica nodes: \" << replica_nodes_.size();\n\
+    \n  for (const auto& node : all_nodes_) {\n    if (replica_nodes_.find(node.first)\
+    \ == replica_nodes_.end()) {\n      shared_nodes_.insert(node.first);\n    }\n\
+    \  }\n  LOG(INFO) << \"Number of shared nodes: \" << shared_nodes_.size();\n \
+    \ return Status::OK();\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nStatus AutoParallel::Initialize(const\
+    \ GrapplerItem& item) {\n  num_gpus_ = GetNumAvailableGPUs();\n  LOG(INFO) <<\
+    \ \"Number of GPUs: \" << num_gpus_;\n  item_ = &item;\n  graph_ = item.graph;\n\
+    \  LOG(INFO) << \"Original graph size: \" << graph_.node_size();\n  if (item.fetch.empty())\
+    \ {\n    return Status(error::INVALID_ARGUMENT, \"No fetch nodes provided.\");\n\
+    \  }\n\n  if (item.MainVariables().empty()) {\n    return Status(error::INVALID_ARGUMENT,\
+    \ \"No variables provided.\");\n  }\n\n  for (const auto& init : item.init_ops)\
+    \ {\n    VLOG(1) << \"Init node: \" << init;\n  }\n\n  for (const auto& fetch\
+    \ : item.fetch) {\n    VLOG(1) << \"Fetch node: \" << fetch;\n  }\n\n  for (const\
+    \ auto& var : item.MainVariables()) {\n    VLOG(2) << \"Variable: \" << var->name();\n\
+    \  }\n\n  const std::set<string> apply_gradients_ops = {\"ApplyGradientDescent\"\
+    ,\n                                                \"ApplyProximalGradientDescent\"\
+    ,\n                                                \"ApplyAdadelta\",\n      \
+    \                                          \"ApplyAdagrad\",\n               \
+    \                                 \"ApplyProximalAdagrad\",\n                \
+    \                                \"ApplyAdagradDA\",\n                       \
+    \                         \"ApplyFtrl\",\n                                   \
+    \             \"ApplyMomentum\",\n                                           \
+    \     \"ApplyAdam\",\n                                                \"ApplyRMSProp\"\
+    ,\n                                                \"ApplyCenteredRMSProp\"};\n\
+    \  for (int i = 0; i < graph_.node_size(); i++) {\n    all_nodes_.insert(\n  \
+    \      std::make_pair(graph_.node(i).name(), graph_.mutable_node(i)));\n    if\
+    \ (apply_gradients_ops.find(graph_.node(i).op()) !=\n        apply_gradients_ops.end())\
+    \ {\n      apply_gradients_nodes_.insert(graph_.node(i).name());\n      VLOG(2)\
+    \ << \"Apply gradients node: \" << graph_.node(i).name();\n    }\n  }\n\n  auto\
+    \ div_const_node = AddNodeDivConst();\n  all_nodes_.insert(std::make_pair(div_const_node->name(),\
+    \ div_const_node));\n  std::map<string, int> gradient_pos = {{\"ApplyGradientDescent\"\
+    , 2},\n                                        {\"ApplyProximalGradientDescent\"\
+    , 4},\n                                        {\"ApplyAdadelta\", 6},\n     \
+    \                                   {\"ApplyAdagrad\", 3},\n                 \
+    \                       {\"ApplyProximalAdagrad\", 5},\n                     \
+    \                   {\"ApplyAdagradDA\", 3},\n                               \
+    \         {\"ApplyFtrl\", 3},\n                                        {\"ApplyMomentum\"\
+    , 3},\n                                        {\"ApplyAdam\", 9},\n         \
+    \                               {\"ApplyRMSProp\", 7},\n                     \
+    \                   {\"ApplyCenteredRMSProp\", 8}};\n  for (const auto& apply_gradient_node_name\
+    \ : apply_gradients_nodes_) {\n    auto apply_gradients_op = all_nodes_[apply_gradient_node_name]->op();\n\
+    \    auto apply_gradients_node = all_nodes_[apply_gradient_node_name];\n\n   \
+    \ auto div_node = AddNodeDiv(\n        apply_gradient_node_name,\n        apply_gradients_node->input(gradient_pos[apply_gradients_op]),\n\
+    \        div_const_node->name());\n    all_nodes_.insert(std::make_pair(div_node->name(),\
+    \ div_node));\n    *apply_gradients_node->mutable_input(gradient_pos[apply_gradients_op])\
+    \ =\n        div_node->name();\n  }\n  LOG(INFO) << \"Graph size after adding\
+    \ div nodes: \" << all_nodes_.size();\n\n  std::vector<const NodeDef*> train_nodes;\n\
+    \  TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_, item.fetch, &train_nodes));\n\
+    \  LOG(INFO) << \"Number of training nodes: \" << train_nodes.size();\n\n  const\
+    \ NodeDef* dequeue_node;\n  for (const auto& train_node : train_nodes) {\n   \
+    \ if (IsDequeueOp(*train_node)) {\n      dequeue_node = train_node;\n      break;\n\
+    \    }\n  }\n\n  std::vector<const NodeDef*> input_nodes;\n  if (dequeue_node)\
+    \ {\n    LOG(INFO) << \"Dequeue node: \" << dequeue_node->name();\n    TF_RETURN_IF_ERROR(ComputeTransitiveFanin(graph_,\
+    \ {dequeue_node->name()},\n                                              {}, &input_nodes));\n\
+    \  }\n  LOG(INFO) << \"Number of input nodes: \" << input_nodes.size();\n\n  std::set<string>\
+    \ dont_replicate_nodes;\n  for (const auto& variable : item.MainVariables()) {\n\
+    \    dont_replicate_nodes.insert(variable->name());\n  }\n\n  for (const auto&\
+    \ init : item.init_ops) {\n    dont_replicate_nodes.insert(NodeName(init));\n\
+    \  }\n\n  // Don't replicate all input nodes, except the dequeue node.\n  for\
+    \ (const auto& input_node : input_nodes) {\n    if (input_node->name() != dequeue_node->name())\
+    \ {\n      dont_replicate_nodes.insert(input_node->name());\n    }\n  }\n\n  for\
+    \ (const auto& node : train_nodes) {\n    if (dont_replicate_nodes.find(node->name())\
+    \ == dont_replicate_nodes.end()) {\n      replica_nodes_.insert(node->name());\n\
+    \    }\n  }\n  LOG(INFO) << \"Number of replica nodes: \" << replica_nodes_.size();\n\
+    \n  for (const auto& node : all_nodes_) {\n    if (replica_nodes_.find(node.first)\
+    \ == replica_nodes_.end()) {\n      shared_nodes_.insert(node.first);\n    }\n\
+    \  }\n  LOG(INFO) << \"Number of shared nodes: \" << shared_nodes_.size();\n \
+    \ return Status::OK();\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 197359
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

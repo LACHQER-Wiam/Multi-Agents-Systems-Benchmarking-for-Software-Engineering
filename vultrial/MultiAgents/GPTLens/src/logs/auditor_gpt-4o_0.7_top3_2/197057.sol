@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "HttpFileImpl::save",
+        "code": "int HttpFileImpl::save(const std::string &path) const\n{\n    assert(!path.empty());\n    if (fileName_.empty())\n        return -1;\n    filesystem::path fsPath(utils::toNativePath(path));\n    if (!fsPath.is_absolute() &&\n        (!fsPath.has_parent_path() ||\n         (fsPath.begin()->string() != \".\" && fsPath.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsPath = fsUploadPath / fsPath;\n    }\n    filesystem::path fsFileName(utils::toNativePath(fileName_));\n    if (!filesystem::exists(fsPath))\n    {\n        LOG_TRACE << \"create path:\" << fsPath;\n        drogon::error_code err;\n        filesystem::create_directories(fsPath, err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsPath / fsFileName);\n}",
+        "vulnerability": "Directory Traversal",
+        "reason": "The code attempts to sanitize the input path by checking if it is absolute and ensuring it doesn't start with '.' or '..'. However, this check can be bypassed if attackers provide a path with encoded traversal sequences or use symbolic links. This can lead to a directory traversal vulnerability, allowing attackers to potentially write files outside the intended directory, which could be exploited to overwrite or create unauthorized files on the server.",
+        "file_name": "197057.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::save",
+        "code": "int HttpFileImpl::save(const std::string &path) const\n{\n    assert(!path.empty());\n    if (fileName_.empty())\n        return -1;\n    filesystem::path fsPath(utils::toNativePath(path));\n    if (!fsPath.is_absolute() &&\n        (!fsPath.has_parent_path() ||\n         (fsPath.begin()->string() != \".\" && fsPath.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsPath = fsUploadPath / fsPath;\n    }\n    filesystem::path fsFileName(utils::toNativePath(fileName_));\n    if (!filesystem::exists(fsPath))\n    {\n        LOG_TRACE << \"create path:\" << fsPath;\n        drogon::error_code err;\n        filesystem::create_directories(fsPath, err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsPath / fsFileName);\n}",
+        "vulnerability": "Insecure Directory Creation",
+        "reason": "The function creates directories without setting specific permissions. If the default permissions are too permissive, this could lead to unauthorized access or modification by other users on the system. This is particularly risky if the application is running with elevated privileges, as it may allow attackers to manipulate the directory structure or inject malicious files.",
+        "file_name": "197057.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::save",
+        "code": "int HttpFileImpl::save(const std::string &path) const\n{\n    assert(!path.empty());\n    if (fileName_.empty())\n        return -1;\n    filesystem::path fsPath(utils::toNativePath(path));\n    if (!fsPath.is_absolute() &&\n        (!fsPath.has_parent_path() ||\n         (fsPath.begin()->string() != \".\" && fsPath.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsPath = fsUploadPath / fsPath;\n    }\n    filesystem::path fsFileName(utils::toNativePath(fileName_));\n    if (!filesystem::exists(fsPath))\n    {\n        LOG_TRACE << \"create path:\" << fsPath;\n        drogon::error_code err;\n        filesystem::create_directories(fsPath, err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsPath / fsFileName);\n}",
+        "vulnerability": "Insecure File Path Handling",
+        "reason": "The code constructs a file path by concatenating user input (fileName_) with a directory path (fsPath) without sufficient validation. This can lead to potential security risks, such as overwriting critical system files if the application does not properly validate or restrict fileName_. Attackers might exploit this to perform unauthorized file operations, especially if combined with directory traversal techniques.",
+        "file_name": "197057.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::save",
+        "code": "int HttpFileImpl::save(const std::string &path) const\n{\n    assert(!path.empty());\n    if (fileName_.empty())\n        return -1;\n    filesystem::path fsPath(utils::toNativePath(path));\n    if (!fsPath.is_absolute() &&\n        (!fsPath.has_parent_path() ||\n         (fsPath.begin()->string() != \".\" && fsPath.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsPath = fsUploadPath / fsPath;\n    }\n    filesystem::path fsFileName(utils::toNativePath(fileName_));\n    if (!filesystem::exists(fsPath))\n    {\n        LOG_TRACE << \"create path:\" << fsPath;\n        drogon::error_code err;\n        filesystem::create_directories(fsPath, err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsPath / fsFileName);\n}",
+        "vulnerability": "Path Traversal",
+        "reason": "The code attempts to validate the path by checking if it's absolute or begins with '.' or '..'. However, this validation is insufficient to prevent path traversal attacks. An attacker could use complex path manipulations or symbolic links to escape the intended directory, potentially writing files to unauthorized locations.",
+        "file_name": "197057.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::save",
+        "code": "int HttpFileImpl::save(const std::string &path) const\n{\n    assert(!path.empty());\n    if (fileName_.empty())\n        return -1;\n    filesystem::path fsPath(utils::toNativePath(path));\n    if (!fsPath.is_absolute() &&\n        (!fsPath.has_parent_path() ||\n         (fsPath.begin()->string() != \".\" && fsPath.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsPath = fsUploadPath / fsPath;\n    }\n    filesystem::path fsFileName(utils::toNativePath(fileName_));\n    if (!filesystem::exists(fsPath))\n    {\n        LOG_TRACE << \"create path:\" << fsPath;\n        drogon::error_code err;\n        filesystem::create_directories(fsPath, err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsPath / fsFileName);\n}",
+        "vulnerability": "Insecure Directory Creation",
+        "reason": "The function creates directories without setting appropriate permissions or verifying the ownership of the created directories. This can be exploited by attackers to create directories with incorrect permissions, leading to privilege escalation or unauthorized data access.",
+        "file_name": "197057.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::save",
+        "code": "int HttpFileImpl::save(const std::string &path) const\n{\n    assert(!path.empty());\n    if (fileName_.empty())\n        return -1;\n    filesystem::path fsPath(utils::toNativePath(path));\n    if (!fsPath.is_absolute() &&\n        (!fsPath.has_parent_path() ||\n         (fsPath.begin()->string() != \".\" && fsPath.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsPath = fsUploadPath / fsPath;\n    }\n    filesystem::path fsFileName(utils::toNativePath(fileName_));\n    if (!filesystem::exists(fsPath))\n    {\n        LOG_TRACE << \"create path:\" << fsPath;\n        drogon::error_code err;\n        filesystem::create_directories(fsPath, err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsPath / fsFileName);\n}",
+        "vulnerability": "Arbitrary File Overwrite",
+        "reason": "The function concatenates the user-controlled `fileName_` with the directory path and saves the file without verifying if the resulting path is within an allowed directory. This can lead to arbitrary file overwrites if an attacker manipulates `fileName_` to point to sensitive files, potentially resulting in data corruption or execution of malicious files.",
+        "file_name": "197057.sol"
+    }
+]

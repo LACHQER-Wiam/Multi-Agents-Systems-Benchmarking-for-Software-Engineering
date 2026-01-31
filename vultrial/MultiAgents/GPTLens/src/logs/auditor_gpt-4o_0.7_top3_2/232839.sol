@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Memory Leak",
+        "reason": "The pointer 'result' is allocated memory using 'new', but there is no corresponding 'delete' or deallocation logic in this function. If 'CreateResource' fails and the condition does not trigger a program halt, this allocated memory will not be freed, leading to a memory leak. Over time, this can exhaust available memory, especially in a long-running process, making it an exploitable vulnerability.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Invalid Input Handling",
+        "reason": "The check only ensures 'num_streams' is non-negative. However, it doesn't cap or validate the size, which might lead to resource exhaustion if an extremely large integer is provided. An attacker could exploit this by inputting an excessively large value, potentially causing the system to slow down or crash due to resource depletion.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Improper Error Handling",
+        "reason": "The error handling logic here does not properly address the case where 'CreateResource' fails with errors other than 'ALREADY_EXISTS'. By simply halting with 'OP_REQUIRES', the function does not clean up resources or provide a meaningful recovery path. This could be exploited to cause denial-of-service (DoS) attacks as the system may halt unexpectedly without proper resource management.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Memory Leak",
+        "reason": "The code allocates memory for a new QuantileStreamResource object using 'new' but does not ensure that this memory is freed in case of an error or when it's no longer needed. This can lead to a memory leak, especially if Compute is called multiple times or if resource creation fails.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Resource Mismanagement",
+        "reason": "If CreateResource fails with an error other than ALREADY_EXISTS, the code does not clean up the allocated QuantileStreamResource object. This results in the object being orphaned, leading to resource mismanagement and potential memory leaks.",
+        "file_name": "232839.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* epsilon_t;\n    OP_REQUIRES_OK(context, context->input(kEpsilonName, &epsilon_t));\n    float epsilon = epsilon_t->scalar<float>()();\n    OP_REQUIRES(\n        context, epsilon > 0,\n        errors::InvalidArgument(\"An epsilon value of zero is not allowed.\"));\n    const Tensor* num_streams_t;\n    OP_REQUIRES_OK(context, context->input(kNumStreamsName, &num_streams_t));\n    int64_t num_streams = num_streams_t->scalar<int64>()();\n    OP_REQUIRES(context, num_streams >= 0,\n                errors::InvalidArgument(\n                    \"Num_streams input cannot be a negative integer\"));\n    auto result =\n        new QuantileStreamResource(epsilon, max_elements_, num_streams);\n    auto status = CreateResource(context, HandleFromInput(context, 0), result);\n    if (!status.ok() && status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES(context, false, status);\n    }\n  }",
+        "vulnerability": "Integer Overflow",
+        "reason": "The code checks if num_streams is non-negative, but it doesn't check for excessively large values which may cause integer overflow when used elsewhere. This can lead to unexpected behavior or crashes if num_streams is used in calculations or memory allocations without further validation.",
+        "file_name": "232839.sol"
+    }
+]

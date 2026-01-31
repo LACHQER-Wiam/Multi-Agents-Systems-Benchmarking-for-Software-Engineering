@@ -1,0 +1,68 @@
+[
+    {
+        "function_name": "finderrfunc",
+        "vulnerability": "Potential Stack Overflow",
+        "criticism": "The reasoning suggests that the function does not adequately check the boundaries of the stack frames, potentially leading to a stack overflow. However, the function does include checks such as 'frame > bot' and 'cf' to prevent iterating beyond valid memory. The claim of stack overflow is not strongly supported by the code, as it seems to handle frame navigation with some care. The severity and profitability of exploiting such a vulnerability are low, given the checks in place.",
+        "correctness": 3,
+        "severity": 2,
+        "profitability": 2,
+        "reason": "The function does not adequately check the boundaries of the stack frames it is iterating over. If an attacker can manipulate the stack, they could cause the function to iterate beyond the valid memory limit of the stack, leading to a stack overflow. This could potentially be exploited to execute arbitrary code.",
+        "code": "static ptrdiff_t finderrfunc(lua_State *L)\n{\n  cTValue *frame = L->base-1, *bot = tvref(L->stack);\n  void *cf = L->cframe;\n  while (frame > bot && cf) {\n    while (cframe_nres(cframe_raw(cf)) < 0) {  \n      if (frame >= restorestack(L, -cframe_nres(cf)))\n\tbreak;\n      if (cframe_errfunc(cf) >= 0)  \n\treturn cframe_errfunc(cf);\n      cf = cframe_prev(cf);  \n      if (cf == NULL)\n\treturn 0;\n    }\n    switch (frame_typep(frame)) {\n    case FRAME_LUA:\n    case FRAME_LUAP:\n      frame = frame_prevl(frame);\n      break;\n    case FRAME_C:\n      cf = cframe_prev(cf);\n    case FRAME_VARG:\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CONT:\n#if LJ_HASFFI\n      if ((frame-1)->u32.lo == LJ_CONT_FFI_CALLBACK)\n\tcf = cframe_prev(cf);\n#endif\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CP:\n      if (cframe_canyield(cf)) return 0;\n      if (cframe_errfunc(cf) >= 0)\n\treturn cframe_errfunc(cf);\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_PCALL:\n    case FRAME_PCALLH:\n      if (frame_ftsz(frame) >= (ptrdiff_t)(2*sizeof(TValue)))  \n\treturn savestack(L, frame-1);  \n      return 0;\n    default:\n      lua_assert(0);\n      return 0;\n    }\n  }\n  return 0;\n}",
+        "file_name": "198743.sol"
+    },
+    {
+        "function_name": "finderrfunc",
+        "vulnerability": "Null Pointer Dereference",
+        "criticism": "The reasoning points out the possibility of null dereferences, particularly with 'cf'. The code does check for 'cf == NULL' in several places, which mitigates the risk of null pointer dereference. However, the concern about 'cf' becoming NULL and being used later is valid, but the function seems to handle this scenario by returning early. The severity and profitability of this vulnerability are moderate, as it could lead to a denial of service.",
+        "correctness": 6,
+        "severity": 4,
+        "profitability": 3,
+        "reason": "The code does not account for the possibility of null dereferences in certain paths. For instance, if 'cf' becomes NULL, subsequent operations on 'cf' would lead to undefined behavior or crashes. An attacker could exploit this to cause a denial of service by forcing the application to crash.",
+        "code": "static ptrdiff_t finderrfunc(lua_State *L)\n{\n  cTValue *frame = L->base-1, *bot = tvref(L->stack);\n  void *cf = L->cframe;\n  while (frame > bot && cf) {\n    while (cframe_nres(cframe_raw(cf)) < 0) {  \n      if (frame >= restorestack(L, -cframe_nres(cf)))\n\tbreak;\n      if (cframe_errfunc(cf) >= 0)  \n\treturn cframe_errfunc(cf);\n      cf = cframe_prev(cf);  \n      if (cf == NULL)\n\treturn 0;\n    }\n    switch (frame_typep(frame)) {\n    case FRAME_LUA:\n    case FRAME_LUAP:\n      frame = frame_prevl(frame);\n      break;\n    case FRAME_C:\n      cf = cframe_prev(cf);\n    case FRAME_VARG:\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CONT:\n#if LJ_HASFFI\n      if ((frame-1)->u32.lo == LJ_CONT_FFI_CALLBACK)\n\tcf = cframe_prev(cf);\n#endif\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CP:\n      if (cframe_canyield(cf)) return 0;\n      if (cframe_errfunc(cf) >= 0)\n\treturn cframe_errfunc(cf);\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_PCALL:\n    case FRAME_PCALLH:\n      if (frame_ftsz(frame) >= (ptrdiff_t)(2*sizeof(TValue)))  \n\treturn savestack(L, frame-1);  \n      return 0;\n    default:\n      lua_assert(0);\n      return 0;\n    }\n  }\n  return 0;\n}",
+        "file_name": "198743.sol"
+    },
+    {
+        "function_name": "finderrfunc",
+        "vulnerability": "Improper Error Handling",
+        "criticism": "The reasoning suggests that the function may return incorrect error functions, potentially leading to bypassing error checks. The function does seem to have logic to handle different frame types and return appropriate error functions. However, the complexity of the stack frame navigation could lead to edge cases where error handling is not optimal. The severity and profitability are moderate, as incorrect error handling could lead to unexpected behavior.",
+        "correctness": 5,
+        "severity": 5,
+        "profitability": 4,
+        "reason": "The function's error handling is insufficient as it may return incorrect error functions under certain conditions, especially in complex or nested stack frames. This can be exploited to bypass error checks or manipulate error handling logic, potentially leading to further security issues.",
+        "code": "static ptrdiff_t finderrfunc(lua_State *L)\n{\n  cTValue *frame = L->base-1, *bot = tvref(L->stack);\n  void *cf = L->cframe;\n  while (frame > bot && cf) {\n    while (cframe_nres(cframe_raw(cf)) < 0) {  \n      if (frame >= restorestack(L, -cframe_nres(cf)))\n\tbreak;\n      if (cframe_errfunc(cf) >= 0)  \n\treturn cframe_errfunc(cf);\n      cf = cframe_prev(cf);  \n      if (cf == NULL)\n\treturn 0;\n    }\n    switch (frame_typep(frame)) {\n    case FRAME_LUA:\n    case FRAME_LUAP:\n      frame = frame_prevl(frame);\n      break;\n    case FRAME_C:\n      cf = cframe_prev(cf);\n    case FRAME_VARG:\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CONT:\n#if LJ_HASFFI\n      if ((frame-1)->u32.lo == LJ_CONT_FFI_CALLBACK)\n\tcf = cframe_prev(cf);\n#endif\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CP:\n      if (cframe_canyield(cf)) return 0;\n      if (cframe_errfunc(cf) >= 0)\n\treturn cframe_errfunc(cf);\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_PCALL:\n    case FRAME_PCALLH:\n      if (frame_ftsz(frame) >= (ptrdiff_t)(2*sizeof(TValue)))  \n\treturn savestack(L, frame-1);  \n      return 0;\n    default:\n      lua_assert(0);\n      return 0;\n    }\n  }\n  return 0;\n}",
+        "file_name": "198743.sol"
+    },
+    {
+        "function_name": "finderrfunc",
+        "vulnerability": "Potential stack overflow",
+        "criticism": "This reasoning is similar to the first vulnerability, suggesting a lack of bounds checking on 'frame'. The function does have checks in place to prevent iterating beyond valid memory, such as 'frame > bot'. The claim of stack overflow is not strongly supported by the code, as it seems to handle frame navigation with some care. The severity and profitability of exploiting such a vulnerability are low.",
+        "correctness": 3,
+        "severity": 2,
+        "profitability": 2,
+        "reason": "The code navigates through stack frames without any explicit bounds checking on 'frame'. If the stack is malformed or corrupted, it could lead to accessing invalid memory, causing a stack overflow. This lack of bounds checking could be exploited by an attacker to execute arbitrary code or crash the application.",
+        "code": "static ptrdiff_t finderrfunc(lua_State *L)\n{\n  cTValue *frame = L->base-1, *bot = tvref(L->stack);\n  void *cf = L->cframe;\n  while (frame > bot && cf) {\n    while (cframe_nres(cframe_raw(cf)) < 0) {  \n      if (frame >= restorestack(L, -cframe_nres(cf)))\n\tbreak;\n      if (cframe_errfunc(cf) >= 0)  \n\treturn cframe_errfunc(cf);\n      cf = cframe_prev(cf);  \n      if (cf == NULL)\n\treturn 0;\n    }\n    switch (frame_typep(frame)) {\n    case FRAME_LUA:\n    case FRAME_LUAP:\n      frame = frame_prevl(frame);\n      break;\n    case FRAME_C:\n      cf = cframe_prev(cf);\n    case FRAME_VARG:\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CONT:\n#if LJ_HASFFI\n      if ((frame-1)->u32.lo == LJ_CONT_FFI_CALLBACK)\n\tcf = cframe_prev(cf);\n#endif\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CP:\n      if (cframe_canyield(cf)) return 0;\n      if (cframe_errfunc(cf) >= 0)\n\treturn cframe_errfunc(cf);\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_PCALL:\n    case FRAME_PCALLH:\n      if (frame_ftsz(frame) >= (ptrdiff_t)(2*sizeof(TValue)))  \n\treturn savestack(L, frame-1);  \n      return 0;\n    default:\n      lua_assert(0);\n      return 0;\n    }\n  }\n  return 0;\n}",
+        "file_name": "198743.sol"
+    },
+    {
+        "function_name": "finderrfunc",
+        "vulnerability": "Null pointer dereference",
+        "criticism": "The reasoning suggests that pointers like 'frame' and 'cf' could be null, leading to crashes. The function does check for 'cf == NULL' in several places, which mitigates the risk of null pointer dereference. However, the concern about 'frame' being invalid is less addressed, though the loop condition 'frame > bot' provides some protection. The severity and profitability are moderate, as it could lead to a denial of service.",
+        "correctness": 6,
+        "severity": 4,
+        "profitability": 3,
+        "reason": "The function assumes that pointers such as 'frame' and 'cf' are always valid when dereferenced. An attacker could exploit this by manipulating the stack or the 'lua_State' structure to create a scenario where these pointers are null or invalid, leading to a crash or undefined behavior.",
+        "code": "static ptrdiff_t finderrfunc(lua_State *L)\n{\n  cTValue *frame = L->base-1, *bot = tvref(L->stack);\n  void *cf = L->cframe;\n  while (frame > bot && cf) {\n    while (cframe_nres(cframe_raw(cf)) < 0) {  \n      if (frame >= restorestack(L, -cframe_nres(cf)))\n\tbreak;\n      if (cframe_errfunc(cf) >= 0)  \n\treturn cframe_errfunc(cf);\n      cf = cframe_prev(cf);  \n      if (cf == NULL)\n\treturn 0;\n    }\n    switch (frame_typep(frame)) {\n    case FRAME_LUA:\n    case FRAME_LUAP:\n      frame = frame_prevl(frame);\n      break;\n    case FRAME_C:\n      cf = cframe_prev(cf);\n    case FRAME_VARG:\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CONT:\n#if LJ_HASFFI\n      if ((frame-1)->u32.lo == LJ_CONT_FFI_CALLBACK)\n\tcf = cframe_prev(cf);\n#endif\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CP:\n      if (cframe_canyield(cf)) return 0;\n      if (cframe_errfunc(cf) >= 0)\n\treturn cframe_errfunc(cf);\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_PCALL:\n    case FRAME_PCALLH:\n      if (frame_ftsz(frame) >= (ptrdiff_t)(2*sizeof(TValue)))  \n\treturn savestack(L, frame-1);  \n      return 0;\n    default:\n      lua_assert(0);\n      return 0;\n    }\n  }\n  return 0;\n}",
+        "file_name": "198743.sol"
+    },
+    {
+        "function_name": "finderrfunc",
+        "vulnerability": "Improper error function handling",
+        "criticism": "The reasoning suggests that the function retrieves error functions without validating their integrity. The function does have logic to handle different frame types and return appropriate error functions, but it does not explicitly validate the integrity of these functions. The severity and profitability are moderate, as improper handling could lead to unexpected behavior.",
+        "correctness": 5,
+        "severity": 5,
+        "profitability": 4,
+        "reason": "The function retrieves error functions without validating their integrity or ensuring that they are within expected bounds. If an attacker can manipulate the stack frame or the error function values, they might redirect execution flow or cause the application to behave unexpectedly.",
+        "code": "static ptrdiff_t finderrfunc(lua_State *L)\n{\n  cTValue *frame = L->base-1, *bot = tvref(L->stack);\n  void *cf = L->cframe;\n  while (frame > bot && cf) {\n    while (cframe_nres(cframe_raw(cf)) < 0) {  \n      if (frame >= restorestack(L, -cframe_nres(cf)))\n\tbreak;\n      if (cframe_errfunc(cf) >= 0)  \n\treturn cframe_errfunc(cf);\n      cf = cframe_prev(cf);  \n      if (cf == NULL)\n\treturn 0;\n    }\n    switch (frame_typep(frame)) {\n    case FRAME_LUA:\n    case FRAME_LUAP:\n      frame = frame_prevl(frame);\n      break;\n    case FRAME_C:\n      cf = cframe_prev(cf);\n    case FRAME_VARG:\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CONT:\n#if LJ_HASFFI\n      if ((frame-1)->u32.lo == LJ_CONT_FFI_CALLBACK)\n\tcf = cframe_prev(cf);\n#endif\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_CP:\n      if (cframe_canyield(cf)) return 0;\n      if (cframe_errfunc(cf) >= 0)\n\treturn cframe_errfunc(cf);\n      frame = frame_prevd(frame);\n      break;\n    case FRAME_PCALL:\n    case FRAME_PCALLH:\n      if (frame_ftsz(frame) >= (ptrdiff_t)(2*sizeof(TValue)))  \n\treturn savestack(L, frame-1);  \n      return 0;\n    default:\n      lua_assert(0);\n      return 0;\n    }\n  }\n  return 0;\n}",
+        "file_name": "198743.sol"
+    }
+]

@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Improper Input Validation",
+        "reason": "The InitFromSerialized function is called with input directly deserialized from the tensor without adequate validation or sanitization of its contents. If an attacker can control or influence the 'tree_ensemble_serialized' input, they might craft a serialized input that causes unexpected behavior, potentially leading to crashes or execution of malicious code.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Use of Released Resource",
+        "reason": "The result object is released using result.release() and passed to CreateResource. If there's an error after this point or the function returns early, there's a risk that the released resource could be accessed or modified, leading to undefined behavior or potential memory corruption.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Potential Integer Overflow",
+        "reason": "The stamp_token is retrieved and directly cast to int64_t from the tensor. If the input value exceeds the maximum or minimum value for int64_t, it could cause an integer overflow, potentially leading to incorrect logic flow or allocation sizes that could be exploited for buffer overflows.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Integer Overflow",
+        "reason": "The variable 'stamp_token' is extracted directly from the input tensor without validation. If the input can be controlled by an attacker, an excessively large value might cause an integer overflow when used in subsequent operations, leading to undefined behavior or exploitation.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Improper Input Validation",
+        "reason": "The serialized input 'tree_ensemble_serialized_t' is directly passed to 'InitFromSerialized' without thorough validation or sanitation. This could lead to deserialization attacks if the input is crafted by an attacker, potentially compromising program logic or allowing code execution.",
+        "file_name": "198523.sol"
+    },
+    {
+        "function_name": "Compute",
+        "code": "void Compute(OpKernelContext* context) override {\n    const Tensor* stamp_token_t;\n    OP_REQUIRES_OK(context, context->input(\"stamp_token\", &stamp_token_t));\n    int64_t stamp_token = stamp_token_t->scalar<int64>()();\n    const Tensor* tree_ensemble_serialized_t;\n    OP_REQUIRES_OK(context, context->input(\"tree_ensemble_serialized\",\n                                           &tree_ensemble_serialized_t));\n    std::unique_ptr<BoostedTreesEnsembleResource> result(\n        new BoostedTreesEnsembleResource());\n    if (!result->InitFromSerialized(\n            tree_ensemble_serialized_t->scalar<tstring>()(), stamp_token)) {\n      result->Unref();\n      OP_REQUIRES(\n          context, false,\n          errors::InvalidArgument(\"Unable to parse tree ensemble proto.\"));\n    }\n    auto status =\n        CreateResource(context, HandleFromInput(context, 0), result.release());\n    if (status.code() != tensorflow::error::ALREADY_EXISTS) {\n      OP_REQUIRES_OK(context, status);\n    }\n  }",
+        "vulnerability": "Use of Released Resource",
+        "reason": "The code releases ownership of the 'result' object using 'result.release()' before checking the status of 'CreateResource'. If 'CreateResource' fails and the resource is already released, the program might attempt to access or manage an invalid resource, leading to a use-after-free vulnerability.",
+        "file_name": "198523.sol"
+    }
+]

@@ -1,0 +1,515 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ int get_recurse_data_length(compiler_common *common, PCRE2_SPTR cc, PCRE2_SPTR\
+    \ ccend,\n  BOOL *needs_control_head, BOOL *has_quit, BOOL *has_accept)\n{\nint\
+    \ length = 1;\nint size, offset;\nPCRE2_SPTR alternative;\nBOOL quit_found = FALSE;\n\
+    BOOL accept_found = FALSE;\nBOOL setsom_found = FALSE;\nBOOL setmark_found = FALSE;\n\
+    BOOL control_head_found = FALSE;\n\nmemset(common->recurse_bitset, 0, common->recurse_bitset_size);\n\
+    \n#if defined DEBUG_FORCE_CONTROL_HEAD && DEBUG_FORCE_CONTROL_HEAD\nSLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\ncontrol_head_found = TRUE;\n#endif\n\n/* Calculate the sum of the private\
+    \ machine words. */\nwhile (cc < ccend)\n  {\n  size = 0;\n  switch(*cc)\n   \
+    \ {\n    case OP_SET_SOM:\n    SLJIT_ASSERT(common->has_set_som);\n    setsom_found\
+    \ = TRUE;\n    cc += 1;\n    break;\n\n    case OP_RECURSE:\n    if (common->has_set_som)\n\
+    \      setsom_found = TRUE;\n    if (common->mark_ptr != 0)\n      setmark_found\
+    \ = TRUE;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\
+    \n    case OP_KET:\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0)\n   \
+    \   {\n      if (recurse_check_bit(common, offset))\n        length++;\n     \
+    \ SLJIT_ASSERT(PRIVATE_DATA(cc + 1) != 0);\n      cc += PRIVATE_DATA(cc + 1);\n\
+    \      }\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_ASSERT:\n    case\
+    \ OP_ASSERT_NOT:\n    case OP_ASSERTBACK:\n    case OP_ASSERTBACK_NOT:\n    case\
+    \ OP_ASSERT_NA:\n    case OP_ASSERTBACK_NA:\n    case OP_ONCE:\n    case OP_SCRIPT_RUN:\n\
+    \    case OP_BRAPOS:\n    case OP_SBRA:\n    case OP_SBRAPOS:\n    case OP_SCOND:\n\
+    \    SLJIT_ASSERT(PRIVATE_DATA(cc) != 0);\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_CBRA:\n\
+    \    case OP_SCBRA:\n    offset = GET2(cc, 1 + LINK_SIZE);\n    if (recurse_check_bit(common,\
+    \ OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (common->optimized_cbracket[offset]\
+    \ == 0 && recurse_check_bit(common, OVECTOR_PRIV(offset)))\n      length++;\n\
+    \    if (common->capture_last_ptr != 0 && recurse_check_bit(common, common->capture_last_ptr))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CBRAPOS:\n    case OP_SCBRAPOS:\n    offset = GET2(cc, 1 + LINK_SIZE);\n\
+    \    if (recurse_check_bit(common, OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (recurse_check_bit(common,\
+    \ OVECTOR_PRIV(offset)))\n      length++;\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n\
+    \    break;\n\n    case OP_COND:\n    /* Might be a hidden SCOND. */\n    alternative\
+    \ = cc + GET(cc, 1);\n    if ((*alternative == OP_KETRMAX || *alternative == OP_KETRMIN)\
+    \ && recurse_check_bit(common, PRIVATE_DATA(cc)))\n      length++;\n    cc +=\
+    \ 1 + LINK_SIZE;\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_1\n    offset =\
+    \ PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      length++;\n    cc += 2;\n#ifdef SUPPORT_UNICODE\n    if (common->utf &&\
+    \ HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n#endif\n    break;\n\n  \
+    \  CASE_ITERATOR_PRIVATE_DATA_2A\n    offset = PRIVATE_DATA(cc);\n    if (offset\
+    \ != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2;\n#ifdef\
+    \ SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_2B\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2 + IMM2_SIZE;\n\
+    #ifdef SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_1\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      length++;\n\
+    \    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2A\n    offset\
+    \ = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2B\n\
+    \    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1 + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CLASS:\n    case OP_NCLASS:\n#if defined SUPPORT_UNICODE || PCRE2_CODE_UNIT_WIDTH\
+    \ != 8\n    case OP_XCLASS:\n    size = (*cc == OP_XCLASS) ? GET(cc, 1) : 1 +\
+    \ 32 / (int)sizeof(PCRE2_UCHAR);\n#else\n    size = 1 + 32 / (int)sizeof(PCRE2_UCHAR);\n\
+    #endif\n\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      length += get_class_iterator_size(cc + size);\n    cc += size;\n\
+    \    break;\n\n    case OP_MARK:\n    case OP_COMMIT_ARG:\n    case OP_PRUNE_ARG:\n\
+    \    case OP_THEN_ARG:\n    SLJIT_ASSERT(common->mark_ptr != 0);\n    if (!setmark_found)\n\
+    \      setmark_found = TRUE;\n    if (common->control_head_ptr != 0)\n      control_head_found\
+    \ = TRUE;\n    if (*cc != OP_MARK)\n      quit_found = TRUE;\n\n    cc += 1 +\
+    \ 2 + cc[1];\n    break;\n\n    case OP_PRUNE:\n    case OP_SKIP:\n    case OP_COMMIT:\n\
+    \    quit_found = TRUE;\n    cc++;\n    break;\n\n    case OP_SKIP_ARG:\n    quit_found\
+    \ = TRUE;\n    cc += 1 + 2 + cc[1];\n    break;\n\n    case OP_THEN:\n    SLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\n    quit_found = TRUE;\n    control_head_found = TRUE;\n    cc++;\n\
+    \    break;\n\n    case OP_ACCEPT:\n    case OP_ASSERT_ACCEPT:\n    accept_found\
+    \ = TRUE;\n    cc++;\n    break;\n\n    default:\n    cc = next_opcode(common,\
+    \ cc);\n    SLJIT_ASSERT(cc != NULL);\n    break;\n    }\n  }\nSLJIT_ASSERT(cc\
+    \ == ccend);\n\nif (control_head_found)\n  length++;\nif (quit_found)\n  {\n \
+    \ if (setsom_found)\n    length++;\n  if (setmark_found)\n    length++;\n  }\n\
+    \n*needs_control_head = control_head_found;\n*has_quit = quit_found;\n*has_accept\
+    \ = accept_found;\nreturn length;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic int get_recurse_data_length(compiler_common\
+    \ *common, PCRE2_SPTR cc, PCRE2_SPTR ccend,\n  BOOL *needs_control_head, BOOL\
+    \ *has_quit, BOOL *has_accept)\n{\nint length = 1;\nint size, offset;\nPCRE2_SPTR\
+    \ alternative;\nBOOL quit_found = FALSE;\nBOOL accept_found = FALSE;\nBOOL setsom_found\
+    \ = FALSE;\nBOOL setmark_found = FALSE;\nBOOL control_head_found = FALSE;\n\n\
+    memset(common->recurse_bitset, 0, common->recurse_bitset_size);\n\n#if defined\
+    \ DEBUG_FORCE_CONTROL_HEAD && DEBUG_FORCE_CONTROL_HEAD\nSLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\ncontrol_head_found = TRUE;\n#endif\n\n/* Calculate the sum of the private\
+    \ machine words. */\nwhile (cc < ccend)\n  {\n  size = 0;\n  switch(*cc)\n   \
+    \ {\n    case OP_SET_SOM:\n    SLJIT_ASSERT(common->has_set_som);\n    setsom_found\
+    \ = TRUE;\n    cc += 1;\n    break;\n\n    case OP_RECURSE:\n    if (common->has_set_som)\n\
+    \      setsom_found = TRUE;\n    if (common->mark_ptr != 0)\n      setmark_found\
+    \ = TRUE;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\
+    \n    case OP_KET:\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0)\n   \
+    \   {\n      if (recurse_check_bit(common, offset))\n        length++;\n     \
+    \ SLJIT_ASSERT(PRIVATE_DATA(cc + 1) != 0);\n      cc += PRIVATE_DATA(cc + 1);\n\
+    \      }\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_ASSERT:\n    case\
+    \ OP_ASSERT_NOT:\n    case OP_ASSERTBACK:\n    case OP_ASSERTBACK_NOT:\n    case\
+    \ OP_ASSERT_NA:\n    case OP_ASSERTBACK_NA:\n    case OP_ONCE:\n    case OP_SCRIPT_RUN:\n\
+    \    case OP_BRAPOS:\n    case OP_SBRA:\n    case OP_SBRAPOS:\n    case OP_SCOND:\n\
+    \    SLJIT_ASSERT(PRIVATE_DATA(cc) != 0);\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_CBRA:\n\
+    \    case OP_SCBRA:\n    offset = GET2(cc, 1 + LINK_SIZE);\n    if (recurse_check_bit(common,\
+    \ OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (common->optimized_cbracket[offset]\
+    \ == 0 && recurse_check_bit(common, OVECTOR_PRIV(offset)))\n      length++;\n\
+    \    if (common->capture_last_ptr != 0 && recurse_check_bit(common, common->capture_last_ptr))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CBRAPOS:\n    case OP_SCBRAPOS:\n    offset = GET2(cc, 1 + LINK_SIZE);\n\
+    \    if (recurse_check_bit(common, OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (recurse_check_bit(common,\
+    \ OVECTOR_PRIV(offset)))\n      length++;\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n\
+    \    break;\n\n    case OP_COND:\n    /* Might be a hidden SCOND. */\n    alternative\
+    \ = cc + GET(cc, 1);\n    if ((*alternative == OP_KETRMAX || *alternative == OP_KETRMIN)\
+    \ && recurse_check_bit(common, PRIVATE_DATA(cc)))\n      length++;\n    cc +=\
+    \ 1 + LINK_SIZE;\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_1\n    offset =\
+    \ PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      length++;\n    cc += 2;\n#ifdef SUPPORT_UNICODE\n    if (common->utf &&\
+    \ HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n#endif\n    break;\n\n  \
+    \  CASE_ITERATOR_PRIVATE_DATA_2A\n    offset = PRIVATE_DATA(cc);\n    if (offset\
+    \ != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2;\n#ifdef\
+    \ SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_2B\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2 + IMM2_SIZE;\n\
+    #ifdef SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_1\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      length++;\n\
+    \    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2A\n    offset\
+    \ = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2B\n\
+    \    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1 + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CLASS:\n    case OP_NCLASS:\n#if defined SUPPORT_UNICODE || PCRE2_CODE_UNIT_WIDTH\
+    \ != 8\n    case OP_XCLASS:\n    size = (*cc == OP_XCLASS) ? GET(cc, 1) : 1 +\
+    \ 32 / (int)sizeof(PCRE2_UCHAR);\n#else\n    size = 1 + 32 / (int)sizeof(PCRE2_UCHAR);\n\
+    #endif\n\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      length += get_class_iterator_size(cc + size);\n    cc += size;\n\
+    \    break;\n\n    case OP_MARK:\n    case OP_COMMIT_ARG:\n    case OP_PRUNE_ARG:\n\
+    \    case OP_THEN_ARG:\n    SLJIT_ASSERT(common->mark_ptr != 0);\n    if (!setmark_found)\n\
+    \      setmark_found = TRUE;\n    if (common->control_head_ptr != 0)\n      control_head_found\
+    \ = TRUE;\n    if (*cc != OP_MARK)\n      quit_found = TRUE;\n\n    cc += 1 +\
+    \ 2 + cc[1];\n    break;\n\n    case OP_PRUNE:\n    case OP_SKIP:\n    case OP_COMMIT:\n\
+    \    quit_found = TRUE;\n    cc++;\n    break;\n\n    case OP_SKIP_ARG:\n    quit_found\
+    \ = TRUE;\n    cc += 1 + 2 + cc[1];\n    break;\n\n    case OP_THEN:\n    SLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\n    quit_found = TRUE;\n    control_head_found = TRUE;\n    cc++;\n\
+    \    break;\n\n    case OP_ACCEPT:\n    case OP_ASSERT_ACCEPT:\n    accept_found\
+    \ = TRUE;\n    cc++;\n    break;\n\n    default:\n    cc = next_opcode(common,\
+    \ cc);\n    SLJIT_ASSERT(cc != NULL);\n    break;\n    }\n  }\nSLJIT_ASSERT(cc\
+    \ == ccend);\n\nif (control_head_found)\n  length++;\nif (quit_found)\n  {\n \
+    \ if (setsom_found)\n    length++;\n  if (setmark_found)\n    length++;\n  }\n\
+    \n*needs_control_head = control_head_found;\n*has_quit = quit_found;\n*has_accept\
+    \ = accept_found;\nreturn length;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic int get_recurse_data_length(compiler_common\
+    \ *common, PCRE2_SPTR cc, PCRE2_SPTR ccend,\n  BOOL *needs_control_head, BOOL\
+    \ *has_quit, BOOL *has_accept)\n{\nint length = 1;\nint size, offset;\nPCRE2_SPTR\
+    \ alternative;\nBOOL quit_found = FALSE;\nBOOL accept_found = FALSE;\nBOOL setsom_found\
+    \ = FALSE;\nBOOL setmark_found = FALSE;\nBOOL control_head_found = FALSE;\n\n\
+    memset(common->recurse_bitset, 0, common->recurse_bitset_size);\n\n#if defined\
+    \ DEBUG_FORCE_CONTROL_HEAD && DEBUG_FORCE_CONTROL_HEAD\nSLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\ncontrol_head_found = TRUE;\n#endif\n\n/* Calculate the sum of the private\
+    \ machine words. */\nwhile (cc < ccend)\n  {\n  size = 0;\n  switch(*cc)\n   \
+    \ {\n    case OP_SET_SOM:\n    SLJIT_ASSERT(common->has_set_som);\n    setsom_found\
+    \ = TRUE;\n    cc += 1;\n    break;\n\n    case OP_RECURSE:\n    if (common->has_set_som)\n\
+    \      setsom_found = TRUE;\n    if (common->mark_ptr != 0)\n      setmark_found\
+    \ = TRUE;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\
+    \n    case OP_KET:\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0)\n   \
+    \   {\n      if (recurse_check_bit(common, offset))\n        length++;\n     \
+    \ SLJIT_ASSERT(PRIVATE_DATA(cc + 1) != 0);\n      cc += PRIVATE_DATA(cc + 1);\n\
+    \      }\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_ASSERT:\n    case\
+    \ OP_ASSERT_NOT:\n    case OP_ASSERTBACK:\n    case OP_ASSERTBACK_NOT:\n    case\
+    \ OP_ASSERT_NA:\n    case OP_ASSERTBACK_NA:\n    case OP_ONCE:\n    case OP_SCRIPT_RUN:\n\
+    \    case OP_BRAPOS:\n    case OP_SBRA:\n    case OP_SBRAPOS:\n    case OP_SCOND:\n\
+    \    SLJIT_ASSERT(PRIVATE_DATA(cc) != 0);\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_CBRA:\n\
+    \    case OP_SCBRA:\n    offset = GET2(cc, 1 + LINK_SIZE);\n    if (recurse_check_bit(common,\
+    \ OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (common->optimized_cbracket[offset]\
+    \ == 0 && recurse_check_bit(common, OVECTOR_PRIV(offset)))\n      length++;\n\
+    \    if (common->capture_last_ptr != 0 && recurse_check_bit(common, common->capture_last_ptr))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CBRAPOS:\n    case OP_SCBRAPOS:\n    offset = GET2(cc, 1 + LINK_SIZE);\n\
+    \    if (recurse_check_bit(common, OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (recurse_check_bit(common,\
+    \ OVECTOR_PRIV(offset)))\n      length++;\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n\
+    \    break;\n\n    case OP_COND:\n    /* Might be a hidden SCOND. */\n    alternative\
+    \ = cc + GET(cc, 1);\n    if ((*alternative == OP_KETRMAX || *alternative == OP_KETRMIN)\
+    \ && recurse_check_bit(common, PRIVATE_DATA(cc)))\n      length++;\n    cc +=\
+    \ 1 + LINK_SIZE;\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_1\n    offset =\
+    \ PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      length++;\n    cc += 2;\n#ifdef SUPPORT_UNICODE\n    if (common->utf &&\
+    \ HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n#endif\n    break;\n\n  \
+    \  CASE_ITERATOR_PRIVATE_DATA_2A\n    offset = PRIVATE_DATA(cc);\n    if (offset\
+    \ != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2;\n#ifdef\
+    \ SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_2B\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2 + IMM2_SIZE;\n\
+    #ifdef SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_1\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      length++;\n\
+    \    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2A\n    offset\
+    \ = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2B\n\
+    \    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1 + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CLASS:\n    case OP_NCLASS:\n#if defined SUPPORT_UNICODE || PCRE2_CODE_UNIT_WIDTH\
+    \ != 8\n    case OP_XCLASS:\n    size = (*cc == OP_XCLASS) ? GET(cc, 1) : 1 +\
+    \ 32 / (int)sizeof(PCRE2_UCHAR);\n#else\n    size = 1 + 32 / (int)sizeof(PCRE2_UCHAR);\n\
+    #endif\n\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      length += get_class_iterator_size(cc + size);\n    cc += size;\n\
+    \    break;\n\n    case OP_MARK:\n    case OP_COMMIT_ARG:\n    case OP_PRUNE_ARG:\n\
+    \    case OP_THEN_ARG:\n    SLJIT_ASSERT(common->mark_ptr != 0);\n    if (!setmark_found)\n\
+    \      setmark_found = TRUE;\n    if (common->control_head_ptr != 0)\n      control_head_found\
+    \ = TRUE;\n    if (*cc != OP_MARK)\n      quit_found = TRUE;\n\n    cc += 1 +\
+    \ 2 + cc[1];\n    break;\n\n    case OP_PRUNE:\n    case OP_SKIP:\n    case OP_COMMIT:\n\
+    \    quit_found = TRUE;\n    cc++;\n    break;\n\n    case OP_SKIP_ARG:\n    quit_found\
+    \ = TRUE;\n    cc += 1 + 2 + cc[1];\n    break;\n\n    case OP_THEN:\n    SLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\n    quit_found = TRUE;\n    control_head_found = TRUE;\n    cc++;\n\
+    \    break;\n\n    case OP_ACCEPT:\n    case OP_ASSERT_ACCEPT:\n    accept_found\
+    \ = TRUE;\n    cc++;\n    break;\n\n    default:\n    cc = next_opcode(common,\
+    \ cc);\n    SLJIT_ASSERT(cc != NULL);\n    break;\n    }\n  }\nSLJIT_ASSERT(cc\
+    \ == ccend);\n\nif (control_head_found)\n  length++;\nif (quit_found)\n  {\n \
+    \ if (setsom_found)\n    length++;\n  if (setmark_found)\n    length++;\n  }\n\
+    \n*needs_control_head = control_head_found;\n*has_quit = quit_found;\n*has_accept\
+    \ = accept_found;\nreturn length;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic int get_recurse_data_length(compiler_common\
+    \ *common, PCRE2_SPTR cc, PCRE2_SPTR ccend,\n  BOOL *needs_control_head, BOOL\
+    \ *has_quit, BOOL *has_accept)\n{\nint length = 1;\nint size, offset;\nPCRE2_SPTR\
+    \ alternative;\nBOOL quit_found = FALSE;\nBOOL accept_found = FALSE;\nBOOL setsom_found\
+    \ = FALSE;\nBOOL setmark_found = FALSE;\nBOOL control_head_found = FALSE;\n\n\
+    memset(common->recurse_bitset, 0, common->recurse_bitset_size);\n\n#if defined\
+    \ DEBUG_FORCE_CONTROL_HEAD && DEBUG_FORCE_CONTROL_HEAD\nSLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\ncontrol_head_found = TRUE;\n#endif\n\n/* Calculate the sum of the private\
+    \ machine words. */\nwhile (cc < ccend)\n  {\n  size = 0;\n  switch(*cc)\n   \
+    \ {\n    case OP_SET_SOM:\n    SLJIT_ASSERT(common->has_set_som);\n    setsom_found\
+    \ = TRUE;\n    cc += 1;\n    break;\n\n    case OP_RECURSE:\n    if (common->has_set_som)\n\
+    \      setsom_found = TRUE;\n    if (common->mark_ptr != 0)\n      setmark_found\
+    \ = TRUE;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\
+    \n    case OP_KET:\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0)\n   \
+    \   {\n      if (recurse_check_bit(common, offset))\n        length++;\n     \
+    \ SLJIT_ASSERT(PRIVATE_DATA(cc + 1) != 0);\n      cc += PRIVATE_DATA(cc + 1);\n\
+    \      }\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_ASSERT:\n    case\
+    \ OP_ASSERT_NOT:\n    case OP_ASSERTBACK:\n    case OP_ASSERTBACK_NOT:\n    case\
+    \ OP_ASSERT_NA:\n    case OP_ASSERTBACK_NA:\n    case OP_ONCE:\n    case OP_SCRIPT_RUN:\n\
+    \    case OP_BRAPOS:\n    case OP_SBRA:\n    case OP_SBRAPOS:\n    case OP_SCOND:\n\
+    \    SLJIT_ASSERT(PRIVATE_DATA(cc) != 0);\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE;\n    break;\n\n    case OP_CBRA:\n\
+    \    case OP_SCBRA:\n    offset = GET2(cc, 1 + LINK_SIZE);\n    if (recurse_check_bit(common,\
+    \ OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (common->optimized_cbracket[offset]\
+    \ == 0 && recurse_check_bit(common, OVECTOR_PRIV(offset)))\n      length++;\n\
+    \    if (common->capture_last_ptr != 0 && recurse_check_bit(common, common->capture_last_ptr))\n\
+    \      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CBRAPOS:\n    case OP_SCBRAPOS:\n    offset = GET2(cc, 1 + LINK_SIZE);\n\
+    \    if (recurse_check_bit(common, OVECTOR(offset << 1)))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ OVECTOR((offset << 1) + 1)));\n      length += 2;\n      }\n    if (recurse_check_bit(common,\
+    \ OVECTOR_PRIV(offset)))\n      length++;\n    if (recurse_check_bit(common, PRIVATE_DATA(cc)))\n\
+    \      length++;\n    if (common->capture_last_ptr != 0 && recurse_check_bit(common,\
+    \ common->capture_last_ptr))\n      length++;\n    cc += 1 + LINK_SIZE + IMM2_SIZE;\n\
+    \    break;\n\n    case OP_COND:\n    /* Might be a hidden SCOND. */\n    alternative\
+    \ = cc + GET(cc, 1);\n    if ((*alternative == OP_KETRMAX || *alternative == OP_KETRMIN)\
+    \ && recurse_check_bit(common, PRIVATE_DATA(cc)))\n      length++;\n    cc +=\
+    \ 1 + LINK_SIZE;\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_1\n    offset =\
+    \ PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      length++;\n    cc += 2;\n#ifdef SUPPORT_UNICODE\n    if (common->utf &&\
+    \ HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n#endif\n    break;\n\n  \
+    \  CASE_ITERATOR_PRIVATE_DATA_2A\n    offset = PRIVATE_DATA(cc);\n    if (offset\
+    \ != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2;\n#ifdef\
+    \ SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_PRIVATE_DATA_2B\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common,\
+    \ offset + sizeof(sljit_sw)));\n      length += 2;\n      }\n    cc += 2 + IMM2_SIZE;\n\
+    #ifdef SUPPORT_UNICODE\n    if (common->utf && HAS_EXTRALEN(cc[-1])) cc += GET_EXTRALEN(cc[-1]);\n\
+    #endif\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_1\n    offset = PRIVATE_DATA(cc);\n\
+    \    if (offset != 0 && recurse_check_bit(common, offset))\n      length++;\n\
+    \    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2A\n    offset\
+    \ = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common, offset))\n\
+    \      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1;\n    break;\n\n    CASE_ITERATOR_TYPE_PRIVATE_DATA_2B\n\
+    \    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      {\n      SLJIT_ASSERT(recurse_check_bit(common, offset + sizeof(sljit_sw)));\n\
+    \      length += 2;\n      }\n    cc += 1 + IMM2_SIZE;\n    break;\n\n    case\
+    \ OP_CLASS:\n    case OP_NCLASS:\n#if defined SUPPORT_UNICODE || PCRE2_CODE_UNIT_WIDTH\
+    \ != 8\n    case OP_XCLASS:\n    size = (*cc == OP_XCLASS) ? GET(cc, 1) : 1 +\
+    \ 32 / (int)sizeof(PCRE2_UCHAR);\n#else\n    size = 1 + 32 / (int)sizeof(PCRE2_UCHAR);\n\
+    #endif\n\n    offset = PRIVATE_DATA(cc);\n    if (offset != 0 && recurse_check_bit(common,\
+    \ offset))\n      length += get_class_iterator_size(cc + size);\n    cc += size;\n\
+    \    break;\n\n    case OP_MARK:\n    case OP_COMMIT_ARG:\n    case OP_PRUNE_ARG:\n\
+    \    case OP_THEN_ARG:\n    SLJIT_ASSERT(common->mark_ptr != 0);\n    if (!setmark_found)\n\
+    \      setmark_found = TRUE;\n    if (common->control_head_ptr != 0)\n      control_head_found\
+    \ = TRUE;\n    if (*cc != OP_MARK)\n      quit_found = TRUE;\n\n    cc += 1 +\
+    \ 2 + cc[1];\n    break;\n\n    case OP_PRUNE:\n    case OP_SKIP:\n    case OP_COMMIT:\n\
+    \    quit_found = TRUE;\n    cc++;\n    break;\n\n    case OP_SKIP_ARG:\n    quit_found\
+    \ = TRUE;\n    cc += 1 + 2 + cc[1];\n    break;\n\n    case OP_THEN:\n    SLJIT_ASSERT(common->control_head_ptr\
+    \ != 0);\n    quit_found = TRUE;\n    control_head_found = TRUE;\n    cc++;\n\
+    \    break;\n\n    case OP_ACCEPT:\n    case OP_ASSERT_ACCEPT:\n    accept_found\
+    \ = TRUE;\n    cc++;\n    break;\n\n    default:\n    cc = next_opcode(common,\
+    \ cc);\n    SLJIT_ASSERT(cc != NULL);\n    break;\n    }\n  }\nSLJIT_ASSERT(cc\
+    \ == ccend);\n\nif (control_head_found)\n  length++;\nif (quit_found)\n  {\n \
+    \ if (setsom_found)\n    length++;\n  if (setmark_found)\n    length++;\n  }\n\
+    \n*needs_control_head = control_head_found;\n*has_quit = quit_found;\n*has_accept\
+    \ = accept_found;\nreturn length;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 404192
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

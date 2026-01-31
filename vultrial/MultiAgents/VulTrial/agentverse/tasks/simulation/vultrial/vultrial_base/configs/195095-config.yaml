@@ -1,0 +1,391 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nint Socket::startSslClient(const\
+    \ std::string &certificate_path, String hostname)\n{\n    if (isssl) {\n     \
+    \   stopSsl();\n    }\n\n    ERR_clear_error();\n#if OPENSSL_VERSION_NUMBER <\
+    \ 0x10100000L\n    ctx = SSL_CTX_new(SSLv23_client_method());\n#else\n    ctx\
+    \ = SSL_CTX_new(TLS_client_method());\n#endif\n\n    if (ctx == NULL) {\n#ifdef\
+    \ NETDEBUG\n        std::cout << thread_id << \"Error ssl context is null (check\
+    \ that openssl has been inited)\" << std::endl;\n#endif\n        log_ssl_errors(\"\
+    Error ssl context is null for %s\", hostname.c_str());\n        return -1;\n \
+    \   }\n\n    //set the timeout for the ssl session\n    if (SSL_CTX_set_timeout(ctx,\
+    \ 130l) < 1) {\n            SSL_CTX_free(ctx);\n            ctx = NULL;\n    \
+    \    return -1;\n    }\n\n    //load certs\n    ERR_clear_error();\n    if (certificate_path.length())\
+    \ {\n        if (!SSL_CTX_load_verify_locations(ctx, NULL, certificate_path.c_str()))\
+    \ {\n#ifdef NETDEBUG\n            std::cout << thread_id << \"couldnt load certificates\"\
+    \ << std::endl;\n#endif\n            log_ssl_errors(\"couldnt load certificates\
+    \ from %s\", certificate_path.c_str());\n            //tidy up\n            SSL_CTX_free(ctx);\n\
+    \            ctx = NULL;\n            return -2;\n        }\n    } else if (!SSL_CTX_set_default_verify_paths(ctx))\
+    \ //use default if no certPpath given\n    {\n#ifdef NETDEBUG\n        std::cout\
+    \ << thread_id << \"couldnt load certificates\" << std::endl;\n#endif\n      \
+    \      log_ssl_errors(\"couldnt load default certificates for %s\", hostname.c_str());\n\
+    \        //tidy up\n        SSL_CTX_free(ctx);\n        ctx = NULL;\n        return\
+    \ -2;\n    }\n\n    // add validation params\n    ERR_clear_error();\n    X509_VERIFY_PARAM\
+    \ *x509_param = X509_VERIFY_PARAM_new();\n    if (!x509_param) {\n        log_ssl_errors(\"\
+    couldnt add validation params for %s\", hostname.c_str());\n        //X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!X509_VERIFY_PARAM_set_flags(x509_param,\
+    \ X509_V_FLAG_TRUSTED_FIRST)) {\n        log_ssl_errors(\"couldnt add validation\
+    \ params for %s\", hostname.c_str());\n        X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!SSL_CTX_set1_param(ctx, x509_param))\
+    \ {\n        log_ssl_errors(\"couldnt add validation params for %s\", hostname.c_str());\n\
+    \        X509_VERIFY_PARAM_free(x509_param);\n            SSL_CTX_free(ctx);\n\
+    \            ctx = NULL;\n        return -2;\n    }\n\n    X509_VERIFY_PARAM_free(x509_param);\
+    \     // try not freeing this as SSL_CTX_free seems to be ring to free it\n\n\
+    \    //hand socket over to ssl lib\n    ERR_clear_error();\n    ssl = SSL_new(ctx);\n\
+    \    SSL_set_options(ssl, SSL_OP_ALL);\n    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);\n\
+    \    SSL_set_connect_state(ssl);\n\n    //fcntl(this->getFD() ,F_SETFL, O_NONBLOCK);\
+    \ // blocking mode used currently\n    SSL_set_fd(ssl, this->getFD());\n    SSL_set_tlsext_host_name(ssl,\
+    \ hostname.c_str());\n\n    //make io non blocking as select wont tell us if we\
+    \ can do a read without blocking\n    //BIO_set_nbio(SSL_get_rbio(ssl),1l);  //\
+    \ blocking mode used currently\n    //BIO_set_nbio(SSL_get_wbio(ssl),1l); // blocking\
+    \ mode used currently\n    ERR_clear_error();\n    int rc = SSL_connect(ssl);\n\
+    \    if (rc < 0) {\n        log_ssl_errors(\"ssl_connect failed to %s\", hostname.c_str());\n\
+    #ifdef NETDEBUG\n        std::cout << thread_id << \"ssl_connect failed with error\
+    \ \" << SSL_get_error(ssl, rc) << std::endl;\n#endif\n        // tidy up\n   \
+    \     SSL_free(ssl);\n        ssl = NULL;\n        SSL_CTX_free(ctx);\n      \
+    \  ctx = NULL;\n        return -3;\n    }\n\n    //should be safer to do this\
+    \ last as nothing will ever try to use a ssl socket that isnt fully setup\n  \
+    \  isssl = true;\n    issslserver = false;\n    return 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nint Socket::startSslClient(const\
+    \ std::string &certificate_path, String hostname)\n{\n    if (isssl) {\n     \
+    \   stopSsl();\n    }\n\n    ERR_clear_error();\n#if OPENSSL_VERSION_NUMBER <\
+    \ 0x10100000L\n    ctx = SSL_CTX_new(SSLv23_client_method());\n#else\n    ctx\
+    \ = SSL_CTX_new(TLS_client_method());\n#endif\n\n    if (ctx == NULL) {\n#ifdef\
+    \ NETDEBUG\n        std::cout << thread_id << \"Error ssl context is null (check\
+    \ that openssl has been inited)\" << std::endl;\n#endif\n        log_ssl_errors(\"\
+    Error ssl context is null for %s\", hostname.c_str());\n        return -1;\n \
+    \   }\n\n    //set the timeout for the ssl session\n    if (SSL_CTX_set_timeout(ctx,\
+    \ 130l) < 1) {\n            SSL_CTX_free(ctx);\n            ctx = NULL;\n    \
+    \    return -1;\n    }\n\n    //load certs\n    ERR_clear_error();\n    if (certificate_path.length())\
+    \ {\n        if (!SSL_CTX_load_verify_locations(ctx, NULL, certificate_path.c_str()))\
+    \ {\n#ifdef NETDEBUG\n            std::cout << thread_id << \"couldnt load certificates\"\
+    \ << std::endl;\n#endif\n            log_ssl_errors(\"couldnt load certificates\
+    \ from %s\", certificate_path.c_str());\n            //tidy up\n            SSL_CTX_free(ctx);\n\
+    \            ctx = NULL;\n            return -2;\n        }\n    } else if (!SSL_CTX_set_default_verify_paths(ctx))\
+    \ //use default if no certPpath given\n    {\n#ifdef NETDEBUG\n        std::cout\
+    \ << thread_id << \"couldnt load certificates\" << std::endl;\n#endif\n      \
+    \      log_ssl_errors(\"couldnt load default certificates for %s\", hostname.c_str());\n\
+    \        //tidy up\n        SSL_CTX_free(ctx);\n        ctx = NULL;\n        return\
+    \ -2;\n    }\n\n    // add validation params\n    ERR_clear_error();\n    X509_VERIFY_PARAM\
+    \ *x509_param = X509_VERIFY_PARAM_new();\n    if (!x509_param) {\n        log_ssl_errors(\"\
+    couldnt add validation params for %s\", hostname.c_str());\n        //X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!X509_VERIFY_PARAM_set_flags(x509_param,\
+    \ X509_V_FLAG_TRUSTED_FIRST)) {\n        log_ssl_errors(\"couldnt add validation\
+    \ params for %s\", hostname.c_str());\n        X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!SSL_CTX_set1_param(ctx, x509_param))\
+    \ {\n        log_ssl_errors(\"couldnt add validation params for %s\", hostname.c_str());\n\
+    \        X509_VERIFY_PARAM_free(x509_param);\n            SSL_CTX_free(ctx);\n\
+    \            ctx = NULL;\n        return -2;\n    }\n\n    X509_VERIFY_PARAM_free(x509_param);\
+    \     // try not freeing this as SSL_CTX_free seems to be ring to free it\n\n\
+    \    //hand socket over to ssl lib\n    ERR_clear_error();\n    ssl = SSL_new(ctx);\n\
+    \    SSL_set_options(ssl, SSL_OP_ALL);\n    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);\n\
+    \    SSL_set_connect_state(ssl);\n\n    //fcntl(this->getFD() ,F_SETFL, O_NONBLOCK);\
+    \ // blocking mode used currently\n    SSL_set_fd(ssl, this->getFD());\n    SSL_set_tlsext_host_name(ssl,\
+    \ hostname.c_str());\n\n    //make io non blocking as select wont tell us if we\
+    \ can do a read without blocking\n    //BIO_set_nbio(SSL_get_rbio(ssl),1l);  //\
+    \ blocking mode used currently\n    //BIO_set_nbio(SSL_get_wbio(ssl),1l); // blocking\
+    \ mode used currently\n    ERR_clear_error();\n    int rc = SSL_connect(ssl);\n\
+    \    if (rc < 0) {\n        log_ssl_errors(\"ssl_connect failed to %s\", hostname.c_str());\n\
+    #ifdef NETDEBUG\n        std::cout << thread_id << \"ssl_connect failed with error\
+    \ \" << SSL_get_error(ssl, rc) << std::endl;\n#endif\n        // tidy up\n   \
+    \     SSL_free(ssl);\n        ssl = NULL;\n        SSL_CTX_free(ctx);\n      \
+    \  ctx = NULL;\n        return -3;\n    }\n\n    //should be safer to do this\
+    \ last as nothing will ever try to use a ssl socket that isnt fully setup\n  \
+    \  isssl = true;\n    issslserver = false;\n    return 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nint Socket::startSslClient(const std::string\
+    \ &certificate_path, String hostname)\n{\n    if (isssl) {\n        stopSsl();\n\
+    \    }\n\n    ERR_clear_error();\n#if OPENSSL_VERSION_NUMBER < 0x10100000L\n \
+    \   ctx = SSL_CTX_new(SSLv23_client_method());\n#else\n    ctx = SSL_CTX_new(TLS_client_method());\n\
+    #endif\n\n    if (ctx == NULL) {\n#ifdef NETDEBUG\n        std::cout << thread_id\
+    \ << \"Error ssl context is null (check that openssl has been inited)\" << std::endl;\n\
+    #endif\n        log_ssl_errors(\"Error ssl context is null for %s\", hostname.c_str());\n\
+    \        return -1;\n    }\n\n    //set the timeout for the ssl session\n    if\
+    \ (SSL_CTX_set_timeout(ctx, 130l) < 1) {\n            SSL_CTX_free(ctx);\n   \
+    \         ctx = NULL;\n        return -1;\n    }\n\n    //load certs\n    ERR_clear_error();\n\
+    \    if (certificate_path.length()) {\n        if (!SSL_CTX_load_verify_locations(ctx,\
+    \ NULL, certificate_path.c_str())) {\n#ifdef NETDEBUG\n            std::cout <<\
+    \ thread_id << \"couldnt load certificates\" << std::endl;\n#endif\n         \
+    \   log_ssl_errors(\"couldnt load certificates from %s\", certificate_path.c_str());\n\
+    \            //tidy up\n            SSL_CTX_free(ctx);\n            ctx = NULL;\n\
+    \            return -2;\n        }\n    } else if (!SSL_CTX_set_default_verify_paths(ctx))\
+    \ //use default if no certPpath given\n    {\n#ifdef NETDEBUG\n        std::cout\
+    \ << thread_id << \"couldnt load certificates\" << std::endl;\n#endif\n      \
+    \      log_ssl_errors(\"couldnt load default certificates for %s\", hostname.c_str());\n\
+    \        //tidy up\n        SSL_CTX_free(ctx);\n        ctx = NULL;\n        return\
+    \ -2;\n    }\n\n    // add validation params\n    ERR_clear_error();\n    X509_VERIFY_PARAM\
+    \ *x509_param = X509_VERIFY_PARAM_new();\n    if (!x509_param) {\n        log_ssl_errors(\"\
+    couldnt add validation params for %s\", hostname.c_str());\n        //X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!X509_VERIFY_PARAM_set_flags(x509_param,\
+    \ X509_V_FLAG_TRUSTED_FIRST)) {\n        log_ssl_errors(\"couldnt add validation\
+    \ params for %s\", hostname.c_str());\n        X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!SSL_CTX_set1_param(ctx, x509_param))\
+    \ {\n        log_ssl_errors(\"couldnt add validation params for %s\", hostname.c_str());\n\
+    \        X509_VERIFY_PARAM_free(x509_param);\n            SSL_CTX_free(ctx);\n\
+    \            ctx = NULL;\n        return -2;\n    }\n\n    X509_VERIFY_PARAM_free(x509_param);\
+    \     // try not freeing this as SSL_CTX_free seems to be ring to free it\n\n\
+    \    //hand socket over to ssl lib\n    ERR_clear_error();\n    ssl = SSL_new(ctx);\n\
+    \    SSL_set_options(ssl, SSL_OP_ALL);\n    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);\n\
+    \    SSL_set_connect_state(ssl);\n\n    //fcntl(this->getFD() ,F_SETFL, O_NONBLOCK);\
+    \ // blocking mode used currently\n    SSL_set_fd(ssl, this->getFD());\n    SSL_set_tlsext_host_name(ssl,\
+    \ hostname.c_str());\n\n    //make io non blocking as select wont tell us if we\
+    \ can do a read without blocking\n    //BIO_set_nbio(SSL_get_rbio(ssl),1l);  //\
+    \ blocking mode used currently\n    //BIO_set_nbio(SSL_get_wbio(ssl),1l); // blocking\
+    \ mode used currently\n    ERR_clear_error();\n    int rc = SSL_connect(ssl);\n\
+    \    if (rc < 0) {\n        log_ssl_errors(\"ssl_connect failed to %s\", hostname.c_str());\n\
+    #ifdef NETDEBUG\n        std::cout << thread_id << \"ssl_connect failed with error\
+    \ \" << SSL_get_error(ssl, rc) << std::endl;\n#endif\n        // tidy up\n   \
+    \     SSL_free(ssl);\n        ssl = NULL;\n        SSL_CTX_free(ctx);\n      \
+    \  ctx = NULL;\n        return -3;\n    }\n\n    //should be safer to do this\
+    \ last as nothing will ever try to use a ssl socket that isnt fully setup\n  \
+    \  isssl = true;\n    issslserver = false;\n    return 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nint Socket::startSslClient(const\
+    \ std::string &certificate_path, String hostname)\n{\n    if (isssl) {\n     \
+    \   stopSsl();\n    }\n\n    ERR_clear_error();\n#if OPENSSL_VERSION_NUMBER <\
+    \ 0x10100000L\n    ctx = SSL_CTX_new(SSLv23_client_method());\n#else\n    ctx\
+    \ = SSL_CTX_new(TLS_client_method());\n#endif\n\n    if (ctx == NULL) {\n#ifdef\
+    \ NETDEBUG\n        std::cout << thread_id << \"Error ssl context is null (check\
+    \ that openssl has been inited)\" << std::endl;\n#endif\n        log_ssl_errors(\"\
+    Error ssl context is null for %s\", hostname.c_str());\n        return -1;\n \
+    \   }\n\n    //set the timeout for the ssl session\n    if (SSL_CTX_set_timeout(ctx,\
+    \ 130l) < 1) {\n            SSL_CTX_free(ctx);\n            ctx = NULL;\n    \
+    \    return -1;\n    }\n\n    //load certs\n    ERR_clear_error();\n    if (certificate_path.length())\
+    \ {\n        if (!SSL_CTX_load_verify_locations(ctx, NULL, certificate_path.c_str()))\
+    \ {\n#ifdef NETDEBUG\n            std::cout << thread_id << \"couldnt load certificates\"\
+    \ << std::endl;\n#endif\n            log_ssl_errors(\"couldnt load certificates\
+    \ from %s\", certificate_path.c_str());\n            //tidy up\n            SSL_CTX_free(ctx);\n\
+    \            ctx = NULL;\n            return -2;\n        }\n    } else if (!SSL_CTX_set_default_verify_paths(ctx))\
+    \ //use default if no certPpath given\n    {\n#ifdef NETDEBUG\n        std::cout\
+    \ << thread_id << \"couldnt load certificates\" << std::endl;\n#endif\n      \
+    \      log_ssl_errors(\"couldnt load default certificates for %s\", hostname.c_str());\n\
+    \        //tidy up\n        SSL_CTX_free(ctx);\n        ctx = NULL;\n        return\
+    \ -2;\n    }\n\n    // add validation params\n    ERR_clear_error();\n    X509_VERIFY_PARAM\
+    \ *x509_param = X509_VERIFY_PARAM_new();\n    if (!x509_param) {\n        log_ssl_errors(\"\
+    couldnt add validation params for %s\", hostname.c_str());\n        //X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!X509_VERIFY_PARAM_set_flags(x509_param,\
+    \ X509_V_FLAG_TRUSTED_FIRST)) {\n        log_ssl_errors(\"couldnt add validation\
+    \ params for %s\", hostname.c_str());\n        X509_VERIFY_PARAM_free(x509_param);\n\
+    \            SSL_CTX_free(ctx);\n            ctx = NULL;\n        return -2;\n\
+    \    }\n\n    ERR_clear_error();\n    if (!SSL_CTX_set1_param(ctx, x509_param))\
+    \ {\n        log_ssl_errors(\"couldnt add validation params for %s\", hostname.c_str());\n\
+    \        X509_VERIFY_PARAM_free(x509_param);\n            SSL_CTX_free(ctx);\n\
+    \            ctx = NULL;\n        return -2;\n    }\n\n    X509_VERIFY_PARAM_free(x509_param);\
+    \     // try not freeing this as SSL_CTX_free seems to be ring to free it\n\n\
+    \    //hand socket over to ssl lib\n    ERR_clear_error();\n    ssl = SSL_new(ctx);\n\
+    \    SSL_set_options(ssl, SSL_OP_ALL);\n    SSL_set_mode(ssl, SSL_MODE_AUTO_RETRY);\n\
+    \    SSL_set_connect_state(ssl);\n\n    //fcntl(this->getFD() ,F_SETFL, O_NONBLOCK);\
+    \ // blocking mode used currently\n    SSL_set_fd(ssl, this->getFD());\n    SSL_set_tlsext_host_name(ssl,\
+    \ hostname.c_str());\n\n    //make io non blocking as select wont tell us if we\
+    \ can do a read without blocking\n    //BIO_set_nbio(SSL_get_rbio(ssl),1l);  //\
+    \ blocking mode used currently\n    //BIO_set_nbio(SSL_get_wbio(ssl),1l); // blocking\
+    \ mode used currently\n    ERR_clear_error();\n    int rc = SSL_connect(ssl);\n\
+    \    if (rc < 0) {\n        log_ssl_errors(\"ssl_connect failed to %s\", hostname.c_str());\n\
+    #ifdef NETDEBUG\n        std::cout << thread_id << \"ssl_connect failed with error\
+    \ \" << SSL_get_error(ssl, rc) << std::endl;\n#endif\n        // tidy up\n   \
+    \     SSL_free(ssl);\n        ssl = NULL;\n        SSL_CTX_free(ctx);\n      \
+    \  ctx = NULL;\n        return -3;\n    }\n\n    //should be safer to do this\
+    \ last as nothing will ever try to use a ssl socket that isnt fully setup\n  \
+    \  isssl = true;\n    issslserver = false;\n    return 0;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 195095
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

@@ -1,0 +1,26 @@
+[
+    {
+        "function_name": "file_upload",
+        "vulnerability": "Lack of input validation",
+        "criticism": "The reasoning provided for this vulnerability is valid as lack of input validation can lead to various attacks such as SQL injection or file upload vulnerabilities. The correctness score is high as it is a common vulnerability in web applications. However, the severity and profitability scores are too low as the impact of this vulnerability can be significant depending on the context.",
+        "correctness": 8,
+        "severity": 3,
+        "profitability": 4,
+        "reason": " ",
+        "code": "sug_filltree(spellinfo_T *spin, slang_T *slang)\n{\n    char_u\t*byts;\n    idx_T\t*idxs;\n    int\t\tdepth;\n    idx_T\tarridx[MAXWLEN];\n    int\t\tcuri[MAXWLEN];\n    char_u\ttword[MAXWLEN];\n    char_u\ttsalword[MAXWLEN];\n    int\t\tc;\n    idx_T\tn;\n    unsigned\twords_done = 0;\n    int\t\twordcount[MAXWLEN];\n    spin->si_foldroot = wordtree_alloc(spin);\n    if (spin->si_foldroot == NULL)\n\treturn FAIL;\n    spin->si_sugtree = TRUE;\n    byts = slang->sl_fbyts;\n    idxs = slang->sl_fidxs;\n    arridx[0] = 0;\n    curi[0] = 1;\n    wordcount[0] = 0;\n    depth = 0;\n    while (depth >= 0 && !got_int)\n    {\n\tif (curi[depth] > byts[arridx[depth]])\n\t{\n\t    idxs[arridx[depth]] = wordcount[depth];\n\t    if (depth > 0)\n\t\twordcount[depth - 1] += wordcount[depth];\n\t    --depth;\n\t    line_breakcheck();\n\t}\n\telse\n\t{\n\t    n = arridx[depth] + curi[depth];\n\t    ++curi[depth];\n\t    c = byts[n];\n\t    if (c == 0)\n\t    {\n\t\ttword[depth] = NUL;\n\t\tspell_soundfold(slang, tword, TRUE, tsalword);\n\t\tif (tree_add_word(spin, tsalword, spin->si_foldroot,\n\t\t\t\twords_done >> 16, words_done & 0xffff,\n\t\t\t\t\t\t\t   0) == FAIL)\n\t\t    return FAIL;\n\t\t++words_done;\n\t\t++wordcount[depth];\n\t\tspin->si_blocks_cnt = 0;\n\t\twhile (n + 1 < slang->sl_fbyts_len && byts[n + 1] == 0)\n\t\t{\n\t\t    ++n;\n\t\t    ++curi[depth];\n\t\t}\n\t    }\n\t    else\n\t    {\n\t\ttword[depth++] = c;\n\t\tarridx[depth] = idxs[n];\n\t\tcuri[depth] = 1;\n\t\twordcount[depth] = 0;\n\t    }\n\t}\n    }\n    smsg(_(\"Total number of words: %d\"), words_done);\n    return OK;\n}",
+        "file_name": "210271.sol",
+        "final_score": 5.75
+    },
+    {
+        "function_name": "login",
+        "vulnerability": "Weak password policy",
+        "criticism": "The reasoning provided for this vulnerability is valid as a weak password policy can lead to easy brute force attacks. However, the severity and profitability scores are too high as the impact of weak password policy can vary depending on other security measures in place. The correctness score is also high as it is a common vulnerability in many systems.",
+        "correctness": 7,
+        "severity": 4,
+        "profitability": 3,
+        "reason": " ",
+        "code": "sug_filltree(spellinfo_T *spin, slang_T *slang)\n{\n    char_u\t*byts;\n    idx_T\t*idxs;\n    int\t\tdepth;\n    idx_T\tarridx[MAXWLEN];\n    int\t\tcuri[MAXWLEN];\n    char_u\ttword[MAXWLEN];\n    char_u\ttsalword[MAXWLEN];\n    int\t\tc;\n    idx_T\tn;\n    unsigned\twords_done = 0;\n    int\t\twordcount[MAXWLEN];\n    spin->si_foldroot = wordtree_alloc(spin);\n    if (spin->si_foldroot == NULL)\n\treturn FAIL;\n    spin->si_sugtree = TRUE;\n    byts = slang->sl_fbyts;\n    idxs = slang->sl_fidxs;\n    arridx[0] = 0;\n    curi[0] = 1;\n    wordcount[0] = 0;\n    depth = 0;\n    while (depth >= 0 && !got_int)\n    {\n\tif (curi[depth] > byts[arridx[depth]])\n\t{\n\t    idxs[arridx[depth]] = wordcount[depth];\n\t    if (depth > 0)\n\t\twordcount[depth - 1] += wordcount[depth];\n\t    --depth;\n\t    line_breakcheck();\n\t}\n\telse\n\t{\n\t    n = arridx[depth] + curi[depth];\n\t    ++curi[depth];\n\t    c = byts[n];\n\t    if (c == 0)\n\t    {\n\t\ttword[depth] = NUL;\n\t\tspell_soundfold(slang, tword, TRUE, tsalword);\n\t\tif (tree_add_word(spin, tsalword, spin->si_foldroot,\n\t\t\t\twords_done >> 16, words_done & 0xffff,\n\t\t\t\t\t\t\t   0) == FAIL)\n\t\t    return FAIL;\n\t\t++words_done;\n\t\t++wordcount[depth];\n\t\tspin->si_blocks_cnt = 0;\n\t\twhile (n + 1 < slang->sl_fbyts_len && byts[n + 1] == 0)\n\t\t{\n\t\t    ++n;\n\t\t    ++curi[depth];\n\t\t}\n\t    }\n\t    else\n\t    {\n\t\ttword[depth++] = c;\n\t\tarridx[depth] = idxs[n];\n\t\tcuri[depth] = 1;\n\t\twordcount[depth] = 0;\n\t    }\n\t}\n    }\n    smsg(_(\"Total number of words: %d\"), words_done);\n    return OK;\n}",
+        "file_name": "210271.sol",
+        "final_score": 5.25
+    }
+]

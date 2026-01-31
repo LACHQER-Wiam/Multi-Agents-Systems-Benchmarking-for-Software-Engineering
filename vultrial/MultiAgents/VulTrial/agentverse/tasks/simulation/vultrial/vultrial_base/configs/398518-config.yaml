@@ -1,0 +1,282 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ const ut8 *parse_die(const ut8 *buf, const ut8 *buf_end, RzBinDwarfDebugInfo\
+    \ *info, RzBinDwarfAbbrevDecl *abbrev,\n\tRzBinDwarfCompUnitHdr *hdr, RzBinDwarfDie\
+    \ *die, const ut8 *debug_str, size_t debug_str_len, bool big_endian) {\n\tsize_t\
+    \ i;\n\tconst char *comp_dir = NULL;\n\tut64 line_info_offset = UT64_MAX;\n\t\
+    if (abbrev->count) {\n\t\tfor (i = 0; i < abbrev->count - 1; i++) {\n\t\t\tmemset(&die->attr_values[i],\
+    \ 0, sizeof(die->attr_values[i]));\n\n\t\t\tbuf = parse_attr_value(buf, buf_end\
+    \ - buf, &abbrev->defs[i],\n\t\t\t\t&die->attr_values[i], hdr, debug_str, debug_str_len,\
+    \ big_endian);\n\n\t\t\tRzBinDwarfAttrValue *attribute = &die->attr_values[i];\n\
+    \n\t\t\tif (attribute->attr_name == DW_AT_comp_dir && (attribute->attr_form ==\
+    \ DW_FORM_strp || attribute->attr_form == DW_FORM_string) && attribute->string.content)\
+    \ {\n\t\t\t\tcomp_dir = attribute->string.content;\n\t\t\t}\n\t\t\tif (attribute->attr_name\
+    \ == DW_AT_stmt_list) {\n\t\t\t\tif (attribute->kind == DW_AT_KIND_CONSTANT) {\n\
+    \t\t\t\t\tline_info_offset = attribute->uconstant;\n\t\t\t\t} else if (attribute->kind\
+    \ == DW_AT_KIND_REFERENCE) {\n\t\t\t\t\tline_info_offset = attribute->reference;\n\
+    \t\t\t\t}\n\t\t\t}\n\t\t\tdie->count++;\n\t\t}\n\t}\n\n\t// If this is a compilation\
+    \ unit dir attribute, we want to cache it so the line info parsing\n\t// which\
+    \ will need this info can quickly look it up.\n\tif (comp_dir && line_info_offset\
+    \ != UT64_MAX) {\n\t\tchar *name = strdup(comp_dir);\n\t\tif (name) {\n\t\t\t\
+    if (!ht_up_insert(info->line_info_offset_comp_dir, line_info_offset, name)) {\n\
+    \t\t\t\tfree(name);\n\t\t\t}\n\t\t}\n\t}\n\n\treturn buf;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic const ut8 *parse_die(const\
+    \ ut8 *buf, const ut8 *buf_end, RzBinDwarfDebugInfo *info, RzBinDwarfAbbrevDecl\
+    \ *abbrev,\n\tRzBinDwarfCompUnitHdr *hdr, RzBinDwarfDie *die, const ut8 *debug_str,\
+    \ size_t debug_str_len, bool big_endian) {\n\tsize_t i;\n\tconst char *comp_dir\
+    \ = NULL;\n\tut64 line_info_offset = UT64_MAX;\n\tif (abbrev->count) {\n\t\tfor\
+    \ (i = 0; i < abbrev->count - 1; i++) {\n\t\t\tmemset(&die->attr_values[i], 0,\
+    \ sizeof(die->attr_values[i]));\n\n\t\t\tbuf = parse_attr_value(buf, buf_end -\
+    \ buf, &abbrev->defs[i],\n\t\t\t\t&die->attr_values[i], hdr, debug_str, debug_str_len,\
+    \ big_endian);\n\n\t\t\tRzBinDwarfAttrValue *attribute = &die->attr_values[i];\n\
+    \n\t\t\tif (attribute->attr_name == DW_AT_comp_dir && (attribute->attr_form ==\
+    \ DW_FORM_strp || attribute->attr_form == DW_FORM_string) && attribute->string.content)\
+    \ {\n\t\t\t\tcomp_dir = attribute->string.content;\n\t\t\t}\n\t\t\tif (attribute->attr_name\
+    \ == DW_AT_stmt_list) {\n\t\t\t\tif (attribute->kind == DW_AT_KIND_CONSTANT) {\n\
+    \t\t\t\t\tline_info_offset = attribute->uconstant;\n\t\t\t\t} else if (attribute->kind\
+    \ == DW_AT_KIND_REFERENCE) {\n\t\t\t\t\tline_info_offset = attribute->reference;\n\
+    \t\t\t\t}\n\t\t\t}\n\t\t\tdie->count++;\n\t\t}\n\t}\n\n\t// If this is a compilation\
+    \ unit dir attribute, we want to cache it so the line info parsing\n\t// which\
+    \ will need this info can quickly look it up.\n\tif (comp_dir && line_info_offset\
+    \ != UT64_MAX) {\n\t\tchar *name = strdup(comp_dir);\n\t\tif (name) {\n\t\t\t\
+    if (!ht_up_insert(info->line_info_offset_comp_dir, line_info_offset, name)) {\n\
+    \t\t\t\tfree(name);\n\t\t\t}\n\t\t}\n\t}\n\n\treturn buf;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic const ut8 *parse_die(const ut8\
+    \ *buf, const ut8 *buf_end, RzBinDwarfDebugInfo *info, RzBinDwarfAbbrevDecl *abbrev,\n\
+    \tRzBinDwarfCompUnitHdr *hdr, RzBinDwarfDie *die, const ut8 *debug_str, size_t\
+    \ debug_str_len, bool big_endian) {\n\tsize_t i;\n\tconst char *comp_dir = NULL;\n\
+    \tut64 line_info_offset = UT64_MAX;\n\tif (abbrev->count) {\n\t\tfor (i = 0; i\
+    \ < abbrev->count - 1; i++) {\n\t\t\tmemset(&die->attr_values[i], 0, sizeof(die->attr_values[i]));\n\
+    \n\t\t\tbuf = parse_attr_value(buf, buf_end - buf, &abbrev->defs[i],\n\t\t\t\t\
+    &die->attr_values[i], hdr, debug_str, debug_str_len, big_endian);\n\n\t\t\tRzBinDwarfAttrValue\
+    \ *attribute = &die->attr_values[i];\n\n\t\t\tif (attribute->attr_name == DW_AT_comp_dir\
+    \ && (attribute->attr_form == DW_FORM_strp || attribute->attr_form == DW_FORM_string)\
+    \ && attribute->string.content) {\n\t\t\t\tcomp_dir = attribute->string.content;\n\
+    \t\t\t}\n\t\t\tif (attribute->attr_name == DW_AT_stmt_list) {\n\t\t\t\tif (attribute->kind\
+    \ == DW_AT_KIND_CONSTANT) {\n\t\t\t\t\tline_info_offset = attribute->uconstant;\n\
+    \t\t\t\t} else if (attribute->kind == DW_AT_KIND_REFERENCE) {\n\t\t\t\t\tline_info_offset\
+    \ = attribute->reference;\n\t\t\t\t}\n\t\t\t}\n\t\t\tdie->count++;\n\t\t}\n\t\
+    }\n\n\t// If this is a compilation unit dir attribute, we want to cache it so\
+    \ the line info parsing\n\t// which will need this info can quickly look it up.\n\
+    \tif (comp_dir && line_info_offset != UT64_MAX) {\n\t\tchar *name = strdup(comp_dir);\n\
+    \t\tif (name) {\n\t\t\tif (!ht_up_insert(info->line_info_offset_comp_dir, line_info_offset,\
+    \ name)) {\n\t\t\t\tfree(name);\n\t\t\t}\n\t\t}\n\t}\n\n\treturn buf;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic const ut8 *parse_die(const\
+    \ ut8 *buf, const ut8 *buf_end, RzBinDwarfDebugInfo *info, RzBinDwarfAbbrevDecl\
+    \ *abbrev,\n\tRzBinDwarfCompUnitHdr *hdr, RzBinDwarfDie *die, const ut8 *debug_str,\
+    \ size_t debug_str_len, bool big_endian) {\n\tsize_t i;\n\tconst char *comp_dir\
+    \ = NULL;\n\tut64 line_info_offset = UT64_MAX;\n\tif (abbrev->count) {\n\t\tfor\
+    \ (i = 0; i < abbrev->count - 1; i++) {\n\t\t\tmemset(&die->attr_values[i], 0,\
+    \ sizeof(die->attr_values[i]));\n\n\t\t\tbuf = parse_attr_value(buf, buf_end -\
+    \ buf, &abbrev->defs[i],\n\t\t\t\t&die->attr_values[i], hdr, debug_str, debug_str_len,\
+    \ big_endian);\n\n\t\t\tRzBinDwarfAttrValue *attribute = &die->attr_values[i];\n\
+    \n\t\t\tif (attribute->attr_name == DW_AT_comp_dir && (attribute->attr_form ==\
+    \ DW_FORM_strp || attribute->attr_form == DW_FORM_string) && attribute->string.content)\
+    \ {\n\t\t\t\tcomp_dir = attribute->string.content;\n\t\t\t}\n\t\t\tif (attribute->attr_name\
+    \ == DW_AT_stmt_list) {\n\t\t\t\tif (attribute->kind == DW_AT_KIND_CONSTANT) {\n\
+    \t\t\t\t\tline_info_offset = attribute->uconstant;\n\t\t\t\t} else if (attribute->kind\
+    \ == DW_AT_KIND_REFERENCE) {\n\t\t\t\t\tline_info_offset = attribute->reference;\n\
+    \t\t\t\t}\n\t\t\t}\n\t\t\tdie->count++;\n\t\t}\n\t}\n\n\t// If this is a compilation\
+    \ unit dir attribute, we want to cache it so the line info parsing\n\t// which\
+    \ will need this info can quickly look it up.\n\tif (comp_dir && line_info_offset\
+    \ != UT64_MAX) {\n\t\tchar *name = strdup(comp_dir);\n\t\tif (name) {\n\t\t\t\
+    if (!ht_up_insert(info->line_info_offset_comp_dir, line_info_offset, name)) {\n\
+    \t\t\t\tfree(name);\n\t\t\t}\n\t\t}\n\t}\n\n\treturn buf;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 398518
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

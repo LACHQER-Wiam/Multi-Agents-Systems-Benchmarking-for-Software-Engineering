@@ -1,0 +1,44 @@
+[
+    {
+        "function_name": "HttpFileImpl::saveAs",
+        "code": "int HttpFileImpl::saveAs(const std::string &fileName) const\n{\n    assert(!fileName.empty());\n    filesystem::path fsFileName(utils::toNativePath(fileName));\n    if (!fsFileName.is_absolute() && (!fsFileName.has_parent_path() ||\n                                      (fsFileName.begin()->string() != \".\" &&\n                                       fsFileName.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsFileName = fsUploadPath / fsFileName;\n    }\n    if (fsFileName.has_parent_path() &&\n        !filesystem::exists(fsFileName.parent_path()))\n    {\n        LOG_TRACE << \"create path:\" << fsFileName.parent_path();\n        drogon::error_code err;\n        filesystem::create_directories(fsFileName.parent_path(), err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsFileName);\n}",
+        "vulnerability": "Path Traversal",
+        "reason": "The code does not adequately sanitize the input 'fileName', which allows for path traversal attacks. An attacker can use special characters like '../' to navigate to unauthorized directories, potentially overwriting or accessing sensitive files outside the intended directory structure.",
+        "file_name": "250692.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::saveAs",
+        "code": "int HttpFileImpl::saveAs(const std::string &fileName) const\n{\n    assert(!fileName.empty());\n    filesystem::path fsFileName(utils::toNativePath(fileName));\n    if (!fsFileName.is_absolute() && (!fsFileName.has_parent_path() ||\n                                      (fsFileName.begin()->string() != \".\" &&\n                                       fsFileName.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsFileName = fsUploadPath / fsFileName;\n    }\n    if (fsFileName.has_parent_path() &&\n        !filesystem::exists(fsFileName.parent_path()))\n    {\n        LOG_TRACE << \"create path:\" << fsFileName.parent_path();\n        drogon::error_code err;\n        filesystem::create_directories(fsFileName.parent_path(), err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsFileName);\n}",
+        "vulnerability": "Improper Error Handling",
+        "reason": "The error handling for filesystem operations is inadequate. The code logs an error when 'create_directories' fails but does not handle the error effectively, potentially leaving the system in an inconsistent state or leaking sensitive information through logs.",
+        "file_name": "250692.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::saveAs",
+        "code": "int HttpFileImpl::saveAs(const std::string &fileName) const\n{\n    assert(!fileName.empty());\n    filesystem::path fsFileName(utils::toNativePath(fileName));\n    if (!fsFileName.is_absolute() && (!fsFileName.has_parent_path() ||\n                                      (fsFileName.begin()->string() != \".\" &&\n                                       fsFileName.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsFileName = fsUploadPath / fsFileName;\n    }\n    if (fsFileName.has_parent_path() &&\n        !filesystem::exists(fsFileName.parent_path()))\n    {\n        LOG_TRACE << \"create path:\" << fsFileName.parent_path();\n        drogon::error_code err;\n        filesystem::create_directories(fsFileName.parent_path(), err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsFileName);\n}",
+        "vulnerability": "Assertion Usage",
+        "reason": "The use of 'assert' for checking if 'fileName' is empty is not secure for production environments. Assertions can be disabled in release builds, potentially allowing empty filenames to be processed and leading to undefined behavior or security issues.",
+        "file_name": "250692.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::saveAs",
+        "code": "int HttpFileImpl::saveAs(const std::string &fileName) const\n{\n    assert(!fileName.empty());\n    filesystem::path fsFileName(utils::toNativePath(fileName));\n    if (!fsFileName.is_absolute() && (!fsFileName.has_parent_path() ||\n                                      (fsFileName.begin()->string() != \".\" &&\n                                       fsFileName.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsFileName = fsUploadPath / fsFileName;\n    }\n    if (fsFileName.has_parent_path() &&\n        !filesystem::exists(fsFileName.parent_path()))\n    {\n        LOG_TRACE << \"create path:\" << fsFileName.parent_path();\n        drogon::error_code err;\n        filesystem::create_directories(fsFileName.parent_path(), err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsFileName);\n}",
+        "vulnerability": "Path Traversal",
+        "reason": "The code does not adequately check for directory traversal. The only check is to see if the path begins with '.' or '..', but an attacker can use more complex paths to traverse directories, potentially overwriting or accessing sensitive files.",
+        "file_name": "250692.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::saveAs",
+        "code": "int HttpFileImpl::saveAs(const std::string &fileName) const\n{\n    assert(!fileName.empty());\n    filesystem::path fsFileName(utils::toNativePath(fileName));\n    if (!fsFileName.is_absolute() && (!fsFileName.has_parent_path() ||\n                                      (fsFileName.begin()->string() != \".\" &&\n                                       fsFileName.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsFileName = fsUploadPath / fsFileName;\n    }\n    if (fsFileName.has_parent_path() &&\n        !filesystem::exists(fsFileName.parent_path()))\n    {\n        LOG_TRACE << \"create path:\" << fsFileName.parent_path();\n        drogon::error_code err;\n        filesystem::create_directories(fsFileName.parent_path(), err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsFileName);\n}",
+        "vulnerability": "Insecure Directory Creation",
+        "reason": "The function creates directories without setting proper permissions. An attacker could exploit this to create directories with weak permissions, potentially allowing unauthorized access or modification to files within those directories.",
+        "file_name": "250692.sol"
+    },
+    {
+        "function_name": "HttpFileImpl::saveAs",
+        "code": "int HttpFileImpl::saveAs(const std::string &fileName) const\n{\n    assert(!fileName.empty());\n    filesystem::path fsFileName(utils::toNativePath(fileName));\n    if (!fsFileName.is_absolute() && (!fsFileName.has_parent_path() ||\n                                      (fsFileName.begin()->string() != \".\" &&\n                                       fsFileName.begin()->string() != \"..\")))\n    {\n        filesystem::path fsUploadPath(utils::toNativePath(\n            HttpAppFrameworkImpl::instance().getUploadPath()));\n        fsFileName = fsUploadPath / fsFileName;\n    }\n    if (fsFileName.has_parent_path() &&\n        !filesystem::exists(fsFileName.parent_path()))\n    {\n        LOG_TRACE << \"create path:\" << fsFileName.parent_path();\n        drogon::error_code err;\n        filesystem::create_directories(fsFileName.parent_path(), err);\n        if (err)\n        {\n            LOG_SYSERR;\n            return -1;\n        }\n    }\n    return saveTo(fsFileName);\n}",
+        "vulnerability": "Inadequate Error Handling",
+        "reason": "The code uses an assert to check if the fileName is empty. In production builds, asserts are typically disabled, potentially allowing an empty fileName to be processed. This could lead to unexpected behavior or errors elsewhere in the application. Proper error handling should replace this assert to ensure robust input validation.",
+        "file_name": "250692.sol"
+    }
+]

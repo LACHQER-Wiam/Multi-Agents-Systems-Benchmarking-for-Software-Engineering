@@ -1,0 +1,278 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ int vidioc_querycap(struct file *file, void *priv,\n\t\t\t   struct v4l2_capability\
+    \ *cap)\n{\n\tstruct v4l2_loopback_device *dev = v4l2loopback_getdevice(file);\n\
+    \tint labellen = (sizeof(cap->card) < sizeof(dev->card_label)) ?\n\t\t\t     \
+    \  sizeof(cap->card) :\n\t\t\t\t     sizeof(dev->card_label);\n\tint device_nr\
+    \ =\n\t\t((struct v4l2loopback_private *)video_get_drvdata(dev->vdev))\n\t\t\t\
+    ->device_nr;\n\t__u32 capabilities = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;\n\
+    \n\tstrlcpy(cap->driver, \"v4l2 loopback\", sizeof(cap->driver));\n\tsnprintf(cap->card,\
+    \ labellen, \"%s\", dev->card_label);\n\tsnprintf(cap->bus_info, sizeof(cap->bus_info),\n\
+    \t\t \"platform:v4l2loopback-%03d\", device_nr);\n\n#if LINUX_VERSION_CODE < KERNEL_VERSION(3,\
+    \ 1, 0)\n\t/* since 3.1.0, the v4l2-core system is supposed to set the version\
+    \ */\n\tcap->version = V4L2LOOPBACK_VERSION_CODE;\n#endif\n\n#ifdef V4L2_CAP_VIDEO_M2M\n\
+    \tcapabilities |= V4L2_CAP_VIDEO_M2M;\n#endif /* V4L2_CAP_VIDEO_M2M */\n\n\tif\
+    \ (dev->announce_all_caps) {\n\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT;\n\
+    \t} else {\n\t\tif (dev->ready_for_capture) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE;\n\
+    \t\t}\n\t\tif (dev->ready_for_output) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_OUTPUT;\n\
+    \t\t}\n\t}\n\n#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)\n\tdev->vdev->device_caps\
+    \ =\n#endif /* >=linux-4.7.0 */\n\t\tcap->device_caps = cap->capabilities = capabilities;\n\
+    \n#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)\n\tcap->capabilities |= V4L2_CAP_DEVICE_CAPS;\n\
+    #endif\n\n\tmemset(cap->reserved, 0, sizeof(cap->reserved));\n\treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic int vidioc_querycap(struct\
+    \ file *file, void *priv,\n\t\t\t   struct v4l2_capability *cap)\n{\n\tstruct\
+    \ v4l2_loopback_device *dev = v4l2loopback_getdevice(file);\n\tint labellen =\
+    \ (sizeof(cap->card) < sizeof(dev->card_label)) ?\n\t\t\t       sizeof(cap->card)\
+    \ :\n\t\t\t\t     sizeof(dev->card_label);\n\tint device_nr =\n\t\t((struct v4l2loopback_private\
+    \ *)video_get_drvdata(dev->vdev))\n\t\t\t->device_nr;\n\t__u32 capabilities =\
+    \ V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;\n\n\tstrlcpy(cap->driver, \"v4l2 loopback\"\
+    , sizeof(cap->driver));\n\tsnprintf(cap->card, labellen, \"%s\", dev->card_label);\n\
+    \tsnprintf(cap->bus_info, sizeof(cap->bus_info),\n\t\t \"platform:v4l2loopback-%03d\"\
+    , device_nr);\n\n#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)\n\t/* since\
+    \ 3.1.0, the v4l2-core system is supposed to set the version */\n\tcap->version\
+    \ = V4L2LOOPBACK_VERSION_CODE;\n#endif\n\n#ifdef V4L2_CAP_VIDEO_M2M\n\tcapabilities\
+    \ |= V4L2_CAP_VIDEO_M2M;\n#endif /* V4L2_CAP_VIDEO_M2M */\n\n\tif (dev->announce_all_caps)\
+    \ {\n\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT;\n\t}\
+    \ else {\n\t\tif (dev->ready_for_capture) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE;\n\
+    \t\t}\n\t\tif (dev->ready_for_output) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_OUTPUT;\n\
+    \t\t}\n\t}\n\n#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)\n\tdev->vdev->device_caps\
+    \ =\n#endif /* >=linux-4.7.0 */\n\t\tcap->device_caps = cap->capabilities = capabilities;\n\
+    \n#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)\n\tcap->capabilities |= V4L2_CAP_DEVICE_CAPS;\n\
+    #endif\n\n\tmemset(cap->reserved, 0, sizeof(cap->reserved));\n\treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic int vidioc_querycap(struct file\
+    \ *file, void *priv,\n\t\t\t   struct v4l2_capability *cap)\n{\n\tstruct v4l2_loopback_device\
+    \ *dev = v4l2loopback_getdevice(file);\n\tint labellen = (sizeof(cap->card) <\
+    \ sizeof(dev->card_label)) ?\n\t\t\t       sizeof(cap->card) :\n\t\t\t\t     sizeof(dev->card_label);\n\
+    \tint device_nr =\n\t\t((struct v4l2loopback_private *)video_get_drvdata(dev->vdev))\n\
+    \t\t\t->device_nr;\n\t__u32 capabilities = V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;\n\
+    \n\tstrlcpy(cap->driver, \"v4l2 loopback\", sizeof(cap->driver));\n\tsnprintf(cap->card,\
+    \ labellen, \"%s\", dev->card_label);\n\tsnprintf(cap->bus_info, sizeof(cap->bus_info),\n\
+    \t\t \"platform:v4l2loopback-%03d\", device_nr);\n\n#if LINUX_VERSION_CODE < KERNEL_VERSION(3,\
+    \ 1, 0)\n\t/* since 3.1.0, the v4l2-core system is supposed to set the version\
+    \ */\n\tcap->version = V4L2LOOPBACK_VERSION_CODE;\n#endif\n\n#ifdef V4L2_CAP_VIDEO_M2M\n\
+    \tcapabilities |= V4L2_CAP_VIDEO_M2M;\n#endif /* V4L2_CAP_VIDEO_M2M */\n\n\tif\
+    \ (dev->announce_all_caps) {\n\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT;\n\
+    \t} else {\n\t\tif (dev->ready_for_capture) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE;\n\
+    \t\t}\n\t\tif (dev->ready_for_output) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_OUTPUT;\n\
+    \t\t}\n\t}\n\n#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)\n\tdev->vdev->device_caps\
+    \ =\n#endif /* >=linux-4.7.0 */\n\t\tcap->device_caps = cap->capabilities = capabilities;\n\
+    \n#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)\n\tcap->capabilities |= V4L2_CAP_DEVICE_CAPS;\n\
+    #endif\n\n\tmemset(cap->reserved, 0, sizeof(cap->reserved));\n\treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic int vidioc_querycap(struct\
+    \ file *file, void *priv,\n\t\t\t   struct v4l2_capability *cap)\n{\n\tstruct\
+    \ v4l2_loopback_device *dev = v4l2loopback_getdevice(file);\n\tint labellen =\
+    \ (sizeof(cap->card) < sizeof(dev->card_label)) ?\n\t\t\t       sizeof(cap->card)\
+    \ :\n\t\t\t\t     sizeof(dev->card_label);\n\tint device_nr =\n\t\t((struct v4l2loopback_private\
+    \ *)video_get_drvdata(dev->vdev))\n\t\t\t->device_nr;\n\t__u32 capabilities =\
+    \ V4L2_CAP_STREAMING | V4L2_CAP_READWRITE;\n\n\tstrlcpy(cap->driver, \"v4l2 loopback\"\
+    , sizeof(cap->driver));\n\tsnprintf(cap->card, labellen, \"%s\", dev->card_label);\n\
+    \tsnprintf(cap->bus_info, sizeof(cap->bus_info),\n\t\t \"platform:v4l2loopback-%03d\"\
+    , device_nr);\n\n#if LINUX_VERSION_CODE < KERNEL_VERSION(3, 1, 0)\n\t/* since\
+    \ 3.1.0, the v4l2-core system is supposed to set the version */\n\tcap->version\
+    \ = V4L2LOOPBACK_VERSION_CODE;\n#endif\n\n#ifdef V4L2_CAP_VIDEO_M2M\n\tcapabilities\
+    \ |= V4L2_CAP_VIDEO_M2M;\n#endif /* V4L2_CAP_VIDEO_M2M */\n\n\tif (dev->announce_all_caps)\
+    \ {\n\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE | V4L2_CAP_VIDEO_OUTPUT;\n\t}\
+    \ else {\n\t\tif (dev->ready_for_capture) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_CAPTURE;\n\
+    \t\t}\n\t\tif (dev->ready_for_output) {\n\t\t\tcapabilities |= V4L2_CAP_VIDEO_OUTPUT;\n\
+    \t\t}\n\t}\n\n#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0)\n\tdev->vdev->device_caps\
+    \ =\n#endif /* >=linux-4.7.0 */\n\t\tcap->device_caps = cap->capabilities = capabilities;\n\
+    \n#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0)\n\tcap->capabilities |= V4L2_CAP_DEVICE_CAPS;\n\
+    #endif\n\n\tmemset(cap->reserved, 0, sizeof(cap->reserved));\n\treturn 0;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 225383
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."
