@@ -1,0 +1,620 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\n    void\
+    \ Image::printIFDStructure(BasicIo& io, std::ostream& out, Exiv2::PrintStructureOption\
+    \ option,uint32_t start,bool bSwap,char c,int depth)\n    {\n        depth++;\n\
+    \        bool bFirst  = true  ;\n\n        // buffer\n        const size_t dirSize\
+    \ = 32;\n        DataBuf  dir(dirSize);\n        bool bPrint = option == kpsBasic\
+    \ || option == kpsRecursive;\n\n        do {\n            // Read top of directory\n\
+    \            io.seek(start,BasicIo::beg);\n            io.read(dir.pData_, 2);\n\
+    \            uint16_t   dirLength = byteSwap2(dir,0,bSwap);\n\n            bool\
+    \ tooBig = dirLength > 500;\n            if ( tooBig ) throw Error(55);\n\n  \
+    \          if ( bFirst && bPrint ) {\n                out << Internal::indent(depth)\
+    \ << Internal::stringFormat(\"STRUCTURE OF TIFF FILE (%c%c): \",c,c) << io.path()\
+    \ << std::endl;\n                if ( tooBig ) out << Internal::indent(depth)\
+    \ << \"dirLength = \" << dirLength << std::endl;\n            }\n\n          \
+    \  // Read the dictionary\n            for ( int i = 0 ; i < dirLength ; i ++\
+    \ ) {\n                if ( bFirst && bPrint ) {\n                    out << Internal::indent(depth)\n\
+    \                        << \" address |    tag                              |\
+    \     \"\n                        << \" type |    count |    offset | value\\\
+    n\";\n                }\n                bFirst = false;\n\n                io.read(dir.pData_,\
+    \ 12);\n                uint16_t tag    = byteSwap2(dir,0,bSwap);\n          \
+    \      uint16_t type   = byteSwap2(dir,2,bSwap);\n                uint32_t count\
+    \  = byteSwap4(dir,4,bSwap);\n                uint32_t offset = byteSwap4(dir,8,bSwap);\n\
+    \n                // Break for unknown tag types else we may segfault.\n     \
+    \           if ( !typeValid(type) ) {\n                    std::cerr << \"invalid\
+    \ type value detected in Image::printIFDStructure:  \" << type << std::endl;\n\
+    \                    start = 0; // break from do loop\n                    throw\
+    \ Error(56);\n                    break; // break from for loop\n            \
+    \    }\n\n                std::string sp  = \"\" ; // output spacer\n\n      \
+    \          //prepare to print the value\n                uint32_t kount  = isPrintXMP(tag,option)\
+    \ ? count // haul in all the data\n                                : isPrintICC(tag,option)\
+    \ ? count // ditto\n                                : isStringType(type)     ?\
+    \ (count > 32 ? 32 : count) // restrict long arrays\n                        \
+    \        : count > 5              ? 5\n                                : count\n\
+    \                                ;\n                uint32_t pad    = isStringType(type)\
+    \ ? 1 : 0;\n                uint32_t size   = isStringType(type) ? 1\n       \
+    \                         : is2ByteType(type)  ? 2\n                         \
+    \       : is4ByteType(type)  ? 4\n                                : is8ByteType(type)\
+    \  ? 8\n                                : 1\n                                ;\n\
+    \n                // if ( offset > io.size() ) offset = 0; // Denial of service?\n\
+    \                DataBuf  buf(size*count + pad+20);  // allocate a buffer\n  \
+    \              std::memcpy(buf.pData_,dir.pData_+8,4);  // copy dir[8:11] into\
+    \ buffer (short strings)\n                const bool bOffsetIsPointer = count*size\
+    \ > 4;\n\n                if ( bOffsetIsPointer ) {         // read into buffer\n\
+    \                    size_t   restore = io.tell();  // save\n                \
+    \    io.seek(offset,BasicIo::beg);  // position\n                    io.read(buf.pData_,count*size);//\
+    \ read\n                    io.seek(restore,BasicIo::beg); // restore\n      \
+    \          }\n\n                if ( bPrint ) {\n                    const uint32_t\
+    \ address = start + 2 + i*12 ;\n                    const std::string offsetString\
+    \ = bOffsetIsPointer?\n                        Internal::stringFormat(\"%10u\"\
+    , offset):\n                        \"\";\n\n                    out << Internal::indent(depth)\n\
+    \                    << Internal::stringFormat(\"%8u | %#06x %-28s |%10s |%9u\
+    \ |%10s | \"\n                                              ,address,tag,tagName(tag).c_str(),typeName(type),count,offsetString.c_str());\n\
+    \                    if ( isShortType(type) ){\n                        for (\
+    \ size_t k = 0 ; k < kount ; k++ ) {\n                            out << sp <<\
+    \ byteSwap2(buf,k*size,bSwap);\n                            sp = \" \";\n    \
+    \                    }\n                    } else if ( isLongType(type) ){\n\
+    \                        for ( size_t k = 0 ; k < kount ; k++ ) {\n          \
+    \                  out << sp << byteSwap4(buf,k*size,bSwap);\n               \
+    \             sp = \" \";\n                        }\n\n                    }\
+    \ else if ( isRationalType(type) ){\n                        for ( size_t k =\
+    \ 0 ; k < kount ; k++ ) {\n                            uint32_t a = byteSwap4(buf,k*size+0,bSwap);\n\
+    \                            uint32_t b = byteSwap4(buf,k*size+4,bSwap);\n   \
+    \                         out << sp << a << \"/\" << b;\n                    \
+    \        sp = \" \";\n                        }\n                    } else if\
+    \ ( isStringType(type) ) {\n                        out << sp << Internal::binaryToString(buf,\
+    \ kount);\n                    }\n\n                    sp = kount == count ?\
+    \ \"\" : \" ...\";\n                    out << sp << std::endl;\n\n          \
+    \          if ( option == kpsRecursive && (tag == 0x8769 /* ExifTag */ || tag\
+    \ == 0x014a/*SubIFDs*/  || type == tiffIfd) ) {\n                        for (\
+    \ size_t k = 0 ; k < count ; k++ ) {\n                            size_t   restore\
+    \ = io.tell();\n                            uint32_t offset = byteSwap4(buf,k*size,bSwap);\n\
+    \                            printIFDStructure(io,out,option,offset,bSwap,c,depth);\n\
+    \                            io.seek(restore,BasicIo::beg);\n                \
+    \        }\n                    } else if ( option == kpsRecursive && tag == 0x83bb\
+    \ /* IPTCNAA */ ) {\n                        size_t   restore = io.tell();  //\
+    \ save\n                        io.seek(offset,BasicIo::beg);  // position\n \
+    \                       byte* bytes=new byte[count] ;  // allocate memory\n  \
+    \                      io.read(bytes,count)        ;  // read\n              \
+    \          io.seek(restore,BasicIo::beg); // restore\n                       \
+    \ IptcData::printStructure(out,bytes,count,depth);\n                        delete[]\
+    \ bytes;                // free\n                    }  else if ( option == kpsRecursive\
+    \ && tag == 0x927c /* MakerNote */ && count > 10) {\n                        size_t\
+    \   restore = io.tell();  // save\n\n                        uint32_t jump= 10\
+    \           ;\n                        byte     bytes[20]          ;\n       \
+    \                 const char* chars = (const char*) &bytes[0] ;\n            \
+    \            io.seek(offset,BasicIo::beg);  // position\n                    \
+    \    io.read(bytes,jump    )     ;  // read\n                        bytes[jump]=0\
+    \               ;\n                        if ( ::strcmp(\"Nikon\",chars) == 0\
+    \ ) {\n                            // tag is an embedded tiff\n              \
+    \              byte* bytes=new byte[count-jump] ;  // allocate memory\n      \
+    \                      io.read(bytes,count-jump)        ;  // read\n         \
+    \                   MemIo memIo(bytes,count-jump)    ;  // create a file\n   \
+    \                         printTiffStructure(memIo,out,option,depth);\n      \
+    \                      delete[] bytes                   ;  // free\n         \
+    \               } else {\n                            // tag is an IFD\n     \
+    \                       io.seek(0,BasicIo::beg);  // position\n              \
+    \              printIFDStructure(io,out,option,offset,bSwap,c,depth);\n      \
+    \                  }\n\n                        io.seek(restore,BasicIo::beg);\
+    \ // restore\n                    }\n                }\n\n                if (\
+    \ isPrintXMP(tag,option) ) {\n                    buf.pData_[count]=0;\n     \
+    \               out << (char*) buf.pData_;\n                }\n              \
+    \  if ( isPrintICC(tag,option) ) {\n                    out.write((const char*)buf.pData_,count);\n\
+    \                }\n            }\n            if ( start ) {\n              \
+    \  io.read(dir.pData_, 4);\n                start = tooBig ? 0 : byteSwap4(dir,0,bSwap);\n\
+    \            }\n        } while (start) ;\n\n        if ( bPrint ) {\n       \
+    \     out << Internal::indent(depth) << \"END \" << io.path() << std::endl;\n\
+    \        }\n        out.flush();\n        depth--;\n    }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\n    void Image::printIFDStructure(BasicIo&\
+    \ io, std::ostream& out, Exiv2::PrintStructureOption option,uint32_t start,bool\
+    \ bSwap,char c,int depth)\n    {\n        depth++;\n        bool bFirst  = true\
+    \  ;\n\n        // buffer\n        const size_t dirSize = 32;\n        DataBuf\
+    \  dir(dirSize);\n        bool bPrint = option == kpsBasic || option == kpsRecursive;\n\
+    \n        do {\n            // Read top of directory\n            io.seek(start,BasicIo::beg);\n\
+    \            io.read(dir.pData_, 2);\n            uint16_t   dirLength = byteSwap2(dir,0,bSwap);\n\
+    \n            bool tooBig = dirLength > 500;\n            if ( tooBig ) throw\
+    \ Error(55);\n\n            if ( bFirst && bPrint ) {\n                out <<\
+    \ Internal::indent(depth) << Internal::stringFormat(\"STRUCTURE OF TIFF FILE (%c%c):\
+    \ \",c,c) << io.path() << std::endl;\n                if ( tooBig ) out << Internal::indent(depth)\
+    \ << \"dirLength = \" << dirLength << std::endl;\n            }\n\n          \
+    \  // Read the dictionary\n            for ( int i = 0 ; i < dirLength ; i ++\
+    \ ) {\n                if ( bFirst && bPrint ) {\n                    out << Internal::indent(depth)\n\
+    \                        << \" address |    tag                              |\
+    \     \"\n                        << \" type |    count |    offset | value\\\
+    n\";\n                }\n                bFirst = false;\n\n                io.read(dir.pData_,\
+    \ 12);\n                uint16_t tag    = byteSwap2(dir,0,bSwap);\n          \
+    \      uint16_t type   = byteSwap2(dir,2,bSwap);\n                uint32_t count\
+    \  = byteSwap4(dir,4,bSwap);\n                uint32_t offset = byteSwap4(dir,8,bSwap);\n\
+    \n                // Break for unknown tag types else we may segfault.\n     \
+    \           if ( !typeValid(type) ) {\n                    std::cerr << \"invalid\
+    \ type value detected in Image::printIFDStructure:  \" << type << std::endl;\n\
+    \                    start = 0; // break from do loop\n                    throw\
+    \ Error(56);\n                    break; // break from for loop\n            \
+    \    }\n\n                std::string sp  = \"\" ; // output spacer\n\n      \
+    \          //prepare to print the value\n                uint32_t kount  = isPrintXMP(tag,option)\
+    \ ? count // haul in all the data\n                                : isPrintICC(tag,option)\
+    \ ? count // ditto\n                                : isStringType(type)     ?\
+    \ (count > 32 ? 32 : count) // restrict long arrays\n                        \
+    \        : count > 5              ? 5\n                                : count\n\
+    \                                ;\n                uint32_t pad    = isStringType(type)\
+    \ ? 1 : 0;\n                uint32_t size   = isStringType(type) ? 1\n       \
+    \                         : is2ByteType(type)  ? 2\n                         \
+    \       : is4ByteType(type)  ? 4\n                                : is8ByteType(type)\
+    \  ? 8\n                                : 1\n                                ;\n\
+    \n                // if ( offset > io.size() ) offset = 0; // Denial of service?\n\
+    \                DataBuf  buf(size*count + pad+20);  // allocate a buffer\n  \
+    \              std::memcpy(buf.pData_,dir.pData_+8,4);  // copy dir[8:11] into\
+    \ buffer (short strings)\n                const bool bOffsetIsPointer = count*size\
+    \ > 4;\n\n                if ( bOffsetIsPointer ) {         // read into buffer\n\
+    \                    size_t   restore = io.tell();  // save\n                \
+    \    io.seek(offset,BasicIo::beg);  // position\n                    io.read(buf.pData_,count*size);//\
+    \ read\n                    io.seek(restore,BasicIo::beg); // restore\n      \
+    \          }\n\n                if ( bPrint ) {\n                    const uint32_t\
+    \ address = start + 2 + i*12 ;\n                    const std::string offsetString\
+    \ = bOffsetIsPointer?\n                        Internal::stringFormat(\"%10u\"\
+    , offset):\n                        \"\";\n\n                    out << Internal::indent(depth)\n\
+    \                    << Internal::stringFormat(\"%8u | %#06x %-28s |%10s |%9u\
+    \ |%10s | \"\n                                              ,address,tag,tagName(tag).c_str(),typeName(type),count,offsetString.c_str());\n\
+    \                    if ( isShortType(type) ){\n                        for (\
+    \ size_t k = 0 ; k < kount ; k++ ) {\n                            out << sp <<\
+    \ byteSwap2(buf,k*size,bSwap);\n                            sp = \" \";\n    \
+    \                    }\n                    } else if ( isLongType(type) ){\n\
+    \                        for ( size_t k = 0 ; k < kount ; k++ ) {\n          \
+    \                  out << sp << byteSwap4(buf,k*size,bSwap);\n               \
+    \             sp = \" \";\n                        }\n\n                    }\
+    \ else if ( isRationalType(type) ){\n                        for ( size_t k =\
+    \ 0 ; k < kount ; k++ ) {\n                            uint32_t a = byteSwap4(buf,k*size+0,bSwap);\n\
+    \                            uint32_t b = byteSwap4(buf,k*size+4,bSwap);\n   \
+    \                         out << sp << a << \"/\" << b;\n                    \
+    \        sp = \" \";\n                        }\n                    } else if\
+    \ ( isStringType(type) ) {\n                        out << sp << Internal::binaryToString(buf,\
+    \ kount);\n                    }\n\n                    sp = kount == count ?\
+    \ \"\" : \" ...\";\n                    out << sp << std::endl;\n\n          \
+    \          if ( option == kpsRecursive && (tag == 0x8769 /* ExifTag */ || tag\
+    \ == 0x014a/*SubIFDs*/  || type == tiffIfd) ) {\n                        for (\
+    \ size_t k = 0 ; k < count ; k++ ) {\n                            size_t   restore\
+    \ = io.tell();\n                            uint32_t offset = byteSwap4(buf,k*size,bSwap);\n\
+    \                            printIFDStructure(io,out,option,offset,bSwap,c,depth);\n\
+    \                            io.seek(restore,BasicIo::beg);\n                \
+    \        }\n                    } else if ( option == kpsRecursive && tag == 0x83bb\
+    \ /* IPTCNAA */ ) {\n                        size_t   restore = io.tell();  //\
+    \ save\n                        io.seek(offset,BasicIo::beg);  // position\n \
+    \                       byte* bytes=new byte[count] ;  // allocate memory\n  \
+    \                      io.read(bytes,count)        ;  // read\n              \
+    \          io.seek(restore,BasicIo::beg); // restore\n                       \
+    \ IptcData::printStructure(out,bytes,count,depth);\n                        delete[]\
+    \ bytes;                // free\n                    }  else if ( option == kpsRecursive\
+    \ && tag == 0x927c /* MakerNote */ && count > 10) {\n                        size_t\
+    \   restore = io.tell();  // save\n\n                        uint32_t jump= 10\
+    \           ;\n                        byte     bytes[20]          ;\n       \
+    \                 const char* chars = (const char*) &bytes[0] ;\n            \
+    \            io.seek(offset,BasicIo::beg);  // position\n                    \
+    \    io.read(bytes,jump    )     ;  // read\n                        bytes[jump]=0\
+    \               ;\n                        if ( ::strcmp(\"Nikon\",chars) == 0\
+    \ ) {\n                            // tag is an embedded tiff\n              \
+    \              byte* bytes=new byte[count-jump] ;  // allocate memory\n      \
+    \                      io.read(bytes,count-jump)        ;  // read\n         \
+    \                   MemIo memIo(bytes,count-jump)    ;  // create a file\n   \
+    \                         printTiffStructure(memIo,out,option,depth);\n      \
+    \                      delete[] bytes                   ;  // free\n         \
+    \               } else {\n                            // tag is an IFD\n     \
+    \                       io.seek(0,BasicIo::beg);  // position\n              \
+    \              printIFDStructure(io,out,option,offset,bSwap,c,depth);\n      \
+    \                  }\n\n                        io.seek(restore,BasicIo::beg);\
+    \ // restore\n                    }\n                }\n\n                if (\
+    \ isPrintXMP(tag,option) ) {\n                    buf.pData_[count]=0;\n     \
+    \               out << (char*) buf.pData_;\n                }\n              \
+    \  if ( isPrintICC(tag,option) ) {\n                    out.write((const char*)buf.pData_,count);\n\
+    \                }\n            }\n            if ( start ) {\n              \
+    \  io.read(dir.pData_, 4);\n                start = tooBig ? 0 : byteSwap4(dir,0,bSwap);\n\
+    \            }\n        } while (start) ;\n\n        if ( bPrint ) {\n       \
+    \     out << Internal::indent(depth) << \"END \" << io.path() << std::endl;\n\
+    \        }\n        out.flush();\n        depth--;\n    }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\n    void Image::printIFDStructure(BasicIo&\
+    \ io, std::ostream& out, Exiv2::PrintStructureOption option,uint32_t start,bool\
+    \ bSwap,char c,int depth)\n    {\n        depth++;\n        bool bFirst  = true\
+    \  ;\n\n        // buffer\n        const size_t dirSize = 32;\n        DataBuf\
+    \  dir(dirSize);\n        bool bPrint = option == kpsBasic || option == kpsRecursive;\n\
+    \n        do {\n            // Read top of directory\n            io.seek(start,BasicIo::beg);\n\
+    \            io.read(dir.pData_, 2);\n            uint16_t   dirLength = byteSwap2(dir,0,bSwap);\n\
+    \n            bool tooBig = dirLength > 500;\n            if ( tooBig ) throw\
+    \ Error(55);\n\n            if ( bFirst && bPrint ) {\n                out <<\
+    \ Internal::indent(depth) << Internal::stringFormat(\"STRUCTURE OF TIFF FILE (%c%c):\
+    \ \",c,c) << io.path() << std::endl;\n                if ( tooBig ) out << Internal::indent(depth)\
+    \ << \"dirLength = \" << dirLength << std::endl;\n            }\n\n          \
+    \  // Read the dictionary\n            for ( int i = 0 ; i < dirLength ; i ++\
+    \ ) {\n                if ( bFirst && bPrint ) {\n                    out << Internal::indent(depth)\n\
+    \                        << \" address |    tag                              |\
+    \     \"\n                        << \" type |    count |    offset | value\\\
+    n\";\n                }\n                bFirst = false;\n\n                io.read(dir.pData_,\
+    \ 12);\n                uint16_t tag    = byteSwap2(dir,0,bSwap);\n          \
+    \      uint16_t type   = byteSwap2(dir,2,bSwap);\n                uint32_t count\
+    \  = byteSwap4(dir,4,bSwap);\n                uint32_t offset = byteSwap4(dir,8,bSwap);\n\
+    \n                // Break for unknown tag types else we may segfault.\n     \
+    \           if ( !typeValid(type) ) {\n                    std::cerr << \"invalid\
+    \ type value detected in Image::printIFDStructure:  \" << type << std::endl;\n\
+    \                    start = 0; // break from do loop\n                    throw\
+    \ Error(56);\n                    break; // break from for loop\n            \
+    \    }\n\n                std::string sp  = \"\" ; // output spacer\n\n      \
+    \          //prepare to print the value\n                uint32_t kount  = isPrintXMP(tag,option)\
+    \ ? count // haul in all the data\n                                : isPrintICC(tag,option)\
+    \ ? count // ditto\n                                : isStringType(type)     ?\
+    \ (count > 32 ? 32 : count) // restrict long arrays\n                        \
+    \        : count > 5              ? 5\n                                : count\n\
+    \                                ;\n                uint32_t pad    = isStringType(type)\
+    \ ? 1 : 0;\n                uint32_t size   = isStringType(type) ? 1\n       \
+    \                         : is2ByteType(type)  ? 2\n                         \
+    \       : is4ByteType(type)  ? 4\n                                : is8ByteType(type)\
+    \  ? 8\n                                : 1\n                                ;\n\
+    \n                // if ( offset > io.size() ) offset = 0; // Denial of service?\n\
+    \                DataBuf  buf(size*count + pad+20);  // allocate a buffer\n  \
+    \              std::memcpy(buf.pData_,dir.pData_+8,4);  // copy dir[8:11] into\
+    \ buffer (short strings)\n                const bool bOffsetIsPointer = count*size\
+    \ > 4;\n\n                if ( bOffsetIsPointer ) {         // read into buffer\n\
+    \                    size_t   restore = io.tell();  // save\n                \
+    \    io.seek(offset,BasicIo::beg);  // position\n                    io.read(buf.pData_,count*size);//\
+    \ read\n                    io.seek(restore,BasicIo::beg); // restore\n      \
+    \          }\n\n                if ( bPrint ) {\n                    const uint32_t\
+    \ address = start + 2 + i*12 ;\n                    const std::string offsetString\
+    \ = bOffsetIsPointer?\n                        Internal::stringFormat(\"%10u\"\
+    , offset):\n                        \"\";\n\n                    out << Internal::indent(depth)\n\
+    \                    << Internal::stringFormat(\"%8u | %#06x %-28s |%10s |%9u\
+    \ |%10s | \"\n                                              ,address,tag,tagName(tag).c_str(),typeName(type),count,offsetString.c_str());\n\
+    \                    if ( isShortType(type) ){\n                        for (\
+    \ size_t k = 0 ; k < kount ; k++ ) {\n                            out << sp <<\
+    \ byteSwap2(buf,k*size,bSwap);\n                            sp = \" \";\n    \
+    \                    }\n                    } else if ( isLongType(type) ){\n\
+    \                        for ( size_t k = 0 ; k < kount ; k++ ) {\n          \
+    \                  out << sp << byteSwap4(buf,k*size,bSwap);\n               \
+    \             sp = \" \";\n                        }\n\n                    }\
+    \ else if ( isRationalType(type) ){\n                        for ( size_t k =\
+    \ 0 ; k < kount ; k++ ) {\n                            uint32_t a = byteSwap4(buf,k*size+0,bSwap);\n\
+    \                            uint32_t b = byteSwap4(buf,k*size+4,bSwap);\n   \
+    \                         out << sp << a << \"/\" << b;\n                    \
+    \        sp = \" \";\n                        }\n                    } else if\
+    \ ( isStringType(type) ) {\n                        out << sp << Internal::binaryToString(buf,\
+    \ kount);\n                    }\n\n                    sp = kount == count ?\
+    \ \"\" : \" ...\";\n                    out << sp << std::endl;\n\n          \
+    \          if ( option == kpsRecursive && (tag == 0x8769 /* ExifTag */ || tag\
+    \ == 0x014a/*SubIFDs*/  || type == tiffIfd) ) {\n                        for (\
+    \ size_t k = 0 ; k < count ; k++ ) {\n                            size_t   restore\
+    \ = io.tell();\n                            uint32_t offset = byteSwap4(buf,k*size,bSwap);\n\
+    \                            printIFDStructure(io,out,option,offset,bSwap,c,depth);\n\
+    \                            io.seek(restore,BasicIo::beg);\n                \
+    \        }\n                    } else if ( option == kpsRecursive && tag == 0x83bb\
+    \ /* IPTCNAA */ ) {\n                        size_t   restore = io.tell();  //\
+    \ save\n                        io.seek(offset,BasicIo::beg);  // position\n \
+    \                       byte* bytes=new byte[count] ;  // allocate memory\n  \
+    \                      io.read(bytes,count)        ;  // read\n              \
+    \          io.seek(restore,BasicIo::beg); // restore\n                       \
+    \ IptcData::printStructure(out,bytes,count,depth);\n                        delete[]\
+    \ bytes;                // free\n                    }  else if ( option == kpsRecursive\
+    \ && tag == 0x927c /* MakerNote */ && count > 10) {\n                        size_t\
+    \   restore = io.tell();  // save\n\n                        uint32_t jump= 10\
+    \           ;\n                        byte     bytes[20]          ;\n       \
+    \                 const char* chars = (const char*) &bytes[0] ;\n            \
+    \            io.seek(offset,BasicIo::beg);  // position\n                    \
+    \    io.read(bytes,jump    )     ;  // read\n                        bytes[jump]=0\
+    \               ;\n                        if ( ::strcmp(\"Nikon\",chars) == 0\
+    \ ) {\n                            // tag is an embedded tiff\n              \
+    \              byte* bytes=new byte[count-jump] ;  // allocate memory\n      \
+    \                      io.read(bytes,count-jump)        ;  // read\n         \
+    \                   MemIo memIo(bytes,count-jump)    ;  // create a file\n   \
+    \                         printTiffStructure(memIo,out,option,depth);\n      \
+    \                      delete[] bytes                   ;  // free\n         \
+    \               } else {\n                            // tag is an IFD\n     \
+    \                       io.seek(0,BasicIo::beg);  // position\n              \
+    \              printIFDStructure(io,out,option,offset,bSwap,c,depth);\n      \
+    \                  }\n\n                        io.seek(restore,BasicIo::beg);\
+    \ // restore\n                    }\n                }\n\n                if (\
+    \ isPrintXMP(tag,option) ) {\n                    buf.pData_[count]=0;\n     \
+    \               out << (char*) buf.pData_;\n                }\n              \
+    \  if ( isPrintICC(tag,option) ) {\n                    out.write((const char*)buf.pData_,count);\n\
+    \                }\n            }\n            if ( start ) {\n              \
+    \  io.read(dir.pData_, 4);\n                start = tooBig ? 0 : byteSwap4(dir,0,bSwap);\n\
+    \            }\n        } while (start) ;\n\n        if ( bPrint ) {\n       \
+    \     out << Internal::indent(depth) << \"END \" << io.path() << std::endl;\n\
+    \        }\n        out.flush();\n        depth--;\n    }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\n    void Image::printIFDStructure(BasicIo&\
+    \ io, std::ostream& out, Exiv2::PrintStructureOption option,uint32_t start,bool\
+    \ bSwap,char c,int depth)\n    {\n        depth++;\n        bool bFirst  = true\
+    \  ;\n\n        // buffer\n        const size_t dirSize = 32;\n        DataBuf\
+    \  dir(dirSize);\n        bool bPrint = option == kpsBasic || option == kpsRecursive;\n\
+    \n        do {\n            // Read top of directory\n            io.seek(start,BasicIo::beg);\n\
+    \            io.read(dir.pData_, 2);\n            uint16_t   dirLength = byteSwap2(dir,0,bSwap);\n\
+    \n            bool tooBig = dirLength > 500;\n            if ( tooBig ) throw\
+    \ Error(55);\n\n            if ( bFirst && bPrint ) {\n                out <<\
+    \ Internal::indent(depth) << Internal::stringFormat(\"STRUCTURE OF TIFF FILE (%c%c):\
+    \ \",c,c) << io.path() << std::endl;\n                if ( tooBig ) out << Internal::indent(depth)\
+    \ << \"dirLength = \" << dirLength << std::endl;\n            }\n\n          \
+    \  // Read the dictionary\n            for ( int i = 0 ; i < dirLength ; i ++\
+    \ ) {\n                if ( bFirst && bPrint ) {\n                    out << Internal::indent(depth)\n\
+    \                        << \" address |    tag                              |\
+    \     \"\n                        << \" type |    count |    offset | value\\\
+    n\";\n                }\n                bFirst = false;\n\n                io.read(dir.pData_,\
+    \ 12);\n                uint16_t tag    = byteSwap2(dir,0,bSwap);\n          \
+    \      uint16_t type   = byteSwap2(dir,2,bSwap);\n                uint32_t count\
+    \  = byteSwap4(dir,4,bSwap);\n                uint32_t offset = byteSwap4(dir,8,bSwap);\n\
+    \n                // Break for unknown tag types else we may segfault.\n     \
+    \           if ( !typeValid(type) ) {\n                    std::cerr << \"invalid\
+    \ type value detected in Image::printIFDStructure:  \" << type << std::endl;\n\
+    \                    start = 0; // break from do loop\n                    throw\
+    \ Error(56);\n                    break; // break from for loop\n            \
+    \    }\n\n                std::string sp  = \"\" ; // output spacer\n\n      \
+    \          //prepare to print the value\n                uint32_t kount  = isPrintXMP(tag,option)\
+    \ ? count // haul in all the data\n                                : isPrintICC(tag,option)\
+    \ ? count // ditto\n                                : isStringType(type)     ?\
+    \ (count > 32 ? 32 : count) // restrict long arrays\n                        \
+    \        : count > 5              ? 5\n                                : count\n\
+    \                                ;\n                uint32_t pad    = isStringType(type)\
+    \ ? 1 : 0;\n                uint32_t size   = isStringType(type) ? 1\n       \
+    \                         : is2ByteType(type)  ? 2\n                         \
+    \       : is4ByteType(type)  ? 4\n                                : is8ByteType(type)\
+    \  ? 8\n                                : 1\n                                ;\n\
+    \n                // if ( offset > io.size() ) offset = 0; // Denial of service?\n\
+    \                DataBuf  buf(size*count + pad+20);  // allocate a buffer\n  \
+    \              std::memcpy(buf.pData_,dir.pData_+8,4);  // copy dir[8:11] into\
+    \ buffer (short strings)\n                const bool bOffsetIsPointer = count*size\
+    \ > 4;\n\n                if ( bOffsetIsPointer ) {         // read into buffer\n\
+    \                    size_t   restore = io.tell();  // save\n                \
+    \    io.seek(offset,BasicIo::beg);  // position\n                    io.read(buf.pData_,count*size);//\
+    \ read\n                    io.seek(restore,BasicIo::beg); // restore\n      \
+    \          }\n\n                if ( bPrint ) {\n                    const uint32_t\
+    \ address = start + 2 + i*12 ;\n                    const std::string offsetString\
+    \ = bOffsetIsPointer?\n                        Internal::stringFormat(\"%10u\"\
+    , offset):\n                        \"\";\n\n                    out << Internal::indent(depth)\n\
+    \                    << Internal::stringFormat(\"%8u | %#06x %-28s |%10s |%9u\
+    \ |%10s | \"\n                                              ,address,tag,tagName(tag).c_str(),typeName(type),count,offsetString.c_str());\n\
+    \                    if ( isShortType(type) ){\n                        for (\
+    \ size_t k = 0 ; k < kount ; k++ ) {\n                            out << sp <<\
+    \ byteSwap2(buf,k*size,bSwap);\n                            sp = \" \";\n    \
+    \                    }\n                    } else if ( isLongType(type) ){\n\
+    \                        for ( size_t k = 0 ; k < kount ; k++ ) {\n          \
+    \                  out << sp << byteSwap4(buf,k*size,bSwap);\n               \
+    \             sp = \" \";\n                        }\n\n                    }\
+    \ else if ( isRationalType(type) ){\n                        for ( size_t k =\
+    \ 0 ; k < kount ; k++ ) {\n                            uint32_t a = byteSwap4(buf,k*size+0,bSwap);\n\
+    \                            uint32_t b = byteSwap4(buf,k*size+4,bSwap);\n   \
+    \                         out << sp << a << \"/\" << b;\n                    \
+    \        sp = \" \";\n                        }\n                    } else if\
+    \ ( isStringType(type) ) {\n                        out << sp << Internal::binaryToString(buf,\
+    \ kount);\n                    }\n\n                    sp = kount == count ?\
+    \ \"\" : \" ...\";\n                    out << sp << std::endl;\n\n          \
+    \          if ( option == kpsRecursive && (tag == 0x8769 /* ExifTag */ || tag\
+    \ == 0x014a/*SubIFDs*/  || type == tiffIfd) ) {\n                        for (\
+    \ size_t k = 0 ; k < count ; k++ ) {\n                            size_t   restore\
+    \ = io.tell();\n                            uint32_t offset = byteSwap4(buf,k*size,bSwap);\n\
+    \                            printIFDStructure(io,out,option,offset,bSwap,c,depth);\n\
+    \                            io.seek(restore,BasicIo::beg);\n                \
+    \        }\n                    } else if ( option == kpsRecursive && tag == 0x83bb\
+    \ /* IPTCNAA */ ) {\n                        size_t   restore = io.tell();  //\
+    \ save\n                        io.seek(offset,BasicIo::beg);  // position\n \
+    \                       byte* bytes=new byte[count] ;  // allocate memory\n  \
+    \                      io.read(bytes,count)        ;  // read\n              \
+    \          io.seek(restore,BasicIo::beg); // restore\n                       \
+    \ IptcData::printStructure(out,bytes,count,depth);\n                        delete[]\
+    \ bytes;                // free\n                    }  else if ( option == kpsRecursive\
+    \ && tag == 0x927c /* MakerNote */ && count > 10) {\n                        size_t\
+    \   restore = io.tell();  // save\n\n                        uint32_t jump= 10\
+    \           ;\n                        byte     bytes[20]          ;\n       \
+    \                 const char* chars = (const char*) &bytes[0] ;\n            \
+    \            io.seek(offset,BasicIo::beg);  // position\n                    \
+    \    io.read(bytes,jump    )     ;  // read\n                        bytes[jump]=0\
+    \               ;\n                        if ( ::strcmp(\"Nikon\",chars) == 0\
+    \ ) {\n                            // tag is an embedded tiff\n              \
+    \              byte* bytes=new byte[count-jump] ;  // allocate memory\n      \
+    \                      io.read(bytes,count-jump)        ;  // read\n         \
+    \                   MemIo memIo(bytes,count-jump)    ;  // create a file\n   \
+    \                         printTiffStructure(memIo,out,option,depth);\n      \
+    \                      delete[] bytes                   ;  // free\n         \
+    \               } else {\n                            // tag is an IFD\n     \
+    \                       io.seek(0,BasicIo::beg);  // position\n              \
+    \              printIFDStructure(io,out,option,offset,bSwap,c,depth);\n      \
+    \                  }\n\n                        io.seek(restore,BasicIo::beg);\
+    \ // restore\n                    }\n                }\n\n                if (\
+    \ isPrintXMP(tag,option) ) {\n                    buf.pData_[count]=0;\n     \
+    \               out << (char*) buf.pData_;\n                }\n              \
+    \  if ( isPrintICC(tag,option) ) {\n                    out.write((const char*)buf.pData_,count);\n\
+    \                }\n            }\n            if ( start ) {\n              \
+    \  io.read(dir.pData_, 4);\n                start = tooBig ? 0 : byteSwap4(dir,0,bSwap);\n\
+    \            }\n        } while (start) ;\n\n        if ( bPrint ) {\n       \
+    \     out << Internal::indent(depth) << \"END \" << io.path() << std::endl;\n\
+    \        }\n        out.flush();\n        depth--;\n    }"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 211179
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

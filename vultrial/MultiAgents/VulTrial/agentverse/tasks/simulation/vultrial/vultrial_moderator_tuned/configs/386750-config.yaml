@@ -1,0 +1,311 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nint udf_expand_file_adinicb(struct\
+    \ inode *inode)\n{\n\tstruct page *page;\n\tchar *kaddr;\n\tstruct udf_inode_info\
+    \ *iinfo = UDF_I(inode);\n\tint err;\n\n\tWARN_ON_ONCE(!inode_is_locked(inode));\n\
+    \tif (!iinfo->i_lenAlloc) {\n\t\tif (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))\n\
+    \t\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\telse\n\t\t\tiinfo->i_alloc_type\
+    \ = ICBTAG_FLAG_AD_LONG;\n\t\t/* from now on we have normal address_space methods\
+    \ */\n\t\tinode->i_data.a_ops = &udf_aops;\n\t\tup_write(&iinfo->i_data_sem);\n\
+    \t\tmark_inode_dirty(inode);\n\t\treturn 0;\n\t}\n\t/*\n\t * Release i_data_sem\
+    \ so that we can lock a page - page lock ranks\n\t * above i_data_sem. i_mutex\
+    \ still protects us against file changes.\n\t */\n\tup_write(&iinfo->i_data_sem);\n\
+    \n\tpage = find_or_create_page(inode->i_mapping, 0, GFP_NOFS);\n\tif (!page)\n\
+    \t\treturn -ENOMEM;\n\n\tif (!PageUptodate(page)) {\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemset(kaddr + iinfo->i_lenAlloc, 0x00,\n\t\t       PAGE_SIZE - iinfo->i_lenAlloc);\n\
+    \t\tmemcpy(kaddr, iinfo->i_data + iinfo->i_lenEAttr,\n\t\t\tiinfo->i_lenAlloc);\n\
+    \t\tflush_dcache_page(page);\n\t\tSetPageUptodate(page);\n\t\tkunmap_atomic(kaddr);\n\
+    \t}\n\tdown_write(&iinfo->i_data_sem);\n\tmemset(iinfo->i_data + iinfo->i_lenEAttr,\
+    \ 0x00,\n\t       iinfo->i_lenAlloc);\n\tiinfo->i_lenAlloc = 0;\n\tif (UDF_QUERY_FLAG(inode->i_sb,\
+    \ UDF_FLAG_USE_SHORT_AD))\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\
+    else\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_LONG;\n\t/* from now on we have\
+    \ normal address_space methods */\n\tinode->i_data.a_ops = &udf_aops;\n\tset_page_dirty(page);\n\
+    \tunlock_page(page);\n\tup_write(&iinfo->i_data_sem);\n\terr = filemap_fdatawrite(inode->i_mapping);\n\
+    \tif (err) {\n\t\t/* Restore everything back so that we don't lose data... */\n\
+    \t\tlock_page(page);\n\t\tdown_write(&iinfo->i_data_sem);\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemcpy(iinfo->i_data + iinfo->i_lenEAttr, kaddr, inode->i_size);\n\t\tkunmap_atomic(kaddr);\n\
+    \t\tunlock_page(page);\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_IN_ICB;\n\t\t\
+    inode->i_data.a_ops = &udf_adinicb_aops;\n\t\tiinfo->i_lenAlloc = inode->i_size;\n\
+    \t\tup_write(&iinfo->i_data_sem);\n\t}\n\tput_page(page);\n\tmark_inode_dirty(inode);\n\
+    \n\treturn err;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nint udf_expand_file_adinicb(struct\
+    \ inode *inode)\n{\n\tstruct page *page;\n\tchar *kaddr;\n\tstruct udf_inode_info\
+    \ *iinfo = UDF_I(inode);\n\tint err;\n\n\tWARN_ON_ONCE(!inode_is_locked(inode));\n\
+    \tif (!iinfo->i_lenAlloc) {\n\t\tif (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))\n\
+    \t\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\telse\n\t\t\tiinfo->i_alloc_type\
+    \ = ICBTAG_FLAG_AD_LONG;\n\t\t/* from now on we have normal address_space methods\
+    \ */\n\t\tinode->i_data.a_ops = &udf_aops;\n\t\tup_write(&iinfo->i_data_sem);\n\
+    \t\tmark_inode_dirty(inode);\n\t\treturn 0;\n\t}\n\t/*\n\t * Release i_data_sem\
+    \ so that we can lock a page - page lock ranks\n\t * above i_data_sem. i_mutex\
+    \ still protects us against file changes.\n\t */\n\tup_write(&iinfo->i_data_sem);\n\
+    \n\tpage = find_or_create_page(inode->i_mapping, 0, GFP_NOFS);\n\tif (!page)\n\
+    \t\treturn -ENOMEM;\n\n\tif (!PageUptodate(page)) {\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemset(kaddr + iinfo->i_lenAlloc, 0x00,\n\t\t       PAGE_SIZE - iinfo->i_lenAlloc);\n\
+    \t\tmemcpy(kaddr, iinfo->i_data + iinfo->i_lenEAttr,\n\t\t\tiinfo->i_lenAlloc);\n\
+    \t\tflush_dcache_page(page);\n\t\tSetPageUptodate(page);\n\t\tkunmap_atomic(kaddr);\n\
+    \t}\n\tdown_write(&iinfo->i_data_sem);\n\tmemset(iinfo->i_data + iinfo->i_lenEAttr,\
+    \ 0x00,\n\t       iinfo->i_lenAlloc);\n\tiinfo->i_lenAlloc = 0;\n\tif (UDF_QUERY_FLAG(inode->i_sb,\
+    \ UDF_FLAG_USE_SHORT_AD))\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\
+    else\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_LONG;\n\t/* from now on we have\
+    \ normal address_space methods */\n\tinode->i_data.a_ops = &udf_aops;\n\tset_page_dirty(page);\n\
+    \tunlock_page(page);\n\tup_write(&iinfo->i_data_sem);\n\terr = filemap_fdatawrite(inode->i_mapping);\n\
+    \tif (err) {\n\t\t/* Restore everything back so that we don't lose data... */\n\
+    \t\tlock_page(page);\n\t\tdown_write(&iinfo->i_data_sem);\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemcpy(iinfo->i_data + iinfo->i_lenEAttr, kaddr, inode->i_size);\n\t\tkunmap_atomic(kaddr);\n\
+    \t\tunlock_page(page);\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_IN_ICB;\n\t\t\
+    inode->i_data.a_ops = &udf_adinicb_aops;\n\t\tiinfo->i_lenAlloc = inode->i_size;\n\
+    \t\tup_write(&iinfo->i_data_sem);\n\t}\n\tput_page(page);\n\tmark_inode_dirty(inode);\n\
+    \n\treturn err;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nint udf_expand_file_adinicb(struct inode\
+    \ *inode)\n{\n\tstruct page *page;\n\tchar *kaddr;\n\tstruct udf_inode_info *iinfo\
+    \ = UDF_I(inode);\n\tint err;\n\n\tWARN_ON_ONCE(!inode_is_locked(inode));\n\t\
+    if (!iinfo->i_lenAlloc) {\n\t\tif (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))\n\
+    \t\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\telse\n\t\t\tiinfo->i_alloc_type\
+    \ = ICBTAG_FLAG_AD_LONG;\n\t\t/* from now on we have normal address_space methods\
+    \ */\n\t\tinode->i_data.a_ops = &udf_aops;\n\t\tup_write(&iinfo->i_data_sem);\n\
+    \t\tmark_inode_dirty(inode);\n\t\treturn 0;\n\t}\n\t/*\n\t * Release i_data_sem\
+    \ so that we can lock a page - page lock ranks\n\t * above i_data_sem. i_mutex\
+    \ still protects us against file changes.\n\t */\n\tup_write(&iinfo->i_data_sem);\n\
+    \n\tpage = find_or_create_page(inode->i_mapping, 0, GFP_NOFS);\n\tif (!page)\n\
+    \t\treturn -ENOMEM;\n\n\tif (!PageUptodate(page)) {\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemset(kaddr + iinfo->i_lenAlloc, 0x00,\n\t\t       PAGE_SIZE - iinfo->i_lenAlloc);\n\
+    \t\tmemcpy(kaddr, iinfo->i_data + iinfo->i_lenEAttr,\n\t\t\tiinfo->i_lenAlloc);\n\
+    \t\tflush_dcache_page(page);\n\t\tSetPageUptodate(page);\n\t\tkunmap_atomic(kaddr);\n\
+    \t}\n\tdown_write(&iinfo->i_data_sem);\n\tmemset(iinfo->i_data + iinfo->i_lenEAttr,\
+    \ 0x00,\n\t       iinfo->i_lenAlloc);\n\tiinfo->i_lenAlloc = 0;\n\tif (UDF_QUERY_FLAG(inode->i_sb,\
+    \ UDF_FLAG_USE_SHORT_AD))\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\
+    else\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_LONG;\n\t/* from now on we have\
+    \ normal address_space methods */\n\tinode->i_data.a_ops = &udf_aops;\n\tset_page_dirty(page);\n\
+    \tunlock_page(page);\n\tup_write(&iinfo->i_data_sem);\n\terr = filemap_fdatawrite(inode->i_mapping);\n\
+    \tif (err) {\n\t\t/* Restore everything back so that we don't lose data... */\n\
+    \t\tlock_page(page);\n\t\tdown_write(&iinfo->i_data_sem);\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemcpy(iinfo->i_data + iinfo->i_lenEAttr, kaddr, inode->i_size);\n\t\tkunmap_atomic(kaddr);\n\
+    \t\tunlock_page(page);\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_IN_ICB;\n\t\t\
+    inode->i_data.a_ops = &udf_adinicb_aops;\n\t\tiinfo->i_lenAlloc = inode->i_size;\n\
+    \t\tup_write(&iinfo->i_data_sem);\n\t}\n\tput_page(page);\n\tmark_inode_dirty(inode);\n\
+    \n\treturn err;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nint udf_expand_file_adinicb(struct\
+    \ inode *inode)\n{\n\tstruct page *page;\n\tchar *kaddr;\n\tstruct udf_inode_info\
+    \ *iinfo = UDF_I(inode);\n\tint err;\n\n\tWARN_ON_ONCE(!inode_is_locked(inode));\n\
+    \tif (!iinfo->i_lenAlloc) {\n\t\tif (UDF_QUERY_FLAG(inode->i_sb, UDF_FLAG_USE_SHORT_AD))\n\
+    \t\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\telse\n\t\t\tiinfo->i_alloc_type\
+    \ = ICBTAG_FLAG_AD_LONG;\n\t\t/* from now on we have normal address_space methods\
+    \ */\n\t\tinode->i_data.a_ops = &udf_aops;\n\t\tup_write(&iinfo->i_data_sem);\n\
+    \t\tmark_inode_dirty(inode);\n\t\treturn 0;\n\t}\n\t/*\n\t * Release i_data_sem\
+    \ so that we can lock a page - page lock ranks\n\t * above i_data_sem. i_mutex\
+    \ still protects us against file changes.\n\t */\n\tup_write(&iinfo->i_data_sem);\n\
+    \n\tpage = find_or_create_page(inode->i_mapping, 0, GFP_NOFS);\n\tif (!page)\n\
+    \t\treturn -ENOMEM;\n\n\tif (!PageUptodate(page)) {\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemset(kaddr + iinfo->i_lenAlloc, 0x00,\n\t\t       PAGE_SIZE - iinfo->i_lenAlloc);\n\
+    \t\tmemcpy(kaddr, iinfo->i_data + iinfo->i_lenEAttr,\n\t\t\tiinfo->i_lenAlloc);\n\
+    \t\tflush_dcache_page(page);\n\t\tSetPageUptodate(page);\n\t\tkunmap_atomic(kaddr);\n\
+    \t}\n\tdown_write(&iinfo->i_data_sem);\n\tmemset(iinfo->i_data + iinfo->i_lenEAttr,\
+    \ 0x00,\n\t       iinfo->i_lenAlloc);\n\tiinfo->i_lenAlloc = 0;\n\tif (UDF_QUERY_FLAG(inode->i_sb,\
+    \ UDF_FLAG_USE_SHORT_AD))\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_SHORT;\n\t\
+    else\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_LONG;\n\t/* from now on we have\
+    \ normal address_space methods */\n\tinode->i_data.a_ops = &udf_aops;\n\tset_page_dirty(page);\n\
+    \tunlock_page(page);\n\tup_write(&iinfo->i_data_sem);\n\terr = filemap_fdatawrite(inode->i_mapping);\n\
+    \tif (err) {\n\t\t/* Restore everything back so that we don't lose data... */\n\
+    \t\tlock_page(page);\n\t\tdown_write(&iinfo->i_data_sem);\n\t\tkaddr = kmap_atomic(page);\n\
+    \t\tmemcpy(iinfo->i_data + iinfo->i_lenEAttr, kaddr, inode->i_size);\n\t\tkunmap_atomic(kaddr);\n\
+    \t\tunlock_page(page);\n\t\tiinfo->i_alloc_type = ICBTAG_FLAG_AD_IN_ICB;\n\t\t\
+    inode->i_data.a_ops = &udf_adinicb_aops;\n\t\tiinfo->i_lenAlloc = inode->i_size;\n\
+    \t\tup_write(&iinfo->i_data_sem);\n\t}\n\tput_page(page);\n\tmark_inode_dirty(inode);\n\
+    \n\treturn err;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 386750
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

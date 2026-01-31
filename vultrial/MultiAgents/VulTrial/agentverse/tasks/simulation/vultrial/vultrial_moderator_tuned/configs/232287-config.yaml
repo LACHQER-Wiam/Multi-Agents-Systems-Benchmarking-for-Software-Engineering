@@ -1,0 +1,483 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nbool SingleComponentLSScan::ParseMCU(void)\n\
+    { \n#if ACCUSOFT_CODE\n  int lines             = m_ulRemaining[0]; // total number\
+    \ of MCU lines processed.\n  UBYTE preshift        = m_ucLowBit + FractionalColorBitsOf();\n\
+    \  struct Line *line     = CurrentLine(0);\n  \n  //\n  // If a DNL marker is\
+    \ present, the number of remaining lines is zero. Fix it.\n  if (m_pFrame->HeightOf()\
+    \ == 0) {\n    assert(lines == 0);\n    lines = 8;\n  }\n\n  assert(m_ucCount\
+    \ == 1);\n\n  //\n  // A \"MCU\" in respect to the code organization is eight\
+    \ lines.\n  if (lines > 8) {\n    lines = 8;\n  }\n  if (m_pFrame->HeightOf()\
+    \ > 0)\n    m_ulRemaining[0] -= lines;\n\n  if (lines == 0)\n    return false;\n\
+    \n  // Loop over lines and columns\n  do {\n    LONG length = m_ulWidth[0];\n\
+    \    LONG *lp    = line->m_pData;\n\n#ifdef DEBUG_LS\n    int xpos    = 0;\n \
+    \   static int linenumber = 0;\n    printf(\"\\n%4d : \",++linenumber);\n#endif\n\
+    \     \n    StartLine(0);\n    if (BeginReadMCU(m_Stream.ByteStreamOf())) { //\
+    \ No error handling strategy. No RST in scans. Bummer!\n      do {\n        LONG\
+    \ a,b,c,d;   // neighbouring values.\n        LONG d1,d2,d3;  // local gradients.\n\
+    \      \n        GetContext(0,a,b,c,d);\n        d1  = d - b;    // compute local\
+    \ gradients\n        d2  = b - c;\n        d3  = c - a;\n        \n        if\
+    \ (isRunMode(d1,d2,d3)) {\n          LONG run = DecodeRun(length,m_lRunIndex[0]);\n\
+    \          //\n          // Now fill the data.\n          while(run) {\n     \
+    \       // Update so that the next process gets the correct value.\n         \
+    \   UpdateContext(0,a);\n            // And insert the value into the target line\
+    \ as well.\n            *lp++ = a << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,a);\n#endif\n            run--,length--;\n            // As\
+    \ long as there are pixels on the line.\n          }\n          //\n         \
+    \ // More data on the line? I.e. the run did not cover the full m_lJ samples?\n\
+    \          // Now decode the run interruption sample.\n          if (length) {\n\
+    \            bool negative; // the sign variable\n            bool rtype;    //\
+    \ run interruption type\n            LONG errval;   // the prediction error\n\
+    \            LONG merr;     // the mapped error (symbol)\n            LONG rx;\
+    \       // the reconstructed value\n            UBYTE k;       // golomb parameter\n\
+    \            // Get the neighbourhood.\n            GetContext(0,a,b,c,d);\n \
+    \           // Get the prediction mode.\n            rtype  = InterruptedPredictionMode(negative,a,b);\n\
+    \            // Get the golomb parameter for run interruption coding.\n      \
+    \      k      = GolombParameter(rtype);\n            // Golomb-decode the error\
+    \ symbol.\n            merr   = GolombDecode(k,m_lLimit - m_lJ[m_lRunIndex[0]]\
+    \ - 1);\n            // Inverse the error mapping procedure.\n            errval\
+    \ = InverseErrorMapping(merr + rtype,ErrorMappingOffset(rtype,rtype || merr,k));\n\
+    \            // Compute the reconstructed value.\n            rx     = Reconstruct(negative,rtype?a:b,errval);\n\
+    \            // Update so that the next process gets the correct value.\n    \
+    \        UpdateContext(0,rx);\n            // Fill in the value into the line\n\
+    \            *lp    = rx << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n            // Update the variables of the\
+    \ run mode.\n            UpdateState(rtype,errval);\n            // Update the\
+    \ run index now. This is not part of\n            // EncodeRun because the non-reduced\
+    \ run-index is\n            // required for the golomb coder length limit. \n\
+    \            if (m_lRunIndex[0] > 0)\n              m_lRunIndex[0]--;\n      \
+    \    } else break; // end of line.\n        } else {\n          UWORD ctxt;\n\
+    \          bool  negative; // the sign variable.\n          LONG  px;       //\
+    \ the predicted variable.\n          LONG  rx;       // the reconstructed value.\n\
+    \          LONG  errval;   // the error value.\n          LONG  merr;     // the\
+    \ mapped error value.\n          UBYTE k;        // the Golomb parameter.\n  \
+    \        // Quantize the gradients.\n          d1     = QuantizedGradient(d1);\n\
+    \          d2     = QuantizedGradient(d2);\n          d3     = QuantizedGradient(d3);\n\
+    \          // Compute the context.\n          ctxt   = Context(negative,d1,d2,d3);\
+    \ \n          // Compute the predicted value.\n          px     = Predict(a,b,c);\n\
+    \          // Correct the prediction.\n          px     = CorrectPrediction(ctxt,negative,px);\n\
+    \          // Compute the golomb parameter k from the context.\n          k  \
+    \    = GolombParameter(ctxt);\n          // Decode the error symbol.\n       \
+    \   merr   = GolombDecode(k,m_lLimit);\n          // Inverse the error symbol\
+    \ into an error value.\n          errval = InverseErrorMapping(merr,ErrorMappingOffset(ctxt,k));\n\
+    \          // Update the variables.\n          UpdateState(ctxt,errval);\n   \
+    \       // Compute the reconstructed value.\n          rx     = Reconstruct(negative,px,errval);\n\
+    \          // Update so that the next process gets the correct value.\n      \
+    \    UpdateContext(0,rx);\n          // And insert the value into the target line\
+    \ as well.\n          *lp    = rx << preshift;\n#ifdef DEBUG_LS\n          printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n        }\n      } while(++lp,--length);\n\
+    \    } // No error handling here.\n    EndLine(0);\n    line = line->m_pNext;\n\
+    \  } while(--lines); \n  //\n  // If this is the last line, gobble up all the\n\
+    \  // bits from bitstuffing the last byte may have left.\n  // As SkipStuffing\
+    \ is idempotent, we can also do that\n  // all the time.\n  m_Stream.SkipStuffing();\n\
+    #endif  \n  return false;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nbool SingleComponentLSScan::ParseMCU(void)\n\
+    { \n#if ACCUSOFT_CODE\n  int lines             = m_ulRemaining[0]; // total number\
+    \ of MCU lines processed.\n  UBYTE preshift        = m_ucLowBit + FractionalColorBitsOf();\n\
+    \  struct Line *line     = CurrentLine(0);\n  \n  //\n  // If a DNL marker is\
+    \ present, the number of remaining lines is zero. Fix it.\n  if (m_pFrame->HeightOf()\
+    \ == 0) {\n    assert(lines == 0);\n    lines = 8;\n  }\n\n  assert(m_ucCount\
+    \ == 1);\n\n  //\n  // A \"MCU\" in respect to the code organization is eight\
+    \ lines.\n  if (lines > 8) {\n    lines = 8;\n  }\n  if (m_pFrame->HeightOf()\
+    \ > 0)\n    m_ulRemaining[0] -= lines;\n\n  if (lines == 0)\n    return false;\n\
+    \n  // Loop over lines and columns\n  do {\n    LONG length = m_ulWidth[0];\n\
+    \    LONG *lp    = line->m_pData;\n\n#ifdef DEBUG_LS\n    int xpos    = 0;\n \
+    \   static int linenumber = 0;\n    printf(\"\\n%4d : \",++linenumber);\n#endif\n\
+    \     \n    StartLine(0);\n    if (BeginReadMCU(m_Stream.ByteStreamOf())) { //\
+    \ No error handling strategy. No RST in scans. Bummer!\n      do {\n        LONG\
+    \ a,b,c,d;   // neighbouring values.\n        LONG d1,d2,d3;  // local gradients.\n\
+    \      \n        GetContext(0,a,b,c,d);\n        d1  = d - b;    // compute local\
+    \ gradients\n        d2  = b - c;\n        d3  = c - a;\n        \n        if\
+    \ (isRunMode(d1,d2,d3)) {\n          LONG run = DecodeRun(length,m_lRunIndex[0]);\n\
+    \          //\n          // Now fill the data.\n          while(run) {\n     \
+    \       // Update so that the next process gets the correct value.\n         \
+    \   UpdateContext(0,a);\n            // And insert the value into the target line\
+    \ as well.\n            *lp++ = a << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,a);\n#endif\n            run--,length--;\n            // As\
+    \ long as there are pixels on the line.\n          }\n          //\n         \
+    \ // More data on the line? I.e. the run did not cover the full m_lJ samples?\n\
+    \          // Now decode the run interruption sample.\n          if (length) {\n\
+    \            bool negative; // the sign variable\n            bool rtype;    //\
+    \ run interruption type\n            LONG errval;   // the prediction error\n\
+    \            LONG merr;     // the mapped error (symbol)\n            LONG rx;\
+    \       // the reconstructed value\n            UBYTE k;       // golomb parameter\n\
+    \            // Get the neighbourhood.\n            GetContext(0,a,b,c,d);\n \
+    \           // Get the prediction mode.\n            rtype  = InterruptedPredictionMode(negative,a,b);\n\
+    \            // Get the golomb parameter for run interruption coding.\n      \
+    \      k      = GolombParameter(rtype);\n            // Golomb-decode the error\
+    \ symbol.\n            merr   = GolombDecode(k,m_lLimit - m_lJ[m_lRunIndex[0]]\
+    \ - 1);\n            // Inverse the error mapping procedure.\n            errval\
+    \ = InverseErrorMapping(merr + rtype,ErrorMappingOffset(rtype,rtype || merr,k));\n\
+    \            // Compute the reconstructed value.\n            rx     = Reconstruct(negative,rtype?a:b,errval);\n\
+    \            // Update so that the next process gets the correct value.\n    \
+    \        UpdateContext(0,rx);\n            // Fill in the value into the line\n\
+    \            *lp    = rx << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n            // Update the variables of the\
+    \ run mode.\n            UpdateState(rtype,errval);\n            // Update the\
+    \ run index now. This is not part of\n            // EncodeRun because the non-reduced\
+    \ run-index is\n            // required for the golomb coder length limit. \n\
+    \            if (m_lRunIndex[0] > 0)\n              m_lRunIndex[0]--;\n      \
+    \    } else break; // end of line.\n        } else {\n          UWORD ctxt;\n\
+    \          bool  negative; // the sign variable.\n          LONG  px;       //\
+    \ the predicted variable.\n          LONG  rx;       // the reconstructed value.\n\
+    \          LONG  errval;   // the error value.\n          LONG  merr;     // the\
+    \ mapped error value.\n          UBYTE k;        // the Golomb parameter.\n  \
+    \        // Quantize the gradients.\n          d1     = QuantizedGradient(d1);\n\
+    \          d2     = QuantizedGradient(d2);\n          d3     = QuantizedGradient(d3);\n\
+    \          // Compute the context.\n          ctxt   = Context(negative,d1,d2,d3);\
+    \ \n          // Compute the predicted value.\n          px     = Predict(a,b,c);\n\
+    \          // Correct the prediction.\n          px     = CorrectPrediction(ctxt,negative,px);\n\
+    \          // Compute the golomb parameter k from the context.\n          k  \
+    \    = GolombParameter(ctxt);\n          // Decode the error symbol.\n       \
+    \   merr   = GolombDecode(k,m_lLimit);\n          // Inverse the error symbol\
+    \ into an error value.\n          errval = InverseErrorMapping(merr,ErrorMappingOffset(ctxt,k));\n\
+    \          // Update the variables.\n          UpdateState(ctxt,errval);\n   \
+    \       // Compute the reconstructed value.\n          rx     = Reconstruct(negative,px,errval);\n\
+    \          // Update so that the next process gets the correct value.\n      \
+    \    UpdateContext(0,rx);\n          // And insert the value into the target line\
+    \ as well.\n          *lp    = rx << preshift;\n#ifdef DEBUG_LS\n          printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n        }\n      } while(++lp,--length);\n\
+    \    } // No error handling here.\n    EndLine(0);\n    line = line->m_pNext;\n\
+    \  } while(--lines); \n  //\n  // If this is the last line, gobble up all the\n\
+    \  // bits from bitstuffing the last byte may have left.\n  // As SkipStuffing\
+    \ is idempotent, we can also do that\n  // all the time.\n  m_Stream.SkipStuffing();\n\
+    #endif  \n  return false;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nbool SingleComponentLSScan::ParseMCU(void)\n\
+    { \n#if ACCUSOFT_CODE\n  int lines             = m_ulRemaining[0]; // total number\
+    \ of MCU lines processed.\n  UBYTE preshift        = m_ucLowBit + FractionalColorBitsOf();\n\
+    \  struct Line *line     = CurrentLine(0);\n  \n  //\n  // If a DNL marker is\
+    \ present, the number of remaining lines is zero. Fix it.\n  if (m_pFrame->HeightOf()\
+    \ == 0) {\n    assert(lines == 0);\n    lines = 8;\n  }\n\n  assert(m_ucCount\
+    \ == 1);\n\n  //\n  // A \"MCU\" in respect to the code organization is eight\
+    \ lines.\n  if (lines > 8) {\n    lines = 8;\n  }\n  if (m_pFrame->HeightOf()\
+    \ > 0)\n    m_ulRemaining[0] -= lines;\n\n  if (lines == 0)\n    return false;\n\
+    \n  // Loop over lines and columns\n  do {\n    LONG length = m_ulWidth[0];\n\
+    \    LONG *lp    = line->m_pData;\n\n#ifdef DEBUG_LS\n    int xpos    = 0;\n \
+    \   static int linenumber = 0;\n    printf(\"\\n%4d : \",++linenumber);\n#endif\n\
+    \     \n    StartLine(0);\n    if (BeginReadMCU(m_Stream.ByteStreamOf())) { //\
+    \ No error handling strategy. No RST in scans. Bummer!\n      do {\n        LONG\
+    \ a,b,c,d;   // neighbouring values.\n        LONG d1,d2,d3;  // local gradients.\n\
+    \      \n        GetContext(0,a,b,c,d);\n        d1  = d - b;    // compute local\
+    \ gradients\n        d2  = b - c;\n        d3  = c - a;\n        \n        if\
+    \ (isRunMode(d1,d2,d3)) {\n          LONG run = DecodeRun(length,m_lRunIndex[0]);\n\
+    \          //\n          // Now fill the data.\n          while(run) {\n     \
+    \       // Update so that the next process gets the correct value.\n         \
+    \   UpdateContext(0,a);\n            // And insert the value into the target line\
+    \ as well.\n            *lp++ = a << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,a);\n#endif\n            run--,length--;\n            // As\
+    \ long as there are pixels on the line.\n          }\n          //\n         \
+    \ // More data on the line? I.e. the run did not cover the full m_lJ samples?\n\
+    \          // Now decode the run interruption sample.\n          if (length) {\n\
+    \            bool negative; // the sign variable\n            bool rtype;    //\
+    \ run interruption type\n            LONG errval;   // the prediction error\n\
+    \            LONG merr;     // the mapped error (symbol)\n            LONG rx;\
+    \       // the reconstructed value\n            UBYTE k;       // golomb parameter\n\
+    \            // Get the neighbourhood.\n            GetContext(0,a,b,c,d);\n \
+    \           // Get the prediction mode.\n            rtype  = InterruptedPredictionMode(negative,a,b);\n\
+    \            // Get the golomb parameter for run interruption coding.\n      \
+    \      k      = GolombParameter(rtype);\n            // Golomb-decode the error\
+    \ symbol.\n            merr   = GolombDecode(k,m_lLimit - m_lJ[m_lRunIndex[0]]\
+    \ - 1);\n            // Inverse the error mapping procedure.\n            errval\
+    \ = InverseErrorMapping(merr + rtype,ErrorMappingOffset(rtype,rtype || merr,k));\n\
+    \            // Compute the reconstructed value.\n            rx     = Reconstruct(negative,rtype?a:b,errval);\n\
+    \            // Update so that the next process gets the correct value.\n    \
+    \        UpdateContext(0,rx);\n            // Fill in the value into the line\n\
+    \            *lp    = rx << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n            // Update the variables of the\
+    \ run mode.\n            UpdateState(rtype,errval);\n            // Update the\
+    \ run index now. This is not part of\n            // EncodeRun because the non-reduced\
+    \ run-index is\n            // required for the golomb coder length limit. \n\
+    \            if (m_lRunIndex[0] > 0)\n              m_lRunIndex[0]--;\n      \
+    \    } else break; // end of line.\n        } else {\n          UWORD ctxt;\n\
+    \          bool  negative; // the sign variable.\n          LONG  px;       //\
+    \ the predicted variable.\n          LONG  rx;       // the reconstructed value.\n\
+    \          LONG  errval;   // the error value.\n          LONG  merr;     // the\
+    \ mapped error value.\n          UBYTE k;        // the Golomb parameter.\n  \
+    \        // Quantize the gradients.\n          d1     = QuantizedGradient(d1);\n\
+    \          d2     = QuantizedGradient(d2);\n          d3     = QuantizedGradient(d3);\n\
+    \          // Compute the context.\n          ctxt   = Context(negative,d1,d2,d3);\
+    \ \n          // Compute the predicted value.\n          px     = Predict(a,b,c);\n\
+    \          // Correct the prediction.\n          px     = CorrectPrediction(ctxt,negative,px);\n\
+    \          // Compute the golomb parameter k from the context.\n          k  \
+    \    = GolombParameter(ctxt);\n          // Decode the error symbol.\n       \
+    \   merr   = GolombDecode(k,m_lLimit);\n          // Inverse the error symbol\
+    \ into an error value.\n          errval = InverseErrorMapping(merr,ErrorMappingOffset(ctxt,k));\n\
+    \          // Update the variables.\n          UpdateState(ctxt,errval);\n   \
+    \       // Compute the reconstructed value.\n          rx     = Reconstruct(negative,px,errval);\n\
+    \          // Update so that the next process gets the correct value.\n      \
+    \    UpdateContext(0,rx);\n          // And insert the value into the target line\
+    \ as well.\n          *lp    = rx << preshift;\n#ifdef DEBUG_LS\n          printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n        }\n      } while(++lp,--length);\n\
+    \    } // No error handling here.\n    EndLine(0);\n    line = line->m_pNext;\n\
+    \  } while(--lines); \n  //\n  // If this is the last line, gobble up all the\n\
+    \  // bits from bitstuffing the last byte may have left.\n  // As SkipStuffing\
+    \ is idempotent, we can also do that\n  // all the time.\n  m_Stream.SkipStuffing();\n\
+    #endif  \n  return false;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nbool SingleComponentLSScan::ParseMCU(void)\n\
+    { \n#if ACCUSOFT_CODE\n  int lines             = m_ulRemaining[0]; // total number\
+    \ of MCU lines processed.\n  UBYTE preshift        = m_ucLowBit + FractionalColorBitsOf();\n\
+    \  struct Line *line     = CurrentLine(0);\n  \n  //\n  // If a DNL marker is\
+    \ present, the number of remaining lines is zero. Fix it.\n  if (m_pFrame->HeightOf()\
+    \ == 0) {\n    assert(lines == 0);\n    lines = 8;\n  }\n\n  assert(m_ucCount\
+    \ == 1);\n\n  //\n  // A \"MCU\" in respect to the code organization is eight\
+    \ lines.\n  if (lines > 8) {\n    lines = 8;\n  }\n  if (m_pFrame->HeightOf()\
+    \ > 0)\n    m_ulRemaining[0] -= lines;\n\n  if (lines == 0)\n    return false;\n\
+    \n  // Loop over lines and columns\n  do {\n    LONG length = m_ulWidth[0];\n\
+    \    LONG *lp    = line->m_pData;\n\n#ifdef DEBUG_LS\n    int xpos    = 0;\n \
+    \   static int linenumber = 0;\n    printf(\"\\n%4d : \",++linenumber);\n#endif\n\
+    \     \n    StartLine(0);\n    if (BeginReadMCU(m_Stream.ByteStreamOf())) { //\
+    \ No error handling strategy. No RST in scans. Bummer!\n      do {\n        LONG\
+    \ a,b,c,d;   // neighbouring values.\n        LONG d1,d2,d3;  // local gradients.\n\
+    \      \n        GetContext(0,a,b,c,d);\n        d1  = d - b;    // compute local\
+    \ gradients\n        d2  = b - c;\n        d3  = c - a;\n        \n        if\
+    \ (isRunMode(d1,d2,d3)) {\n          LONG run = DecodeRun(length,m_lRunIndex[0]);\n\
+    \          //\n          // Now fill the data.\n          while(run) {\n     \
+    \       // Update so that the next process gets the correct value.\n         \
+    \   UpdateContext(0,a);\n            // And insert the value into the target line\
+    \ as well.\n            *lp++ = a << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,a);\n#endif\n            run--,length--;\n            // As\
+    \ long as there are pixels on the line.\n          }\n          //\n         \
+    \ // More data on the line? I.e. the run did not cover the full m_lJ samples?\n\
+    \          // Now decode the run interruption sample.\n          if (length) {\n\
+    \            bool negative; // the sign variable\n            bool rtype;    //\
+    \ run interruption type\n            LONG errval;   // the prediction error\n\
+    \            LONG merr;     // the mapped error (symbol)\n            LONG rx;\
+    \       // the reconstructed value\n            UBYTE k;       // golomb parameter\n\
+    \            // Get the neighbourhood.\n            GetContext(0,a,b,c,d);\n \
+    \           // Get the prediction mode.\n            rtype  = InterruptedPredictionMode(negative,a,b);\n\
+    \            // Get the golomb parameter for run interruption coding.\n      \
+    \      k      = GolombParameter(rtype);\n            // Golomb-decode the error\
+    \ symbol.\n            merr   = GolombDecode(k,m_lLimit - m_lJ[m_lRunIndex[0]]\
+    \ - 1);\n            // Inverse the error mapping procedure.\n            errval\
+    \ = InverseErrorMapping(merr + rtype,ErrorMappingOffset(rtype,rtype || merr,k));\n\
+    \            // Compute the reconstructed value.\n            rx     = Reconstruct(negative,rtype?a:b,errval);\n\
+    \            // Update so that the next process gets the correct value.\n    \
+    \        UpdateContext(0,rx);\n            // Fill in the value into the line\n\
+    \            *lp    = rx << preshift;\n#ifdef DEBUG_LS\n            printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n            // Update the variables of the\
+    \ run mode.\n            UpdateState(rtype,errval);\n            // Update the\
+    \ run index now. This is not part of\n            // EncodeRun because the non-reduced\
+    \ run-index is\n            // required for the golomb coder length limit. \n\
+    \            if (m_lRunIndex[0] > 0)\n              m_lRunIndex[0]--;\n      \
+    \    } else break; // end of line.\n        } else {\n          UWORD ctxt;\n\
+    \          bool  negative; // the sign variable.\n          LONG  px;       //\
+    \ the predicted variable.\n          LONG  rx;       // the reconstructed value.\n\
+    \          LONG  errval;   // the error value.\n          LONG  merr;     // the\
+    \ mapped error value.\n          UBYTE k;        // the Golomb parameter.\n  \
+    \        // Quantize the gradients.\n          d1     = QuantizedGradient(d1);\n\
+    \          d2     = QuantizedGradient(d2);\n          d3     = QuantizedGradient(d3);\n\
+    \          // Compute the context.\n          ctxt   = Context(negative,d1,d2,d3);\
+    \ \n          // Compute the predicted value.\n          px     = Predict(a,b,c);\n\
+    \          // Correct the prediction.\n          px     = CorrectPrediction(ctxt,negative,px);\n\
+    \          // Compute the golomb parameter k from the context.\n          k  \
+    \    = GolombParameter(ctxt);\n          // Decode the error symbol.\n       \
+    \   merr   = GolombDecode(k,m_lLimit);\n          // Inverse the error symbol\
+    \ into an error value.\n          errval = InverseErrorMapping(merr,ErrorMappingOffset(ctxt,k));\n\
+    \          // Update the variables.\n          UpdateState(ctxt,errval);\n   \
+    \       // Compute the reconstructed value.\n          rx     = Reconstruct(negative,px,errval);\n\
+    \          // Update so that the next process gets the correct value.\n      \
+    \    UpdateContext(0,rx);\n          // And insert the value into the target line\
+    \ as well.\n          *lp    = rx << preshift;\n#ifdef DEBUG_LS\n          printf(\"\
+    %4d:<%2x> \",xpos++,*lp);\n#endif\n        }\n      } while(++lp,--length);\n\
+    \    } // No error handling here.\n    EndLine(0);\n    line = line->m_pNext;\n\
+    \  } while(--lines); \n  //\n  // If this is the last line, gobble up all the\n\
+    \  // bits from bitstuffing the last byte may have left.\n  // As SkipStuffing\
+    \ is idempotent, we can also do that\n  // all the time.\n  m_Stream.SkipStuffing();\n\
+    #endif  \n  return false;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 232287
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

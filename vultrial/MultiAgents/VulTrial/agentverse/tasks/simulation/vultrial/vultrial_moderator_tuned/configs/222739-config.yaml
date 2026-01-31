@@ -1,0 +1,442 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\ns32 gf_avc_parse_nalu(GF_BitStream\
+    \ *bs, AVCState *avc)\n{\n\tu8 idr_flag;\n\ts32 slice, ret;\n\tu32 nal_hdr;\n\t\
+    AVCSliceInfo n_state;\n\n\tgf_bs_enable_emulation_byte_removal(bs, GF_TRUE);\n\
+    \n\tnal_hdr = gf_bs_read_u8(bs);\n\n\tslice = 0;\n\tmemcpy(&n_state, &avc->s_info,\
+    \ sizeof(AVCSliceInfo));\n\tavc->last_nal_type_parsed = n_state.nal_unit_type\
+    \ = nal_hdr & 0x1F;\n\tn_state.nal_ref_idc = (nal_hdr >> 5) & 0x3;\n\n\tidr_flag\
+    \ = 0;\n\n\tswitch (n_state.nal_unit_type) {\n\tcase GF_AVC_NALU_ACCESS_UNIT:\n\
+    \tcase GF_AVC_NALU_END_OF_SEQ:\n\tcase GF_AVC_NALU_END_OF_STREAM:\n\t\tret = 1;\n\
+    \t\tbreak;\n\n\tcase GF_AVC_NALU_SVC_SLICE:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\t// slice buffer - read the info and compare.\n\t\t\
+    /*ret = */svc_parse_slice(bs, avc, &n_state);\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t\tavc_compute_poc(&n_state);\n\n\t\tif (avc->s_info.poc\
+    \ != n_state.poc) {\n\t\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\t\treturn 1;\n\t\t}\n\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\treturn 0;\n\n\tcase GF_AVC_NALU_SVC_PREFIX_NALU:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_IDR_SLICE:\n\tcase\
+    \ GF_AVC_NALU_NON_IDR_SLICE:\n\tcase GF_AVC_NALU_DP_A_SLICE:\n\tcase GF_AVC_NALU_DP_B_SLICE:\n\
+    \tcase GF_AVC_NALU_DP_C_SLICE:\n\t\tslice = 1;\n\t\t/* slice buffer - read the\
+    \ info and compare.*/\n\t\tret = avc_parse_slice(bs, avc, idr_flag, &n_state);\n\
+    \t\tif (ret < 0) return ret;\n\t\tret = 0;\n\t\tif (\n\t\t\t((avc->s_info.nal_unit_type\
+    \ > GF_AVC_NALU_IDR_SLICE) || (avc->s_info.nal_unit_type < GF_AVC_NALU_NON_IDR_SLICE))\n\
+    \t\t\t&& (avc->s_info.nal_unit_type != GF_AVC_NALU_SVC_SLICE)\n\t\t\t) {\n\t\t\
+    \tbreak;\n\t\t}\n\t\tif (avc->s_info.frame_num != n_state.frame_num) {\n\t\t\t\
+    ret = 1;\n\t\t\tbreak;\n\t\t}\n\n\t\tif (avc->s_info.field_pic_flag != n_state.field_pic_flag)\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif ((avc->s_info.nal_ref_idc !=\
+    \ n_state.nal_ref_idc) &&\n\t\t\t(!avc->s_info.nal_ref_idc || !n_state.nal_ref_idc))\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif (!avc->s_info.sps)\n\t\t\treturn\
+    \ -1;\n\n\t\tif (avc->s_info.sps->poc_type == n_state.sps->poc_type) {\n\t\t\t\
+    if (!avc->s_info.sps->poc_type) {\n\t\t\t\tif (!n_state.bottom_field_flag && (avc->s_info.poc_lsb\
+    \ != n_state.poc_lsb)) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\
+    \t\tif (avc->s_info.delta_poc_bottom != n_state.delta_poc_bottom) {\n\t\t\t\t\t\
+    ret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t\telse if (avc->s_info.sps->poc_type\
+    \ == 1) {\n\t\t\t\tif (avc->s_info.delta_poc[0] != n_state.delta_poc[0]) {\n\t\
+    \t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t\tif (avc->s_info.delta_poc[1]\
+    \ != n_state.delta_poc[1]) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\
+    \t\t\t}\n\t\t}\n\n\t\tif (n_state.nal_unit_type == GF_AVC_NALU_IDR_SLICE) {\n\t\
+    \t\tif (avc->s_info.nal_unit_type != GF_AVC_NALU_IDR_SLICE) { /*IdrPicFlag differs\
+    \ in value*/\n\t\t\t\tret = 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\telse if (avc->s_info.idr_pic_id\
+    \ != n_state.idr_pic_id) { /*both IDR and idr_pic_id differs*/\n\t\t\t\tret =\
+    \ 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\t\tbreak;\n\tcase GF_AVC_NALU_SEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 0, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_PIC_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_pps_bs_internal(bs, avc, nal_hdr);\n\t\tif\
+    \ (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SVC_SUBSEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 1, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SEQ_PARAM_EXT:\n\
+    \t\tavc->last_ps_idx = (s32) gf_bs_read_ue(bs);\n\t\tif (avc->last_ps_idx < 0)\
+    \ return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_SEI:\n\tcase GF_AVC_NALU_FILLER_DATA:\n\
+    \t\treturn 0;\n\n\tdefault:\n\t\tif (avc->s_info.nal_unit_type <= GF_AVC_NALU_IDR_SLICE)\
+    \ ret = 1;\n\t\t//To detect change of AU when multiple sps and pps in stream\n\
+    \t\telse if ((nal_hdr & 0x1F) == GF_AVC_NALU_SEI && avc->s_info.nal_unit_type\
+    \ == GF_AVC_NALU_SVC_SLICE)\n\t\t\tret = 1;\n\t\telse if ((nal_hdr & 0x1F) ==\
+    \ GF_AVC_NALU_SEQ_PARAM && avc->s_info.nal_unit_type == GF_AVC_NALU_SVC_SLICE)\n\
+    \t\t\tret = 1;\n\t\telse\n\t\t\tret = 0;\n\t\tbreak;\n\t}\n\n\t/* save _prev values\
+    \ */\n\tif (ret && avc->s_info.sps) {\n\t\tn_state.frame_num_offset_prev = avc->s_info.frame_num_offset;\n\
+    \t\tif ((avc->s_info.sps->poc_type != 2) || (avc->s_info.nal_ref_idc != 0))\n\t\
+    \t\tn_state.frame_num_prev = avc->s_info.frame_num;\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t}\n\tif (slice)\n\t\tavc_compute_poc(&n_state);\n\
+    \tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\treturn ret;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\ns32 gf_avc_parse_nalu(GF_BitStream\
+    \ *bs, AVCState *avc)\n{\n\tu8 idr_flag;\n\ts32 slice, ret;\n\tu32 nal_hdr;\n\t\
+    AVCSliceInfo n_state;\n\n\tgf_bs_enable_emulation_byte_removal(bs, GF_TRUE);\n\
+    \n\tnal_hdr = gf_bs_read_u8(bs);\n\n\tslice = 0;\n\tmemcpy(&n_state, &avc->s_info,\
+    \ sizeof(AVCSliceInfo));\n\tavc->last_nal_type_parsed = n_state.nal_unit_type\
+    \ = nal_hdr & 0x1F;\n\tn_state.nal_ref_idc = (nal_hdr >> 5) & 0x3;\n\n\tidr_flag\
+    \ = 0;\n\n\tswitch (n_state.nal_unit_type) {\n\tcase GF_AVC_NALU_ACCESS_UNIT:\n\
+    \tcase GF_AVC_NALU_END_OF_SEQ:\n\tcase GF_AVC_NALU_END_OF_STREAM:\n\t\tret = 1;\n\
+    \t\tbreak;\n\n\tcase GF_AVC_NALU_SVC_SLICE:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\t// slice buffer - read the info and compare.\n\t\t\
+    /*ret = */svc_parse_slice(bs, avc, &n_state);\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t\tavc_compute_poc(&n_state);\n\n\t\tif (avc->s_info.poc\
+    \ != n_state.poc) {\n\t\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\t\treturn 1;\n\t\t}\n\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\treturn 0;\n\n\tcase GF_AVC_NALU_SVC_PREFIX_NALU:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_IDR_SLICE:\n\tcase\
+    \ GF_AVC_NALU_NON_IDR_SLICE:\n\tcase GF_AVC_NALU_DP_A_SLICE:\n\tcase GF_AVC_NALU_DP_B_SLICE:\n\
+    \tcase GF_AVC_NALU_DP_C_SLICE:\n\t\tslice = 1;\n\t\t/* slice buffer - read the\
+    \ info and compare.*/\n\t\tret = avc_parse_slice(bs, avc, idr_flag, &n_state);\n\
+    \t\tif (ret < 0) return ret;\n\t\tret = 0;\n\t\tif (\n\t\t\t((avc->s_info.nal_unit_type\
+    \ > GF_AVC_NALU_IDR_SLICE) || (avc->s_info.nal_unit_type < GF_AVC_NALU_NON_IDR_SLICE))\n\
+    \t\t\t&& (avc->s_info.nal_unit_type != GF_AVC_NALU_SVC_SLICE)\n\t\t\t) {\n\t\t\
+    \tbreak;\n\t\t}\n\t\tif (avc->s_info.frame_num != n_state.frame_num) {\n\t\t\t\
+    ret = 1;\n\t\t\tbreak;\n\t\t}\n\n\t\tif (avc->s_info.field_pic_flag != n_state.field_pic_flag)\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif ((avc->s_info.nal_ref_idc !=\
+    \ n_state.nal_ref_idc) &&\n\t\t\t(!avc->s_info.nal_ref_idc || !n_state.nal_ref_idc))\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif (!avc->s_info.sps)\n\t\t\treturn\
+    \ -1;\n\n\t\tif (avc->s_info.sps->poc_type == n_state.sps->poc_type) {\n\t\t\t\
+    if (!avc->s_info.sps->poc_type) {\n\t\t\t\tif (!n_state.bottom_field_flag && (avc->s_info.poc_lsb\
+    \ != n_state.poc_lsb)) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\
+    \t\tif (avc->s_info.delta_poc_bottom != n_state.delta_poc_bottom) {\n\t\t\t\t\t\
+    ret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t\telse if (avc->s_info.sps->poc_type\
+    \ == 1) {\n\t\t\t\tif (avc->s_info.delta_poc[0] != n_state.delta_poc[0]) {\n\t\
+    \t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t\tif (avc->s_info.delta_poc[1]\
+    \ != n_state.delta_poc[1]) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\
+    \t\t\t}\n\t\t}\n\n\t\tif (n_state.nal_unit_type == GF_AVC_NALU_IDR_SLICE) {\n\t\
+    \t\tif (avc->s_info.nal_unit_type != GF_AVC_NALU_IDR_SLICE) { /*IdrPicFlag differs\
+    \ in value*/\n\t\t\t\tret = 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\telse if (avc->s_info.idr_pic_id\
+    \ != n_state.idr_pic_id) { /*both IDR and idr_pic_id differs*/\n\t\t\t\tret =\
+    \ 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\t\tbreak;\n\tcase GF_AVC_NALU_SEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 0, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_PIC_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_pps_bs_internal(bs, avc, nal_hdr);\n\t\tif\
+    \ (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SVC_SUBSEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 1, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SEQ_PARAM_EXT:\n\
+    \t\tavc->last_ps_idx = (s32) gf_bs_read_ue(bs);\n\t\tif (avc->last_ps_idx < 0)\
+    \ return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_SEI:\n\tcase GF_AVC_NALU_FILLER_DATA:\n\
+    \t\treturn 0;\n\n\tdefault:\n\t\tif (avc->s_info.nal_unit_type <= GF_AVC_NALU_IDR_SLICE)\
+    \ ret = 1;\n\t\t//To detect change of AU when multiple sps and pps in stream\n\
+    \t\telse if ((nal_hdr & 0x1F) == GF_AVC_NALU_SEI && avc->s_info.nal_unit_type\
+    \ == GF_AVC_NALU_SVC_SLICE)\n\t\t\tret = 1;\n\t\telse if ((nal_hdr & 0x1F) ==\
+    \ GF_AVC_NALU_SEQ_PARAM && avc->s_info.nal_unit_type == GF_AVC_NALU_SVC_SLICE)\n\
+    \t\t\tret = 1;\n\t\telse\n\t\t\tret = 0;\n\t\tbreak;\n\t}\n\n\t/* save _prev values\
+    \ */\n\tif (ret && avc->s_info.sps) {\n\t\tn_state.frame_num_offset_prev = avc->s_info.frame_num_offset;\n\
+    \t\tif ((avc->s_info.sps->poc_type != 2) || (avc->s_info.nal_ref_idc != 0))\n\t\
+    \t\tn_state.frame_num_prev = avc->s_info.frame_num;\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t}\n\tif (slice)\n\t\tavc_compute_poc(&n_state);\n\
+    \tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\treturn ret;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\ns32 gf_avc_parse_nalu(GF_BitStream *bs,\
+    \ AVCState *avc)\n{\n\tu8 idr_flag;\n\ts32 slice, ret;\n\tu32 nal_hdr;\n\tAVCSliceInfo\
+    \ n_state;\n\n\tgf_bs_enable_emulation_byte_removal(bs, GF_TRUE);\n\n\tnal_hdr\
+    \ = gf_bs_read_u8(bs);\n\n\tslice = 0;\n\tmemcpy(&n_state, &avc->s_info, sizeof(AVCSliceInfo));\n\
+    \tavc->last_nal_type_parsed = n_state.nal_unit_type = nal_hdr & 0x1F;\n\tn_state.nal_ref_idc\
+    \ = (nal_hdr >> 5) & 0x3;\n\n\tidr_flag = 0;\n\n\tswitch (n_state.nal_unit_type)\
+    \ {\n\tcase GF_AVC_NALU_ACCESS_UNIT:\n\tcase GF_AVC_NALU_END_OF_SEQ:\n\tcase GF_AVC_NALU_END_OF_STREAM:\n\
+    \t\tret = 1;\n\t\tbreak;\n\n\tcase GF_AVC_NALU_SVC_SLICE:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\t// slice buffer - read the info and compare.\n\t\t\
+    /*ret = */svc_parse_slice(bs, avc, &n_state);\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t\tavc_compute_poc(&n_state);\n\n\t\tif (avc->s_info.poc\
+    \ != n_state.poc) {\n\t\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\t\treturn 1;\n\t\t}\n\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\treturn 0;\n\n\tcase GF_AVC_NALU_SVC_PREFIX_NALU:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_IDR_SLICE:\n\tcase\
+    \ GF_AVC_NALU_NON_IDR_SLICE:\n\tcase GF_AVC_NALU_DP_A_SLICE:\n\tcase GF_AVC_NALU_DP_B_SLICE:\n\
+    \tcase GF_AVC_NALU_DP_C_SLICE:\n\t\tslice = 1;\n\t\t/* slice buffer - read the\
+    \ info and compare.*/\n\t\tret = avc_parse_slice(bs, avc, idr_flag, &n_state);\n\
+    \t\tif (ret < 0) return ret;\n\t\tret = 0;\n\t\tif (\n\t\t\t((avc->s_info.nal_unit_type\
+    \ > GF_AVC_NALU_IDR_SLICE) || (avc->s_info.nal_unit_type < GF_AVC_NALU_NON_IDR_SLICE))\n\
+    \t\t\t&& (avc->s_info.nal_unit_type != GF_AVC_NALU_SVC_SLICE)\n\t\t\t) {\n\t\t\
+    \tbreak;\n\t\t}\n\t\tif (avc->s_info.frame_num != n_state.frame_num) {\n\t\t\t\
+    ret = 1;\n\t\t\tbreak;\n\t\t}\n\n\t\tif (avc->s_info.field_pic_flag != n_state.field_pic_flag)\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif ((avc->s_info.nal_ref_idc !=\
+    \ n_state.nal_ref_idc) &&\n\t\t\t(!avc->s_info.nal_ref_idc || !n_state.nal_ref_idc))\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif (!avc->s_info.sps)\n\t\t\treturn\
+    \ -1;\n\n\t\tif (avc->s_info.sps->poc_type == n_state.sps->poc_type) {\n\t\t\t\
+    if (!avc->s_info.sps->poc_type) {\n\t\t\t\tif (!n_state.bottom_field_flag && (avc->s_info.poc_lsb\
+    \ != n_state.poc_lsb)) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\
+    \t\tif (avc->s_info.delta_poc_bottom != n_state.delta_poc_bottom) {\n\t\t\t\t\t\
+    ret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t\telse if (avc->s_info.sps->poc_type\
+    \ == 1) {\n\t\t\t\tif (avc->s_info.delta_poc[0] != n_state.delta_poc[0]) {\n\t\
+    \t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t\tif (avc->s_info.delta_poc[1]\
+    \ != n_state.delta_poc[1]) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\
+    \t\t\t}\n\t\t}\n\n\t\tif (n_state.nal_unit_type == GF_AVC_NALU_IDR_SLICE) {\n\t\
+    \t\tif (avc->s_info.nal_unit_type != GF_AVC_NALU_IDR_SLICE) { /*IdrPicFlag differs\
+    \ in value*/\n\t\t\t\tret = 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\telse if (avc->s_info.idr_pic_id\
+    \ != n_state.idr_pic_id) { /*both IDR and idr_pic_id differs*/\n\t\t\t\tret =\
+    \ 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\t\tbreak;\n\tcase GF_AVC_NALU_SEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 0, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_PIC_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_pps_bs_internal(bs, avc, nal_hdr);\n\t\tif\
+    \ (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SVC_SUBSEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 1, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SEQ_PARAM_EXT:\n\
+    \t\tavc->last_ps_idx = (s32) gf_bs_read_ue(bs);\n\t\tif (avc->last_ps_idx < 0)\
+    \ return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_SEI:\n\tcase GF_AVC_NALU_FILLER_DATA:\n\
+    \t\treturn 0;\n\n\tdefault:\n\t\tif (avc->s_info.nal_unit_type <= GF_AVC_NALU_IDR_SLICE)\
+    \ ret = 1;\n\t\t//To detect change of AU when multiple sps and pps in stream\n\
+    \t\telse if ((nal_hdr & 0x1F) == GF_AVC_NALU_SEI && avc->s_info.nal_unit_type\
+    \ == GF_AVC_NALU_SVC_SLICE)\n\t\t\tret = 1;\n\t\telse if ((nal_hdr & 0x1F) ==\
+    \ GF_AVC_NALU_SEQ_PARAM && avc->s_info.nal_unit_type == GF_AVC_NALU_SVC_SLICE)\n\
+    \t\t\tret = 1;\n\t\telse\n\t\t\tret = 0;\n\t\tbreak;\n\t}\n\n\t/* save _prev values\
+    \ */\n\tif (ret && avc->s_info.sps) {\n\t\tn_state.frame_num_offset_prev = avc->s_info.frame_num_offset;\n\
+    \t\tif ((avc->s_info.sps->poc_type != 2) || (avc->s_info.nal_ref_idc != 0))\n\t\
+    \t\tn_state.frame_num_prev = avc->s_info.frame_num;\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t}\n\tif (slice)\n\t\tavc_compute_poc(&n_state);\n\
+    \tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\treturn ret;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\ns32 gf_avc_parse_nalu(GF_BitStream\
+    \ *bs, AVCState *avc)\n{\n\tu8 idr_flag;\n\ts32 slice, ret;\n\tu32 nal_hdr;\n\t\
+    AVCSliceInfo n_state;\n\n\tgf_bs_enable_emulation_byte_removal(bs, GF_TRUE);\n\
+    \n\tnal_hdr = gf_bs_read_u8(bs);\n\n\tslice = 0;\n\tmemcpy(&n_state, &avc->s_info,\
+    \ sizeof(AVCSliceInfo));\n\tavc->last_nal_type_parsed = n_state.nal_unit_type\
+    \ = nal_hdr & 0x1F;\n\tn_state.nal_ref_idc = (nal_hdr >> 5) & 0x3;\n\n\tidr_flag\
+    \ = 0;\n\n\tswitch (n_state.nal_unit_type) {\n\tcase GF_AVC_NALU_ACCESS_UNIT:\n\
+    \tcase GF_AVC_NALU_END_OF_SEQ:\n\tcase GF_AVC_NALU_END_OF_STREAM:\n\t\tret = 1;\n\
+    \t\tbreak;\n\n\tcase GF_AVC_NALU_SVC_SLICE:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\t// slice buffer - read the info and compare.\n\t\t\
+    /*ret = */svc_parse_slice(bs, avc, &n_state);\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t\tavc_compute_poc(&n_state);\n\n\t\tif (avc->s_info.poc\
+    \ != n_state.poc) {\n\t\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\t\treturn 1;\n\t\t}\n\t\tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\
+    \t\treturn 0;\n\n\tcase GF_AVC_NALU_SVC_PREFIX_NALU:\n\t\tSVC_ReadNal_header_extension(bs,\
+    \ &n_state.NalHeader);\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_IDR_SLICE:\n\tcase\
+    \ GF_AVC_NALU_NON_IDR_SLICE:\n\tcase GF_AVC_NALU_DP_A_SLICE:\n\tcase GF_AVC_NALU_DP_B_SLICE:\n\
+    \tcase GF_AVC_NALU_DP_C_SLICE:\n\t\tslice = 1;\n\t\t/* slice buffer - read the\
+    \ info and compare.*/\n\t\tret = avc_parse_slice(bs, avc, idr_flag, &n_state);\n\
+    \t\tif (ret < 0) return ret;\n\t\tret = 0;\n\t\tif (\n\t\t\t((avc->s_info.nal_unit_type\
+    \ > GF_AVC_NALU_IDR_SLICE) || (avc->s_info.nal_unit_type < GF_AVC_NALU_NON_IDR_SLICE))\n\
+    \t\t\t&& (avc->s_info.nal_unit_type != GF_AVC_NALU_SVC_SLICE)\n\t\t\t) {\n\t\t\
+    \tbreak;\n\t\t}\n\t\tif (avc->s_info.frame_num != n_state.frame_num) {\n\t\t\t\
+    ret = 1;\n\t\t\tbreak;\n\t\t}\n\n\t\tif (avc->s_info.field_pic_flag != n_state.field_pic_flag)\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif ((avc->s_info.nal_ref_idc !=\
+    \ n_state.nal_ref_idc) &&\n\t\t\t(!avc->s_info.nal_ref_idc || !n_state.nal_ref_idc))\
+    \ {\n\t\t\tret = 1;\n\t\t\tbreak;\n\t\t}\n\t\tif (!avc->s_info.sps)\n\t\t\treturn\
+    \ -1;\n\n\t\tif (avc->s_info.sps->poc_type == n_state.sps->poc_type) {\n\t\t\t\
+    if (!avc->s_info.sps->poc_type) {\n\t\t\t\tif (!n_state.bottom_field_flag && (avc->s_info.poc_lsb\
+    \ != n_state.poc_lsb)) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\
+    \t\tif (avc->s_info.delta_poc_bottom != n_state.delta_poc_bottom) {\n\t\t\t\t\t\
+    ret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t}\n\t\t\telse if (avc->s_info.sps->poc_type\
+    \ == 1) {\n\t\t\t\tif (avc->s_info.delta_poc[0] != n_state.delta_poc[0]) {\n\t\
+    \t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\t\t\t\tif (avc->s_info.delta_poc[1]\
+    \ != n_state.delta_poc[1]) {\n\t\t\t\t\tret = 1;\n\t\t\t\t\tbreak;\n\t\t\t\t}\n\
+    \t\t\t}\n\t\t}\n\n\t\tif (n_state.nal_unit_type == GF_AVC_NALU_IDR_SLICE) {\n\t\
+    \t\tif (avc->s_info.nal_unit_type != GF_AVC_NALU_IDR_SLICE) { /*IdrPicFlag differs\
+    \ in value*/\n\t\t\t\tret = 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t\telse if (avc->s_info.idr_pic_id\
+    \ != n_state.idr_pic_id) { /*both IDR and idr_pic_id differs*/\n\t\t\t\tret =\
+    \ 1;\n\t\t\t\tbreak;\n\t\t\t}\n\t\t}\n\t\tbreak;\n\tcase GF_AVC_NALU_SEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 0, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_PIC_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_pps_bs_internal(bs, avc, nal_hdr);\n\t\tif\
+    \ (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SVC_SUBSEQ_PARAM:\n\
+    \t\tavc->last_ps_idx = gf_avc_read_sps_bs_internal(bs, avc, 1, NULL, nal_hdr);\n\
+    \t\tif (avc->last_ps_idx < 0) return -1;\n\t\treturn 0;\n\tcase GF_AVC_NALU_SEQ_PARAM_EXT:\n\
+    \t\tavc->last_ps_idx = (s32) gf_bs_read_ue(bs);\n\t\tif (avc->last_ps_idx < 0)\
+    \ return -1;\n\t\treturn 0;\n\n\tcase GF_AVC_NALU_SEI:\n\tcase GF_AVC_NALU_FILLER_DATA:\n\
+    \t\treturn 0;\n\n\tdefault:\n\t\tif (avc->s_info.nal_unit_type <= GF_AVC_NALU_IDR_SLICE)\
+    \ ret = 1;\n\t\t//To detect change of AU when multiple sps and pps in stream\n\
+    \t\telse if ((nal_hdr & 0x1F) == GF_AVC_NALU_SEI && avc->s_info.nal_unit_type\
+    \ == GF_AVC_NALU_SVC_SLICE)\n\t\t\tret = 1;\n\t\telse if ((nal_hdr & 0x1F) ==\
+    \ GF_AVC_NALU_SEQ_PARAM && avc->s_info.nal_unit_type == GF_AVC_NALU_SVC_SLICE)\n\
+    \t\t\tret = 1;\n\t\telse\n\t\t\tret = 0;\n\t\tbreak;\n\t}\n\n\t/* save _prev values\
+    \ */\n\tif (ret && avc->s_info.sps) {\n\t\tn_state.frame_num_offset_prev = avc->s_info.frame_num_offset;\n\
+    \t\tif ((avc->s_info.sps->poc_type != 2) || (avc->s_info.nal_ref_idc != 0))\n\t\
+    \t\tn_state.frame_num_prev = avc->s_info.frame_num;\n\t\tif (avc->s_info.nal_ref_idc)\
+    \ {\n\t\t\tn_state.poc_lsb_prev = avc->s_info.poc_lsb;\n\t\t\tn_state.poc_msb_prev\
+    \ = avc->s_info.poc_msb;\n\t\t}\n\t}\n\tif (slice)\n\t\tavc_compute_poc(&n_state);\n\
+    \tmemcpy(&avc->s_info, &n_state, sizeof(AVCSliceInfo));\n\treturn ret;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 222739
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

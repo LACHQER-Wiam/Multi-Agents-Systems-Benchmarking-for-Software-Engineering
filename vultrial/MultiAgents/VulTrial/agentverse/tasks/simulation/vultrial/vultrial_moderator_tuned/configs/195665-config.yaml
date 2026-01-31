@@ -1,0 +1,427 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nnjs_array_prototype_splice(njs_vm_t\
+    \ *vm, njs_value_t *args, njs_uint_t nargs,\n    njs_index_t unused)\n{\n    int64_t\
+    \      i, n, start, length, items, delta, delete;\n    njs_int_t    ret;\n   \
+    \ njs_value_t  *this, value, del_object;\n    njs_array_t  *array, *deleted;\n\
+    \n    this = njs_argument(args, 0);\n\n    ret = njs_value_to_object(vm, this);\n\
+    \    if (njs_slow_path(ret != NJS_OK)) {\n        return ret;\n    }\n\n    ret\
+    \ = njs_object_length(vm, this, &length);\n    if (njs_slow_path(ret == NJS_ERROR))\
+    \ {\n        return ret;\n    }\n\n    ret = njs_value_to_integer(vm, njs_arg(args,\
+    \ nargs, 1), &start);\n    if (njs_slow_path(ret != NJS_OK)) {\n        return\
+    \ ret;\n    }\n\n    start = (start < 0) ? njs_max(length + start, 0) : njs_min(start,\
+    \ length);\n\n    items = 0;\n    delete = 0;\n\n    if (nargs == 2) {\n     \
+    \   delete = length - start;\n\n    } else if (nargs > 2) {\n        items = nargs\
+    \ - 3;\n\n        ret = njs_value_to_integer(vm, njs_arg(args, nargs, 2), &delete);\n\
+    \        if (njs_slow_path(ret != NJS_OK)) {\n            return ret;\n      \
+    \  }\n\n        delete = njs_min(njs_max(delete, 0), length - start);\n    }\n\
+    \n    delta = items - delete;\n\n    if (njs_slow_path((length + delta) > NJS_MAX_LENGTH))\
+    \ {\n        njs_type_error(vm, \"Invalid length\");\n        return NJS_ERROR;\n\
+    \    }\n\n    /* TODO: ArraySpeciesCreate(). */\n\n    deleted = njs_array_alloc(vm,\
+    \ 0, delete, 0);\n    if (njs_slow_path(deleted == NULL)) {\n        return NJS_ERROR;\n\
+    \    }\n\n    if (njs_fast_path(njs_is_fast_array(this) && deleted->object.fast_array))\
+    \ {\n        array = njs_array(this);\n        for (i = 0, n = start; i < delete;\
+    \ i++, n++) {\n            deleted->start[i] = array->start[n];\n        }\n\n\
+    \    } else {\n        njs_set_array(&del_object, deleted);\n\n        for (i\
+    \ = 0, n = start; i < delete; i++, n++) {\n            ret = njs_value_property_i64(vm,\
+    \ this, n, &value);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n    \
+    \            return NJS_ERROR;\n            }\n\n            if (ret == NJS_OK)\
+    \ {\n                /* TODO:  CreateDataPropertyOrThrow(). */\n             \
+    \   ret = njs_value_property_i64_set(vm, &del_object, i, &value);\n          \
+    \      if (njs_slow_path(ret == NJS_ERROR)) {\n                    return ret;\n\
+    \                }\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ &del_object, delete);\n        if (njs_slow_path(ret != NJS_OK)) {\n       \
+    \     return NJS_ERROR;\n        }\n    }\n\n    if (njs_fast_path(njs_is_fast_array(this)))\
+    \ {\n        array = njs_array(this);\n\n        if (delta != 0) {\n         \
+    \   /*\n             * Relocate the rest of items.\n             * Index of the\
+    \ first item is in \"n\".\n             */\n            if (delta > 0) {\n   \
+    \             ret = njs_array_expand(vm, array, 0, delta);\n                if\
+    \ (njs_slow_path(ret != NJS_OK)) {\n                    return ret;\n        \
+    \        }\n            }\n\n            ret = njs_array_copy_within(vm, this,\
+    \ start + items, start + delete,\n                                        array->length\
+    \ - (start + delete), 0);\n            if (njs_slow_path(ret != NJS_OK)) {\n \
+    \               return ret;\n            }\n\n            array->length += delta;\n\
+    \        }\n\n        /* Copy new items. */\n\n        if (items > 0) {\n    \
+    \        memcpy(&array->start[start], &args[3],\n                   items * sizeof(njs_value_t));\n\
+    \        }\n\n    } else {\n\n       if (delta != 0) {\n           ret = njs_array_copy_within(vm,\
+    \ this, start + items, start + delete,\n                                     \
+    \  length - (start + delete), delta < 0);\n            if (njs_slow_path(ret !=\
+    \ NJS_OK)) {\n                return ret;\n            }\n\n            for (i\
+    \ = length - 1; i >= length + delta; i--) {\n                ret = njs_value_property_i64_delete(vm,\
+    \ this, i, NULL);\n                if (njs_slow_path(ret == NJS_ERROR)) {\n  \
+    \                  return NJS_ERROR;\n                }\n            }\n     \
+    \  }\n\n        /* Copy new items. */\n\n        for (i = 3, n = start; items--\
+    \ > 0; i++, n++) {\n            ret = njs_value_property_i64_set(vm, this, n,\
+    \ &args[i]);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n           \
+    \     return NJS_ERROR;\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ this, length + delta);\n        if (njs_slow_path(ret != NJS_OK)) {\n      \
+    \      return NJS_ERROR;\n        }\n    }\n\n    njs_set_array(&vm->retval, deleted);\n\
+    \n    return NJS_OK;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nnjs_array_prototype_splice(njs_vm_t\
+    \ *vm, njs_value_t *args, njs_uint_t nargs,\n    njs_index_t unused)\n{\n    int64_t\
+    \      i, n, start, length, items, delta, delete;\n    njs_int_t    ret;\n   \
+    \ njs_value_t  *this, value, del_object;\n    njs_array_t  *array, *deleted;\n\
+    \n    this = njs_argument(args, 0);\n\n    ret = njs_value_to_object(vm, this);\n\
+    \    if (njs_slow_path(ret != NJS_OK)) {\n        return ret;\n    }\n\n    ret\
+    \ = njs_object_length(vm, this, &length);\n    if (njs_slow_path(ret == NJS_ERROR))\
+    \ {\n        return ret;\n    }\n\n    ret = njs_value_to_integer(vm, njs_arg(args,\
+    \ nargs, 1), &start);\n    if (njs_slow_path(ret != NJS_OK)) {\n        return\
+    \ ret;\n    }\n\n    start = (start < 0) ? njs_max(length + start, 0) : njs_min(start,\
+    \ length);\n\n    items = 0;\n    delete = 0;\n\n    if (nargs == 2) {\n     \
+    \   delete = length - start;\n\n    } else if (nargs > 2) {\n        items = nargs\
+    \ - 3;\n\n        ret = njs_value_to_integer(vm, njs_arg(args, nargs, 2), &delete);\n\
+    \        if (njs_slow_path(ret != NJS_OK)) {\n            return ret;\n      \
+    \  }\n\n        delete = njs_min(njs_max(delete, 0), length - start);\n    }\n\
+    \n    delta = items - delete;\n\n    if (njs_slow_path((length + delta) > NJS_MAX_LENGTH))\
+    \ {\n        njs_type_error(vm, \"Invalid length\");\n        return NJS_ERROR;\n\
+    \    }\n\n    /* TODO: ArraySpeciesCreate(). */\n\n    deleted = njs_array_alloc(vm,\
+    \ 0, delete, 0);\n    if (njs_slow_path(deleted == NULL)) {\n        return NJS_ERROR;\n\
+    \    }\n\n    if (njs_fast_path(njs_is_fast_array(this) && deleted->object.fast_array))\
+    \ {\n        array = njs_array(this);\n        for (i = 0, n = start; i < delete;\
+    \ i++, n++) {\n            deleted->start[i] = array->start[n];\n        }\n\n\
+    \    } else {\n        njs_set_array(&del_object, deleted);\n\n        for (i\
+    \ = 0, n = start; i < delete; i++, n++) {\n            ret = njs_value_property_i64(vm,\
+    \ this, n, &value);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n    \
+    \            return NJS_ERROR;\n            }\n\n            if (ret == NJS_OK)\
+    \ {\n                /* TODO:  CreateDataPropertyOrThrow(). */\n             \
+    \   ret = njs_value_property_i64_set(vm, &del_object, i, &value);\n          \
+    \      if (njs_slow_path(ret == NJS_ERROR)) {\n                    return ret;\n\
+    \                }\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ &del_object, delete);\n        if (njs_slow_path(ret != NJS_OK)) {\n       \
+    \     return NJS_ERROR;\n        }\n    }\n\n    if (njs_fast_path(njs_is_fast_array(this)))\
+    \ {\n        array = njs_array(this);\n\n        if (delta != 0) {\n         \
+    \   /*\n             * Relocate the rest of items.\n             * Index of the\
+    \ first item is in \"n\".\n             */\n            if (delta > 0) {\n   \
+    \             ret = njs_array_expand(vm, array, 0, delta);\n                if\
+    \ (njs_slow_path(ret != NJS_OK)) {\n                    return ret;\n        \
+    \        }\n            }\n\n            ret = njs_array_copy_within(vm, this,\
+    \ start + items, start + delete,\n                                        array->length\
+    \ - (start + delete), 0);\n            if (njs_slow_path(ret != NJS_OK)) {\n \
+    \               return ret;\n            }\n\n            array->length += delta;\n\
+    \        }\n\n        /* Copy new items. */\n\n        if (items > 0) {\n    \
+    \        memcpy(&array->start[start], &args[3],\n                   items * sizeof(njs_value_t));\n\
+    \        }\n\n    } else {\n\n       if (delta != 0) {\n           ret = njs_array_copy_within(vm,\
+    \ this, start + items, start + delete,\n                                     \
+    \  length - (start + delete), delta < 0);\n            if (njs_slow_path(ret !=\
+    \ NJS_OK)) {\n                return ret;\n            }\n\n            for (i\
+    \ = length - 1; i >= length + delta; i--) {\n                ret = njs_value_property_i64_delete(vm,\
+    \ this, i, NULL);\n                if (njs_slow_path(ret == NJS_ERROR)) {\n  \
+    \                  return NJS_ERROR;\n                }\n            }\n     \
+    \  }\n\n        /* Copy new items. */\n\n        for (i = 3, n = start; items--\
+    \ > 0; i++, n++) {\n            ret = njs_value_property_i64_set(vm, this, n,\
+    \ &args[i]);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n           \
+    \     return NJS_ERROR;\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ this, length + delta);\n        if (njs_slow_path(ret != NJS_OK)) {\n      \
+    \      return NJS_ERROR;\n        }\n    }\n\n    njs_set_array(&vm->retval, deleted);\n\
+    \n    return NJS_OK;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nnjs_array_prototype_splice(njs_vm_t *vm,\
+    \ njs_value_t *args, njs_uint_t nargs,\n    njs_index_t unused)\n{\n    int64_t\
+    \      i, n, start, length, items, delta, delete;\n    njs_int_t    ret;\n   \
+    \ njs_value_t  *this, value, del_object;\n    njs_array_t  *array, *deleted;\n\
+    \n    this = njs_argument(args, 0);\n\n    ret = njs_value_to_object(vm, this);\n\
+    \    if (njs_slow_path(ret != NJS_OK)) {\n        return ret;\n    }\n\n    ret\
+    \ = njs_object_length(vm, this, &length);\n    if (njs_slow_path(ret == NJS_ERROR))\
+    \ {\n        return ret;\n    }\n\n    ret = njs_value_to_integer(vm, njs_arg(args,\
+    \ nargs, 1), &start);\n    if (njs_slow_path(ret != NJS_OK)) {\n        return\
+    \ ret;\n    }\n\n    start = (start < 0) ? njs_max(length + start, 0) : njs_min(start,\
+    \ length);\n\n    items = 0;\n    delete = 0;\n\n    if (nargs == 2) {\n     \
+    \   delete = length - start;\n\n    } else if (nargs > 2) {\n        items = nargs\
+    \ - 3;\n\n        ret = njs_value_to_integer(vm, njs_arg(args, nargs, 2), &delete);\n\
+    \        if (njs_slow_path(ret != NJS_OK)) {\n            return ret;\n      \
+    \  }\n\n        delete = njs_min(njs_max(delete, 0), length - start);\n    }\n\
+    \n    delta = items - delete;\n\n    if (njs_slow_path((length + delta) > NJS_MAX_LENGTH))\
+    \ {\n        njs_type_error(vm, \"Invalid length\");\n        return NJS_ERROR;\n\
+    \    }\n\n    /* TODO: ArraySpeciesCreate(). */\n\n    deleted = njs_array_alloc(vm,\
+    \ 0, delete, 0);\n    if (njs_slow_path(deleted == NULL)) {\n        return NJS_ERROR;\n\
+    \    }\n\n    if (njs_fast_path(njs_is_fast_array(this) && deleted->object.fast_array))\
+    \ {\n        array = njs_array(this);\n        for (i = 0, n = start; i < delete;\
+    \ i++, n++) {\n            deleted->start[i] = array->start[n];\n        }\n\n\
+    \    } else {\n        njs_set_array(&del_object, deleted);\n\n        for (i\
+    \ = 0, n = start; i < delete; i++, n++) {\n            ret = njs_value_property_i64(vm,\
+    \ this, n, &value);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n    \
+    \            return NJS_ERROR;\n            }\n\n            if (ret == NJS_OK)\
+    \ {\n                /* TODO:  CreateDataPropertyOrThrow(). */\n             \
+    \   ret = njs_value_property_i64_set(vm, &del_object, i, &value);\n          \
+    \      if (njs_slow_path(ret == NJS_ERROR)) {\n                    return ret;\n\
+    \                }\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ &del_object, delete);\n        if (njs_slow_path(ret != NJS_OK)) {\n       \
+    \     return NJS_ERROR;\n        }\n    }\n\n    if (njs_fast_path(njs_is_fast_array(this)))\
+    \ {\n        array = njs_array(this);\n\n        if (delta != 0) {\n         \
+    \   /*\n             * Relocate the rest of items.\n             * Index of the\
+    \ first item is in \"n\".\n             */\n            if (delta > 0) {\n   \
+    \             ret = njs_array_expand(vm, array, 0, delta);\n                if\
+    \ (njs_slow_path(ret != NJS_OK)) {\n                    return ret;\n        \
+    \        }\n            }\n\n            ret = njs_array_copy_within(vm, this,\
+    \ start + items, start + delete,\n                                        array->length\
+    \ - (start + delete), 0);\n            if (njs_slow_path(ret != NJS_OK)) {\n \
+    \               return ret;\n            }\n\n            array->length += delta;\n\
+    \        }\n\n        /* Copy new items. */\n\n        if (items > 0) {\n    \
+    \        memcpy(&array->start[start], &args[3],\n                   items * sizeof(njs_value_t));\n\
+    \        }\n\n    } else {\n\n       if (delta != 0) {\n           ret = njs_array_copy_within(vm,\
+    \ this, start + items, start + delete,\n                                     \
+    \  length - (start + delete), delta < 0);\n            if (njs_slow_path(ret !=\
+    \ NJS_OK)) {\n                return ret;\n            }\n\n            for (i\
+    \ = length - 1; i >= length + delta; i--) {\n                ret = njs_value_property_i64_delete(vm,\
+    \ this, i, NULL);\n                if (njs_slow_path(ret == NJS_ERROR)) {\n  \
+    \                  return NJS_ERROR;\n                }\n            }\n     \
+    \  }\n\n        /* Copy new items. */\n\n        for (i = 3, n = start; items--\
+    \ > 0; i++, n++) {\n            ret = njs_value_property_i64_set(vm, this, n,\
+    \ &args[i]);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n           \
+    \     return NJS_ERROR;\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ this, length + delta);\n        if (njs_slow_path(ret != NJS_OK)) {\n      \
+    \      return NJS_ERROR;\n        }\n    }\n\n    njs_set_array(&vm->retval, deleted);\n\
+    \n    return NJS_OK;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nnjs_array_prototype_splice(njs_vm_t\
+    \ *vm, njs_value_t *args, njs_uint_t nargs,\n    njs_index_t unused)\n{\n    int64_t\
+    \      i, n, start, length, items, delta, delete;\n    njs_int_t    ret;\n   \
+    \ njs_value_t  *this, value, del_object;\n    njs_array_t  *array, *deleted;\n\
+    \n    this = njs_argument(args, 0);\n\n    ret = njs_value_to_object(vm, this);\n\
+    \    if (njs_slow_path(ret != NJS_OK)) {\n        return ret;\n    }\n\n    ret\
+    \ = njs_object_length(vm, this, &length);\n    if (njs_slow_path(ret == NJS_ERROR))\
+    \ {\n        return ret;\n    }\n\n    ret = njs_value_to_integer(vm, njs_arg(args,\
+    \ nargs, 1), &start);\n    if (njs_slow_path(ret != NJS_OK)) {\n        return\
+    \ ret;\n    }\n\n    start = (start < 0) ? njs_max(length + start, 0) : njs_min(start,\
+    \ length);\n\n    items = 0;\n    delete = 0;\n\n    if (nargs == 2) {\n     \
+    \   delete = length - start;\n\n    } else if (nargs > 2) {\n        items = nargs\
+    \ - 3;\n\n        ret = njs_value_to_integer(vm, njs_arg(args, nargs, 2), &delete);\n\
+    \        if (njs_slow_path(ret != NJS_OK)) {\n            return ret;\n      \
+    \  }\n\n        delete = njs_min(njs_max(delete, 0), length - start);\n    }\n\
+    \n    delta = items - delete;\n\n    if (njs_slow_path((length + delta) > NJS_MAX_LENGTH))\
+    \ {\n        njs_type_error(vm, \"Invalid length\");\n        return NJS_ERROR;\n\
+    \    }\n\n    /* TODO: ArraySpeciesCreate(). */\n\n    deleted = njs_array_alloc(vm,\
+    \ 0, delete, 0);\n    if (njs_slow_path(deleted == NULL)) {\n        return NJS_ERROR;\n\
+    \    }\n\n    if (njs_fast_path(njs_is_fast_array(this) && deleted->object.fast_array))\
+    \ {\n        array = njs_array(this);\n        for (i = 0, n = start; i < delete;\
+    \ i++, n++) {\n            deleted->start[i] = array->start[n];\n        }\n\n\
+    \    } else {\n        njs_set_array(&del_object, deleted);\n\n        for (i\
+    \ = 0, n = start; i < delete; i++, n++) {\n            ret = njs_value_property_i64(vm,\
+    \ this, n, &value);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n    \
+    \            return NJS_ERROR;\n            }\n\n            if (ret == NJS_OK)\
+    \ {\n                /* TODO:  CreateDataPropertyOrThrow(). */\n             \
+    \   ret = njs_value_property_i64_set(vm, &del_object, i, &value);\n          \
+    \      if (njs_slow_path(ret == NJS_ERROR)) {\n                    return ret;\n\
+    \                }\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ &del_object, delete);\n        if (njs_slow_path(ret != NJS_OK)) {\n       \
+    \     return NJS_ERROR;\n        }\n    }\n\n    if (njs_fast_path(njs_is_fast_array(this)))\
+    \ {\n        array = njs_array(this);\n\n        if (delta != 0) {\n         \
+    \   /*\n             * Relocate the rest of items.\n             * Index of the\
+    \ first item is in \"n\".\n             */\n            if (delta > 0) {\n   \
+    \             ret = njs_array_expand(vm, array, 0, delta);\n                if\
+    \ (njs_slow_path(ret != NJS_OK)) {\n                    return ret;\n        \
+    \        }\n            }\n\n            ret = njs_array_copy_within(vm, this,\
+    \ start + items, start + delete,\n                                        array->length\
+    \ - (start + delete), 0);\n            if (njs_slow_path(ret != NJS_OK)) {\n \
+    \               return ret;\n            }\n\n            array->length += delta;\n\
+    \        }\n\n        /* Copy new items. */\n\n        if (items > 0) {\n    \
+    \        memcpy(&array->start[start], &args[3],\n                   items * sizeof(njs_value_t));\n\
+    \        }\n\n    } else {\n\n       if (delta != 0) {\n           ret = njs_array_copy_within(vm,\
+    \ this, start + items, start + delete,\n                                     \
+    \  length - (start + delete), delta < 0);\n            if (njs_slow_path(ret !=\
+    \ NJS_OK)) {\n                return ret;\n            }\n\n            for (i\
+    \ = length - 1; i >= length + delta; i--) {\n                ret = njs_value_property_i64_delete(vm,\
+    \ this, i, NULL);\n                if (njs_slow_path(ret == NJS_ERROR)) {\n  \
+    \                  return NJS_ERROR;\n                }\n            }\n     \
+    \  }\n\n        /* Copy new items. */\n\n        for (i = 3, n = start; items--\
+    \ > 0; i++, n++) {\n            ret = njs_value_property_i64_set(vm, this, n,\
+    \ &args[i]);\n            if (njs_slow_path(ret == NJS_ERROR)) {\n           \
+    \     return NJS_ERROR;\n            }\n        }\n\n        ret = njs_object_length_set(vm,\
+    \ this, length + delta);\n        if (njs_slow_path(ret != NJS_OK)) {\n      \
+    \      return NJS_ERROR;\n        }\n    }\n\n    njs_set_array(&vm->retval, deleted);\n\
+    \n    return NJS_OK;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 195665
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

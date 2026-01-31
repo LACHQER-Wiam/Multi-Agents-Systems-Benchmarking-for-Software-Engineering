@@ -1,0 +1,335 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nmbfl_filt_conv_big5_wchar(int\
+    \ c, mbfl_convert_filter *filter)\n{\n\tint k;\n\tint c1, w, c2;\n\n\tswitch (filter->status)\
+    \ {\n\tcase 0:\n\t\tif (filter->from->no_encoding == mbfl_no_encoding_cp950) {\n\
+    \t\t\tc1 = 0x80;\n\t\t} else {\n\t\t\tc1 = 0xa0;\n\t\t}\n\n\t\tif (c >= 0 && c\
+    \ <= 0x80) {\t/* latin */\n\t\t\tCK((*filter->output_function)(c, filter->data));\n\
+    \t\t} else if (c == 0xff) {\n\t\t\tCK((*filter->output_function)(0xf8f8, filter->data));\n\
+    \t\t} else if (c > c1 && c < 0xff) {\t/* dbcs lead byte */\n\t\t\tfilter->status\
+    \ = 1;\n\t\t\tfilter->cache = c;\n\t\t} else {\n\t\t\tw = c & MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tcase 1:\t\t/* dbcs second byte */\n\t\tfilter->status =\
+    \ 0;\n\t\tc1 = filter->cache;\n\t\tif ((c > 0x39 && c < 0x7f) | (c > 0xa0 && c\
+    \ < 0xff)) {\n\t\t\tif (c < 0x7f){\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0x40);\n\
+    \t\t\t} else {\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0xa1) + 0x3f;\n\t\t\t}\n\t\t\
+    \tif (w >= 0 && w < big5_ucs_table_size) {\n\t\t\t\tw = big5_ucs_table[w];\n\t\
+    \t\t} else {\n\t\t\t\tw = 0;\n\t\t\t}\n\n\t\t\tif (filter->from->no_encoding ==\
+    \ mbfl_no_encoding_cp950) {\n\t\t\t\t/* PUA for CP950 */\n\t\t\t\tif (w <= 0 &&\n\
+    \t\t\t\t\t(((c1 >= 0xfa && c1 <= 0xfe) || (c1 >= 0x8e && c1 <= 0xa0) ||\n\t\t\t\
+    \t\t  (c1 >= 0x81 && c1 <= 0x8d) ||(c1 >= 0xc7 && c1 <= 0xc8))\n\t\t\t\t\t &&\
+    \ ((c > 0x39 && c < 0x7f) || (c > 0xa0 && c < 0xff))) ||\n\t\t\t\t\t((c1 == 0xc6)\
+    \ && (c > 0xa0 && c < 0xff))) {\n\t\t\t\t\tc2 = c1 << 8 | c;\n\t\t\t\t\tfor (k\
+    \ = 0; k < sizeof(cp950_pua_tbl)/(sizeof(unsigned short)*4); k++) {\n\t\t\t\t\t\
+    \tif (c2 >= cp950_pua_tbl[k][2] && c2 <= cp950_pua_tbl[k][3]) {\n\t\t\t\t\t\t\t\
+    break;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\tif ((cp950_pua_tbl[k][2] & 0xff)\
+    \ == 0x40) {\n\t\t\t\t\t\tw = 157*(c1 - (cp950_pua_tbl[k][2]>>8)) + c - (c >=\
+    \ 0xa1 ? 0x62 : 0x40)\n\t\t\t\t\t\t\t+ cp950_pua_tbl[k][0];\n\t\t\t\t\t} else\
+    \ {\n\t\t\t\t\t\tw = c2 - cp950_pua_tbl[k][2] + cp950_pua_tbl[k][0];\n\t\t\t\t\
+    \t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (w <= 0) {\n\t\t\t\tw = (c1 << 8) | c;\n\t\
+    \t\t\tw &= MBFL_WCSPLANE_MASK;\n\t\t\t\tw |= MBFL_WCSPLANE_BIG5;\n\t\t\t}\n\t\t\
+    \tCK((*filter->output_function)(w, filter->data));\n\t\t} else if ((c >= 0 &&\
+    \ c < 0x21) || c == 0x7f) {\t\t/* CTLs */\n\t\t\tCK((*filter->output_function)(c,\
+    \ filter->data));\n\t\t} else {\n\t\t\tw = (c1 << 8) | c;\n\t\t\tw &= MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tdefault:\n\t\tfilter->status = 0;\n\t\tbreak;\n\t}\n\n\t\
+    return c;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nmbfl_filt_conv_big5_wchar(int\
+    \ c, mbfl_convert_filter *filter)\n{\n\tint k;\n\tint c1, w, c2;\n\n\tswitch (filter->status)\
+    \ {\n\tcase 0:\n\t\tif (filter->from->no_encoding == mbfl_no_encoding_cp950) {\n\
+    \t\t\tc1 = 0x80;\n\t\t} else {\n\t\t\tc1 = 0xa0;\n\t\t}\n\n\t\tif (c >= 0 && c\
+    \ <= 0x80) {\t/* latin */\n\t\t\tCK((*filter->output_function)(c, filter->data));\n\
+    \t\t} else if (c == 0xff) {\n\t\t\tCK((*filter->output_function)(0xf8f8, filter->data));\n\
+    \t\t} else if (c > c1 && c < 0xff) {\t/* dbcs lead byte */\n\t\t\tfilter->status\
+    \ = 1;\n\t\t\tfilter->cache = c;\n\t\t} else {\n\t\t\tw = c & MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tcase 1:\t\t/* dbcs second byte */\n\t\tfilter->status =\
+    \ 0;\n\t\tc1 = filter->cache;\n\t\tif ((c > 0x39 && c < 0x7f) | (c > 0xa0 && c\
+    \ < 0xff)) {\n\t\t\tif (c < 0x7f){\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0x40);\n\
+    \t\t\t} else {\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0xa1) + 0x3f;\n\t\t\t}\n\t\t\
+    \tif (w >= 0 && w < big5_ucs_table_size) {\n\t\t\t\tw = big5_ucs_table[w];\n\t\
+    \t\t} else {\n\t\t\t\tw = 0;\n\t\t\t}\n\n\t\t\tif (filter->from->no_encoding ==\
+    \ mbfl_no_encoding_cp950) {\n\t\t\t\t/* PUA for CP950 */\n\t\t\t\tif (w <= 0 &&\n\
+    \t\t\t\t\t(((c1 >= 0xfa && c1 <= 0xfe) || (c1 >= 0x8e && c1 <= 0xa0) ||\n\t\t\t\
+    \t\t  (c1 >= 0x81 && c1 <= 0x8d) ||(c1 >= 0xc7 && c1 <= 0xc8))\n\t\t\t\t\t &&\
+    \ ((c > 0x39 && c < 0x7f) || (c > 0xa0 && c < 0xff))) ||\n\t\t\t\t\t((c1 == 0xc6)\
+    \ && (c > 0xa0 && c < 0xff))) {\n\t\t\t\t\tc2 = c1 << 8 | c;\n\t\t\t\t\tfor (k\
+    \ = 0; k < sizeof(cp950_pua_tbl)/(sizeof(unsigned short)*4); k++) {\n\t\t\t\t\t\
+    \tif (c2 >= cp950_pua_tbl[k][2] && c2 <= cp950_pua_tbl[k][3]) {\n\t\t\t\t\t\t\t\
+    break;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\tif ((cp950_pua_tbl[k][2] & 0xff)\
+    \ == 0x40) {\n\t\t\t\t\t\tw = 157*(c1 - (cp950_pua_tbl[k][2]>>8)) + c - (c >=\
+    \ 0xa1 ? 0x62 : 0x40)\n\t\t\t\t\t\t\t+ cp950_pua_tbl[k][0];\n\t\t\t\t\t} else\
+    \ {\n\t\t\t\t\t\tw = c2 - cp950_pua_tbl[k][2] + cp950_pua_tbl[k][0];\n\t\t\t\t\
+    \t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (w <= 0) {\n\t\t\t\tw = (c1 << 8) | c;\n\t\
+    \t\t\tw &= MBFL_WCSPLANE_MASK;\n\t\t\t\tw |= MBFL_WCSPLANE_BIG5;\n\t\t\t}\n\t\t\
+    \tCK((*filter->output_function)(w, filter->data));\n\t\t} else if ((c >= 0 &&\
+    \ c < 0x21) || c == 0x7f) {\t\t/* CTLs */\n\t\t\tCK((*filter->output_function)(c,\
+    \ filter->data));\n\t\t} else {\n\t\t\tw = (c1 << 8) | c;\n\t\t\tw &= MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tdefault:\n\t\tfilter->status = 0;\n\t\tbreak;\n\t}\n\n\t\
+    return c;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nmbfl_filt_conv_big5_wchar(int c, mbfl_convert_filter\
+    \ *filter)\n{\n\tint k;\n\tint c1, w, c2;\n\n\tswitch (filter->status) {\n\tcase\
+    \ 0:\n\t\tif (filter->from->no_encoding == mbfl_no_encoding_cp950) {\n\t\t\tc1\
+    \ = 0x80;\n\t\t} else {\n\t\t\tc1 = 0xa0;\n\t\t}\n\n\t\tif (c >= 0 && c <= 0x80)\
+    \ {\t/* latin */\n\t\t\tCK((*filter->output_function)(c, filter->data));\n\t\t\
+    } else if (c == 0xff) {\n\t\t\tCK((*filter->output_function)(0xf8f8, filter->data));\n\
+    \t\t} else if (c > c1 && c < 0xff) {\t/* dbcs lead byte */\n\t\t\tfilter->status\
+    \ = 1;\n\t\t\tfilter->cache = c;\n\t\t} else {\n\t\t\tw = c & MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tcase 1:\t\t/* dbcs second byte */\n\t\tfilter->status =\
+    \ 0;\n\t\tc1 = filter->cache;\n\t\tif ((c > 0x39 && c < 0x7f) | (c > 0xa0 && c\
+    \ < 0xff)) {\n\t\t\tif (c < 0x7f){\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0x40);\n\
+    \t\t\t} else {\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0xa1) + 0x3f;\n\t\t\t}\n\t\t\
+    \tif (w >= 0 && w < big5_ucs_table_size) {\n\t\t\t\tw = big5_ucs_table[w];\n\t\
+    \t\t} else {\n\t\t\t\tw = 0;\n\t\t\t}\n\n\t\t\tif (filter->from->no_encoding ==\
+    \ mbfl_no_encoding_cp950) {\n\t\t\t\t/* PUA for CP950 */\n\t\t\t\tif (w <= 0 &&\n\
+    \t\t\t\t\t(((c1 >= 0xfa && c1 <= 0xfe) || (c1 >= 0x8e && c1 <= 0xa0) ||\n\t\t\t\
+    \t\t  (c1 >= 0x81 && c1 <= 0x8d) ||(c1 >= 0xc7 && c1 <= 0xc8))\n\t\t\t\t\t &&\
+    \ ((c > 0x39 && c < 0x7f) || (c > 0xa0 && c < 0xff))) ||\n\t\t\t\t\t((c1 == 0xc6)\
+    \ && (c > 0xa0 && c < 0xff))) {\n\t\t\t\t\tc2 = c1 << 8 | c;\n\t\t\t\t\tfor (k\
+    \ = 0; k < sizeof(cp950_pua_tbl)/(sizeof(unsigned short)*4); k++) {\n\t\t\t\t\t\
+    \tif (c2 >= cp950_pua_tbl[k][2] && c2 <= cp950_pua_tbl[k][3]) {\n\t\t\t\t\t\t\t\
+    break;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\tif ((cp950_pua_tbl[k][2] & 0xff)\
+    \ == 0x40) {\n\t\t\t\t\t\tw = 157*(c1 - (cp950_pua_tbl[k][2]>>8)) + c - (c >=\
+    \ 0xa1 ? 0x62 : 0x40)\n\t\t\t\t\t\t\t+ cp950_pua_tbl[k][0];\n\t\t\t\t\t} else\
+    \ {\n\t\t\t\t\t\tw = c2 - cp950_pua_tbl[k][2] + cp950_pua_tbl[k][0];\n\t\t\t\t\
+    \t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (w <= 0) {\n\t\t\t\tw = (c1 << 8) | c;\n\t\
+    \t\t\tw &= MBFL_WCSPLANE_MASK;\n\t\t\t\tw |= MBFL_WCSPLANE_BIG5;\n\t\t\t}\n\t\t\
+    \tCK((*filter->output_function)(w, filter->data));\n\t\t} else if ((c >= 0 &&\
+    \ c < 0x21) || c == 0x7f) {\t\t/* CTLs */\n\t\t\tCK((*filter->output_function)(c,\
+    \ filter->data));\n\t\t} else {\n\t\t\tw = (c1 << 8) | c;\n\t\t\tw &= MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tdefault:\n\t\tfilter->status = 0;\n\t\tbreak;\n\t}\n\n\t\
+    return c;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nmbfl_filt_conv_big5_wchar(int\
+    \ c, mbfl_convert_filter *filter)\n{\n\tint k;\n\tint c1, w, c2;\n\n\tswitch (filter->status)\
+    \ {\n\tcase 0:\n\t\tif (filter->from->no_encoding == mbfl_no_encoding_cp950) {\n\
+    \t\t\tc1 = 0x80;\n\t\t} else {\n\t\t\tc1 = 0xa0;\n\t\t}\n\n\t\tif (c >= 0 && c\
+    \ <= 0x80) {\t/* latin */\n\t\t\tCK((*filter->output_function)(c, filter->data));\n\
+    \t\t} else if (c == 0xff) {\n\t\t\tCK((*filter->output_function)(0xf8f8, filter->data));\n\
+    \t\t} else if (c > c1 && c < 0xff) {\t/* dbcs lead byte */\n\t\t\tfilter->status\
+    \ = 1;\n\t\t\tfilter->cache = c;\n\t\t} else {\n\t\t\tw = c & MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tcase 1:\t\t/* dbcs second byte */\n\t\tfilter->status =\
+    \ 0;\n\t\tc1 = filter->cache;\n\t\tif ((c > 0x39 && c < 0x7f) | (c > 0xa0 && c\
+    \ < 0xff)) {\n\t\t\tif (c < 0x7f){\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0x40);\n\
+    \t\t\t} else {\n\t\t\t\tw = (c1 - 0xa1)*157 + (c - 0xa1) + 0x3f;\n\t\t\t}\n\t\t\
+    \tif (w >= 0 && w < big5_ucs_table_size) {\n\t\t\t\tw = big5_ucs_table[w];\n\t\
+    \t\t} else {\n\t\t\t\tw = 0;\n\t\t\t}\n\n\t\t\tif (filter->from->no_encoding ==\
+    \ mbfl_no_encoding_cp950) {\n\t\t\t\t/* PUA for CP950 */\n\t\t\t\tif (w <= 0 &&\n\
+    \t\t\t\t\t(((c1 >= 0xfa && c1 <= 0xfe) || (c1 >= 0x8e && c1 <= 0xa0) ||\n\t\t\t\
+    \t\t  (c1 >= 0x81 && c1 <= 0x8d) ||(c1 >= 0xc7 && c1 <= 0xc8))\n\t\t\t\t\t &&\
+    \ ((c > 0x39 && c < 0x7f) || (c > 0xa0 && c < 0xff))) ||\n\t\t\t\t\t((c1 == 0xc6)\
+    \ && (c > 0xa0 && c < 0xff))) {\n\t\t\t\t\tc2 = c1 << 8 | c;\n\t\t\t\t\tfor (k\
+    \ = 0; k < sizeof(cp950_pua_tbl)/(sizeof(unsigned short)*4); k++) {\n\t\t\t\t\t\
+    \tif (c2 >= cp950_pua_tbl[k][2] && c2 <= cp950_pua_tbl[k][3]) {\n\t\t\t\t\t\t\t\
+    break;\n\t\t\t\t\t\t}\n\t\t\t\t\t}\n\n\t\t\t\t\tif ((cp950_pua_tbl[k][2] & 0xff)\
+    \ == 0x40) {\n\t\t\t\t\t\tw = 157*(c1 - (cp950_pua_tbl[k][2]>>8)) + c - (c >=\
+    \ 0xa1 ? 0x62 : 0x40)\n\t\t\t\t\t\t\t+ cp950_pua_tbl[k][0];\n\t\t\t\t\t} else\
+    \ {\n\t\t\t\t\t\tw = c2 - cp950_pua_tbl[k][2] + cp950_pua_tbl[k][0];\n\t\t\t\t\
+    \t}\n\t\t\t\t}\n\t\t\t}\n\n\t\t\tif (w <= 0) {\n\t\t\t\tw = (c1 << 8) | c;\n\t\
+    \t\t\tw &= MBFL_WCSPLANE_MASK;\n\t\t\t\tw |= MBFL_WCSPLANE_BIG5;\n\t\t\t}\n\t\t\
+    \tCK((*filter->output_function)(w, filter->data));\n\t\t} else if ((c >= 0 &&\
+    \ c < 0x21) || c == 0x7f) {\t\t/* CTLs */\n\t\t\tCK((*filter->output_function)(c,\
+    \ filter->data));\n\t\t} else {\n\t\t\tw = (c1 << 8) | c;\n\t\t\tw &= MBFL_WCSGROUP_MASK;\n\
+    \t\t\tw |= MBFL_WCSGROUP_THROUGH;\n\t\t\tCK((*filter->output_function)(w, filter->data));\n\
+    \t\t}\n\t\tbreak;\n\n\tdefault:\n\t\tfilter->status = 0;\n\t\tbreak;\n\t}\n\n\t\
+    return c;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 213037
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

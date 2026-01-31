@@ -1,0 +1,639 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\n  void\
+    \ Compute(OpKernelContext* ctx) override {\n    const Tensor* x_tensor = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"x\", &x_tensor));\n\n    const Tensor* cs_prev_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"cs_prev\", &cs_prev_tensor));\n\
+    \n    const Tensor* h_prev_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    h_prev\", &h_prev_tensor));\n\n    const Tensor* w_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"w\", &w_tensor));\n\n    const Tensor* wci_tensor = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"wci\", &wci_tensor));\n\n    const Tensor*\
+    \ wcf_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"wcf\", &wcf_tensor));\n\
+    \n    const Tensor* wco_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    wco\", &wco_tensor));\n\n    const Tensor* b_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"b\", &b_tensor));\n\n    const int64_t batch_size = x_tensor->dim_size(0);\n\
+    \    const int64_t input_size = x_tensor->dim_size(1);\n    const int64_t cell_size\
+    \ = cs_prev_tensor->dim_size(1);\n\n    // Sanity checks for our input shapes.\n\
+    \    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(0) == batch_size,\n           \
+    \     errors::InvalidArgument(\"cs_prev.dims(0) != batch_size: \",\n         \
+    \                               cs_prev_tensor->dim_size(0), \" vs. \",\n    \
+    \                                    batch_size));\n    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(1)\
+    \ == cell_size,\n                errors::InvalidArgument(\"cs_prev.dims(1) !=\
+    \ cell_size: \",\n                                        cs_prev_tensor->dim_size(1),\
+    \ \" vs. \",\n                                        cell_size));\n\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(0) == batch_size,\n                errors::InvalidArgument(\"\
+    h_prev.dims(0) != batch_size: \",\n                                        h_prev_tensor->dim_size(0),\
+    \ \" vs. \",\n                                        batch_size));\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(1) == cell_size,\n                errors::InvalidArgument(\n\
+    \                    \"h_prev.dims(1) != cell_size: \", h_prev_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size));\n\n    OP_REQUIRES(ctx, w_tensor->dim_size(0)\
+    \ == input_size + cell_size,\n                errors::InvalidArgument(\n     \
+    \               \"w.dim_size(0) != input_size + cell_size: \",\n             \
+    \       w_tensor->dim_size(0), \" vs. \", input_size + cell_size));\n    OP_REQUIRES(ctx,\
+    \ w_tensor->dim_size(1) == cell_size * 4,\n                errors::InvalidArgument(\n\
+    \                    \"w.dim_size(1) != cell_size * 4: \", w_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size * 4));\n\n    OP_REQUIRES(ctx, b_tensor->dim_size(0)\
+    \ == cell_size * 4,\n                errors::InvalidArgument(\n              \
+    \      \"b.dim_size(0) != cell_size * 4: \", b_tensor->dim_size(0),\n        \
+    \            \" vs. \", cell_size * 4));\n\n    // Allocate our output tensors.\n\
+    \    Tensor* i_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"h_prev\"}, \"i\",\n                          \
+    \  TensorShape({batch_size, cell_size}), &i_tensor));\n\n    Tensor* cs_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"cs\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &cs_tensor));\n\n    Tensor*\
+    \ f_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    f\", TensorShape({batch_size, cell_size}),\n                                 \
+    \ &f_tensor));\n\n    Tensor* o_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"cs_prev\"}, \"o\",\n                         \
+    \   TensorShape({batch_size, cell_size}), &o_tensor));\n\n    Tensor* ci_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"ci\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &ci_tensor));\n\n    Tensor*\
+    \ co_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    co\", TensorShape({batch_size, cell_size}),\n                                \
+    \  &co_tensor));\n\n    Tensor* h_tensor = nullptr;\n    OP_REQUIRES_OK(\n   \
+    \     ctx, ctx->allocate_output(\"h\", TensorShape({batch_size, cell_size}),\n\
+    \                                  &h_tensor));\n\n    // Allocate our temp tensors.\n\
+    \    Tensor xh_tensor;\n    OP_REQUIRES_OK(ctx, ctx->allocate_temp(\n        \
+    \                    DataTypeToEnum<T>::v(),\n                            TensorShape({batch_size,\
+    \ input_size + cell_size}),\n                            &xh_tensor));\n\n   \
+    \ Tensor gates_tensor;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_temp(DataTypeToEnum<T>::v(),\n\
+    \                                      TensorShape({batch_size, cell_size * 4}),\n\
+    \                                      &gates_tensor));\n\n    const Device& device\
+    \ = ctx->eigen_device<Device>();\n\n    // Sanity check that each of the tensors\
+    \ have the required NDIMS.\n    OP_REQUIRES(ctx, x_tensor->dims() == 2,\n    \
+    \            errors::InvalidArgument(\"x_tensor must be rank 2 but is rank \"\
+    ,\n                                        x_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, cs_prev_tensor->dims() == 2,\n        errors::InvalidArgument(\"\
+    cs_prev_tensor must be rank 2 but is rank \",\n                              \
+    \  cs_prev_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, h_prev_tensor->dims()\
+    \ == 2,\n        errors::InvalidArgument(\"h_prev_tensor must be rank 2 but is\
+    \ rank \",\n                                h_prev_tensor->dims(), \".\"));\n\
+    \    OP_REQUIRES(ctx, w_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    w_tensor must be rank 2 but is rank \",\n                                    \
+    \    w_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, wci_tensor->dims()\
+    \ == 1,\n        errors::InvalidArgument(\"wci_tensor must be rank 1 but is rank\
+    \ \",\n                                wci_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, wcf_tensor->dims() == 1,\n        errors::InvalidArgument(\"wcf_tensor\
+    \ must be rank 1 but is rank \",\n                                wci_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(\n        ctx, wco_tensor->dims() == 1,\n        errors::InvalidArgument(\"\
+    wco_tensor must be rank 1 but is rank \",\n                                wco_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, b_tensor->dims() == 1,\n                errors::InvalidArgument(\"\
+    b_tensor must be rank 1 but is rank \",\n                                    \
+    \    b_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, xh_tensor.dims() == 2,\n\
+    \                errors::InvalidArgument(\"xh_tensor must be rank 2 but is rank\
+    \ \",\n                                        xh_tensor.dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, i_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    i_tensor must be rank 2 but is rank \",\n                                    \
+    \    i_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, cs_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"cs_tensor must be rank 2 but is rank\
+    \ \",\n                                        cs_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(ctx, f_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    f_tensor must be rank 2 but is rank \",\n                                    \
+    \    f_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, o_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"o_tensor must be rank 2 but is rank\
+    \ \",\n                                        o_tensor->dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, ci_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    ci_tensor must be rank 2 but is rank \",\n                                   \
+    \     ci_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, co_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"co_tensor must be rank 2 but is rank\
+    \ \",\n                                        co_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(\n        ctx, gates_tensor.dims() == 2,\n        errors::InvalidArgument(\"\
+    gates_tensor must be rank 2 but is rank \",\n                                gates_tensor.dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, h_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    h_tensor must be rank 2 but is rank \",\n                                    \
+    \    h_tensor->dims(), \".\"));\n\n    functor::LSTMBlockCellFprop<Device, T,\
+    \ USE_CUBLAS, gate_layout>(\n        batch_size, input_size, cell_size)(\n   \
+    \     ctx, device, forget_bias_, cell_clip_, use_peephole_,\n        x_tensor->matrix<T>(),\
+    \ cs_prev_tensor->matrix<T>(),\n        h_prev_tensor->matrix<T>(), w_tensor->matrix<T>(),\
+    \ wci_tensor->vec<T>(),\n        wcf_tensor->vec<T>(), wco_tensor->vec<T>(), b_tensor->vec<T>(),\n\
+    \        xh_tensor.matrix<T>(), i_tensor->matrix<T>(), cs_tensor->matrix<T>(),\n\
+    \        f_tensor->matrix<T>(), o_tensor->matrix<T>(), ci_tensor->matrix<T>(),\n\
+    \        co_tensor->matrix<T>(), gates_tensor.matrix<T>(),\n        h_tensor->matrix<T>());\n\
+    \  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor* x_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"x\", &x_tensor));\n\n    const Tensor* cs_prev_tensor = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"cs_prev\", &cs_prev_tensor));\n\n    const\
+    \ Tensor* h_prev_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"h_prev\"\
+    , &h_prev_tensor));\n\n    const Tensor* w_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"w\", &w_tensor));\n\n    const Tensor* wci_tensor = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"wci\", &wci_tensor));\n\n    const Tensor*\
+    \ wcf_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"wcf\", &wcf_tensor));\n\
+    \n    const Tensor* wco_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    wco\", &wco_tensor));\n\n    const Tensor* b_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"b\", &b_tensor));\n\n    const int64_t batch_size = x_tensor->dim_size(0);\n\
+    \    const int64_t input_size = x_tensor->dim_size(1);\n    const int64_t cell_size\
+    \ = cs_prev_tensor->dim_size(1);\n\n    // Sanity checks for our input shapes.\n\
+    \    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(0) == batch_size,\n           \
+    \     errors::InvalidArgument(\"cs_prev.dims(0) != batch_size: \",\n         \
+    \                               cs_prev_tensor->dim_size(0), \" vs. \",\n    \
+    \                                    batch_size));\n    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(1)\
+    \ == cell_size,\n                errors::InvalidArgument(\"cs_prev.dims(1) !=\
+    \ cell_size: \",\n                                        cs_prev_tensor->dim_size(1),\
+    \ \" vs. \",\n                                        cell_size));\n\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(0) == batch_size,\n                errors::InvalidArgument(\"\
+    h_prev.dims(0) != batch_size: \",\n                                        h_prev_tensor->dim_size(0),\
+    \ \" vs. \",\n                                        batch_size));\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(1) == cell_size,\n                errors::InvalidArgument(\n\
+    \                    \"h_prev.dims(1) != cell_size: \", h_prev_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size));\n\n    OP_REQUIRES(ctx, w_tensor->dim_size(0)\
+    \ == input_size + cell_size,\n                errors::InvalidArgument(\n     \
+    \               \"w.dim_size(0) != input_size + cell_size: \",\n             \
+    \       w_tensor->dim_size(0), \" vs. \", input_size + cell_size));\n    OP_REQUIRES(ctx,\
+    \ w_tensor->dim_size(1) == cell_size * 4,\n                errors::InvalidArgument(\n\
+    \                    \"w.dim_size(1) != cell_size * 4: \", w_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size * 4));\n\n    OP_REQUIRES(ctx, b_tensor->dim_size(0)\
+    \ == cell_size * 4,\n                errors::InvalidArgument(\n              \
+    \      \"b.dim_size(0) != cell_size * 4: \", b_tensor->dim_size(0),\n        \
+    \            \" vs. \", cell_size * 4));\n\n    // Allocate our output tensors.\n\
+    \    Tensor* i_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"h_prev\"}, \"i\",\n                          \
+    \  TensorShape({batch_size, cell_size}), &i_tensor));\n\n    Tensor* cs_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"cs\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &cs_tensor));\n\n    Tensor*\
+    \ f_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    f\", TensorShape({batch_size, cell_size}),\n                                 \
+    \ &f_tensor));\n\n    Tensor* o_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"cs_prev\"}, \"o\",\n                         \
+    \   TensorShape({batch_size, cell_size}), &o_tensor));\n\n    Tensor* ci_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"ci\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &ci_tensor));\n\n    Tensor*\
+    \ co_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    co\", TensorShape({batch_size, cell_size}),\n                                \
+    \  &co_tensor));\n\n    Tensor* h_tensor = nullptr;\n    OP_REQUIRES_OK(\n   \
+    \     ctx, ctx->allocate_output(\"h\", TensorShape({batch_size, cell_size}),\n\
+    \                                  &h_tensor));\n\n    // Allocate our temp tensors.\n\
+    \    Tensor xh_tensor;\n    OP_REQUIRES_OK(ctx, ctx->allocate_temp(\n        \
+    \                    DataTypeToEnum<T>::v(),\n                            TensorShape({batch_size,\
+    \ input_size + cell_size}),\n                            &xh_tensor));\n\n   \
+    \ Tensor gates_tensor;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_temp(DataTypeToEnum<T>::v(),\n\
+    \                                      TensorShape({batch_size, cell_size * 4}),\n\
+    \                                      &gates_tensor));\n\n    const Device& device\
+    \ = ctx->eigen_device<Device>();\n\n    // Sanity check that each of the tensors\
+    \ have the required NDIMS.\n    OP_REQUIRES(ctx, x_tensor->dims() == 2,\n    \
+    \            errors::InvalidArgument(\"x_tensor must be rank 2 but is rank \"\
+    ,\n                                        x_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, cs_prev_tensor->dims() == 2,\n        errors::InvalidArgument(\"\
+    cs_prev_tensor must be rank 2 but is rank \",\n                              \
+    \  cs_prev_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, h_prev_tensor->dims()\
+    \ == 2,\n        errors::InvalidArgument(\"h_prev_tensor must be rank 2 but is\
+    \ rank \",\n                                h_prev_tensor->dims(), \".\"));\n\
+    \    OP_REQUIRES(ctx, w_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    w_tensor must be rank 2 but is rank \",\n                                    \
+    \    w_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, wci_tensor->dims()\
+    \ == 1,\n        errors::InvalidArgument(\"wci_tensor must be rank 1 but is rank\
+    \ \",\n                                wci_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, wcf_tensor->dims() == 1,\n        errors::InvalidArgument(\"wcf_tensor\
+    \ must be rank 1 but is rank \",\n                                wci_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(\n        ctx, wco_tensor->dims() == 1,\n        errors::InvalidArgument(\"\
+    wco_tensor must be rank 1 but is rank \",\n                                wco_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, b_tensor->dims() == 1,\n                errors::InvalidArgument(\"\
+    b_tensor must be rank 1 but is rank \",\n                                    \
+    \    b_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, xh_tensor.dims() == 2,\n\
+    \                errors::InvalidArgument(\"xh_tensor must be rank 2 but is rank\
+    \ \",\n                                        xh_tensor.dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, i_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    i_tensor must be rank 2 but is rank \",\n                                    \
+    \    i_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, cs_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"cs_tensor must be rank 2 but is rank\
+    \ \",\n                                        cs_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(ctx, f_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    f_tensor must be rank 2 but is rank \",\n                                    \
+    \    f_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, o_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"o_tensor must be rank 2 but is rank\
+    \ \",\n                                        o_tensor->dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, ci_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    ci_tensor must be rank 2 but is rank \",\n                                   \
+    \     ci_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, co_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"co_tensor must be rank 2 but is rank\
+    \ \",\n                                        co_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(\n        ctx, gates_tensor.dims() == 2,\n        errors::InvalidArgument(\"\
+    gates_tensor must be rank 2 but is rank \",\n                                gates_tensor.dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, h_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    h_tensor must be rank 2 but is rank \",\n                                    \
+    \    h_tensor->dims(), \".\"));\n\n    functor::LSTMBlockCellFprop<Device, T,\
+    \ USE_CUBLAS, gate_layout>(\n        batch_size, input_size, cell_size)(\n   \
+    \     ctx, device, forget_bias_, cell_clip_, use_peephole_,\n        x_tensor->matrix<T>(),\
+    \ cs_prev_tensor->matrix<T>(),\n        h_prev_tensor->matrix<T>(), w_tensor->matrix<T>(),\
+    \ wci_tensor->vec<T>(),\n        wcf_tensor->vec<T>(), wco_tensor->vec<T>(), b_tensor->vec<T>(),\n\
+    \        xh_tensor.matrix<T>(), i_tensor->matrix<T>(), cs_tensor->matrix<T>(),\n\
+    \        f_tensor->matrix<T>(), o_tensor->matrix<T>(), ci_tensor->matrix<T>(),\n\
+    \        co_tensor->matrix<T>(), gates_tensor.matrix<T>(),\n        h_tensor->matrix<T>());\n\
+    \  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\n  void Compute(OpKernelContext* ctx) override\
+    \ {\n    const Tensor* x_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    x\", &x_tensor));\n\n    const Tensor* cs_prev_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"cs_prev\", &cs_prev_tensor));\n\n    const Tensor* h_prev_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"h_prev\", &h_prev_tensor));\n\
+    \n    const Tensor* w_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    w\", &w_tensor));\n\n    const Tensor* wci_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"wci\", &wci_tensor));\n\n    const Tensor* wcf_tensor = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"wcf\", &wcf_tensor));\n\n    const Tensor*\
+    \ wco_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"wco\", &wco_tensor));\n\
+    \n    const Tensor* b_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    b\", &b_tensor));\n\n    const int64_t batch_size = x_tensor->dim_size(0);\n \
+    \   const int64_t input_size = x_tensor->dim_size(1);\n    const int64_t cell_size\
+    \ = cs_prev_tensor->dim_size(1);\n\n    // Sanity checks for our input shapes.\n\
+    \    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(0) == batch_size,\n           \
+    \     errors::InvalidArgument(\"cs_prev.dims(0) != batch_size: \",\n         \
+    \                               cs_prev_tensor->dim_size(0), \" vs. \",\n    \
+    \                                    batch_size));\n    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(1)\
+    \ == cell_size,\n                errors::InvalidArgument(\"cs_prev.dims(1) !=\
+    \ cell_size: \",\n                                        cs_prev_tensor->dim_size(1),\
+    \ \" vs. \",\n                                        cell_size));\n\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(0) == batch_size,\n                errors::InvalidArgument(\"\
+    h_prev.dims(0) != batch_size: \",\n                                        h_prev_tensor->dim_size(0),\
+    \ \" vs. \",\n                                        batch_size));\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(1) == cell_size,\n                errors::InvalidArgument(\n\
+    \                    \"h_prev.dims(1) != cell_size: \", h_prev_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size));\n\n    OP_REQUIRES(ctx, w_tensor->dim_size(0)\
+    \ == input_size + cell_size,\n                errors::InvalidArgument(\n     \
+    \               \"w.dim_size(0) != input_size + cell_size: \",\n             \
+    \       w_tensor->dim_size(0), \" vs. \", input_size + cell_size));\n    OP_REQUIRES(ctx,\
+    \ w_tensor->dim_size(1) == cell_size * 4,\n                errors::InvalidArgument(\n\
+    \                    \"w.dim_size(1) != cell_size * 4: \", w_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size * 4));\n\n    OP_REQUIRES(ctx, b_tensor->dim_size(0)\
+    \ == cell_size * 4,\n                errors::InvalidArgument(\n              \
+    \      \"b.dim_size(0) != cell_size * 4: \", b_tensor->dim_size(0),\n        \
+    \            \" vs. \", cell_size * 4));\n\n    // Allocate our output tensors.\n\
+    \    Tensor* i_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"h_prev\"}, \"i\",\n                          \
+    \  TensorShape({batch_size, cell_size}), &i_tensor));\n\n    Tensor* cs_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"cs\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &cs_tensor));\n\n    Tensor*\
+    \ f_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    f\", TensorShape({batch_size, cell_size}),\n                                 \
+    \ &f_tensor));\n\n    Tensor* o_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"cs_prev\"}, \"o\",\n                         \
+    \   TensorShape({batch_size, cell_size}), &o_tensor));\n\n    Tensor* ci_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"ci\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &ci_tensor));\n\n    Tensor*\
+    \ co_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    co\", TensorShape({batch_size, cell_size}),\n                                \
+    \  &co_tensor));\n\n    Tensor* h_tensor = nullptr;\n    OP_REQUIRES_OK(\n   \
+    \     ctx, ctx->allocate_output(\"h\", TensorShape({batch_size, cell_size}),\n\
+    \                                  &h_tensor));\n\n    // Allocate our temp tensors.\n\
+    \    Tensor xh_tensor;\n    OP_REQUIRES_OK(ctx, ctx->allocate_temp(\n        \
+    \                    DataTypeToEnum<T>::v(),\n                            TensorShape({batch_size,\
+    \ input_size + cell_size}),\n                            &xh_tensor));\n\n   \
+    \ Tensor gates_tensor;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_temp(DataTypeToEnum<T>::v(),\n\
+    \                                      TensorShape({batch_size, cell_size * 4}),\n\
+    \                                      &gates_tensor));\n\n    const Device& device\
+    \ = ctx->eigen_device<Device>();\n\n    // Sanity check that each of the tensors\
+    \ have the required NDIMS.\n    OP_REQUIRES(ctx, x_tensor->dims() == 2,\n    \
+    \            errors::InvalidArgument(\"x_tensor must be rank 2 but is rank \"\
+    ,\n                                        x_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, cs_prev_tensor->dims() == 2,\n        errors::InvalidArgument(\"\
+    cs_prev_tensor must be rank 2 but is rank \",\n                              \
+    \  cs_prev_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, h_prev_tensor->dims()\
+    \ == 2,\n        errors::InvalidArgument(\"h_prev_tensor must be rank 2 but is\
+    \ rank \",\n                                h_prev_tensor->dims(), \".\"));\n\
+    \    OP_REQUIRES(ctx, w_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    w_tensor must be rank 2 but is rank \",\n                                    \
+    \    w_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, wci_tensor->dims()\
+    \ == 1,\n        errors::InvalidArgument(\"wci_tensor must be rank 1 but is rank\
+    \ \",\n                                wci_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, wcf_tensor->dims() == 1,\n        errors::InvalidArgument(\"wcf_tensor\
+    \ must be rank 1 but is rank \",\n                                wci_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(\n        ctx, wco_tensor->dims() == 1,\n        errors::InvalidArgument(\"\
+    wco_tensor must be rank 1 but is rank \",\n                                wco_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, b_tensor->dims() == 1,\n                errors::InvalidArgument(\"\
+    b_tensor must be rank 1 but is rank \",\n                                    \
+    \    b_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, xh_tensor.dims() == 2,\n\
+    \                errors::InvalidArgument(\"xh_tensor must be rank 2 but is rank\
+    \ \",\n                                        xh_tensor.dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, i_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    i_tensor must be rank 2 but is rank \",\n                                    \
+    \    i_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, cs_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"cs_tensor must be rank 2 but is rank\
+    \ \",\n                                        cs_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(ctx, f_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    f_tensor must be rank 2 but is rank \",\n                                    \
+    \    f_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, o_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"o_tensor must be rank 2 but is rank\
+    \ \",\n                                        o_tensor->dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, ci_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    ci_tensor must be rank 2 but is rank \",\n                                   \
+    \     ci_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, co_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"co_tensor must be rank 2 but is rank\
+    \ \",\n                                        co_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(\n        ctx, gates_tensor.dims() == 2,\n        errors::InvalidArgument(\"\
+    gates_tensor must be rank 2 but is rank \",\n                                gates_tensor.dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, h_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    h_tensor must be rank 2 but is rank \",\n                                    \
+    \    h_tensor->dims(), \".\"));\n\n    functor::LSTMBlockCellFprop<Device, T,\
+    \ USE_CUBLAS, gate_layout>(\n        batch_size, input_size, cell_size)(\n   \
+    \     ctx, device, forget_bias_, cell_clip_, use_peephole_,\n        x_tensor->matrix<T>(),\
+    \ cs_prev_tensor->matrix<T>(),\n        h_prev_tensor->matrix<T>(), w_tensor->matrix<T>(),\
+    \ wci_tensor->vec<T>(),\n        wcf_tensor->vec<T>(), wco_tensor->vec<T>(), b_tensor->vec<T>(),\n\
+    \        xh_tensor.matrix<T>(), i_tensor->matrix<T>(), cs_tensor->matrix<T>(),\n\
+    \        f_tensor->matrix<T>(), o_tensor->matrix<T>(), ci_tensor->matrix<T>(),\n\
+    \        co_tensor->matrix<T>(), gates_tensor.matrix<T>(),\n        h_tensor->matrix<T>());\n\
+    \  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor* x_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"x\", &x_tensor));\n\n    const Tensor* cs_prev_tensor = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"cs_prev\", &cs_prev_tensor));\n\n    const\
+    \ Tensor* h_prev_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"h_prev\"\
+    , &h_prev_tensor));\n\n    const Tensor* w_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"w\", &w_tensor));\n\n    const Tensor* wci_tensor = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"wci\", &wci_tensor));\n\n    const Tensor*\
+    \ wcf_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"wcf\", &wcf_tensor));\n\
+    \n    const Tensor* wco_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    wco\", &wco_tensor));\n\n    const Tensor* b_tensor = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"b\", &b_tensor));\n\n    const int64_t batch_size = x_tensor->dim_size(0);\n\
+    \    const int64_t input_size = x_tensor->dim_size(1);\n    const int64_t cell_size\
+    \ = cs_prev_tensor->dim_size(1);\n\n    // Sanity checks for our input shapes.\n\
+    \    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(0) == batch_size,\n           \
+    \     errors::InvalidArgument(\"cs_prev.dims(0) != batch_size: \",\n         \
+    \                               cs_prev_tensor->dim_size(0), \" vs. \",\n    \
+    \                                    batch_size));\n    OP_REQUIRES(ctx, cs_prev_tensor->dim_size(1)\
+    \ == cell_size,\n                errors::InvalidArgument(\"cs_prev.dims(1) !=\
+    \ cell_size: \",\n                                        cs_prev_tensor->dim_size(1),\
+    \ \" vs. \",\n                                        cell_size));\n\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(0) == batch_size,\n                errors::InvalidArgument(\"\
+    h_prev.dims(0) != batch_size: \",\n                                        h_prev_tensor->dim_size(0),\
+    \ \" vs. \",\n                                        batch_size));\n    OP_REQUIRES(ctx,\
+    \ h_prev_tensor->dim_size(1) == cell_size,\n                errors::InvalidArgument(\n\
+    \                    \"h_prev.dims(1) != cell_size: \", h_prev_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size));\n\n    OP_REQUIRES(ctx, w_tensor->dim_size(0)\
+    \ == input_size + cell_size,\n                errors::InvalidArgument(\n     \
+    \               \"w.dim_size(0) != input_size + cell_size: \",\n             \
+    \       w_tensor->dim_size(0), \" vs. \", input_size + cell_size));\n    OP_REQUIRES(ctx,\
+    \ w_tensor->dim_size(1) == cell_size * 4,\n                errors::InvalidArgument(\n\
+    \                    \"w.dim_size(1) != cell_size * 4: \", w_tensor->dim_size(1),\n\
+    \                    \" vs. \", cell_size * 4));\n\n    OP_REQUIRES(ctx, b_tensor->dim_size(0)\
+    \ == cell_size * 4,\n                errors::InvalidArgument(\n              \
+    \      \"b.dim_size(0) != cell_size * 4: \", b_tensor->dim_size(0),\n        \
+    \            \" vs. \", cell_size * 4));\n\n    // Allocate our output tensors.\n\
+    \    Tensor* i_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"h_prev\"}, \"i\",\n                          \
+    \  TensorShape({batch_size, cell_size}), &i_tensor));\n\n    Tensor* cs_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"cs\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &cs_tensor));\n\n    Tensor*\
+    \ f_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    f\", TensorShape({batch_size, cell_size}),\n                                 \
+    \ &f_tensor));\n\n    Tensor* o_tensor = nullptr;\n    OP_REQUIRES_OK(ctx, ctx->forward_input_or_allocate_output(\n\
+    \                            {\"cs_prev\"}, \"o\",\n                         \
+    \   TensorShape({batch_size, cell_size}), &o_tensor));\n\n    Tensor* ci_tensor\
+    \ = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"ci\", TensorShape({batch_size,\
+    \ cell_size}),\n                                  &ci_tensor));\n\n    Tensor*\
+    \ co_tensor = nullptr;\n    OP_REQUIRES_OK(\n        ctx, ctx->allocate_output(\"\
+    co\", TensorShape({batch_size, cell_size}),\n                                \
+    \  &co_tensor));\n\n    Tensor* h_tensor = nullptr;\n    OP_REQUIRES_OK(\n   \
+    \     ctx, ctx->allocate_output(\"h\", TensorShape({batch_size, cell_size}),\n\
+    \                                  &h_tensor));\n\n    // Allocate our temp tensors.\n\
+    \    Tensor xh_tensor;\n    OP_REQUIRES_OK(ctx, ctx->allocate_temp(\n        \
+    \                    DataTypeToEnum<T>::v(),\n                            TensorShape({batch_size,\
+    \ input_size + cell_size}),\n                            &xh_tensor));\n\n   \
+    \ Tensor gates_tensor;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_temp(DataTypeToEnum<T>::v(),\n\
+    \                                      TensorShape({batch_size, cell_size * 4}),\n\
+    \                                      &gates_tensor));\n\n    const Device& device\
+    \ = ctx->eigen_device<Device>();\n\n    // Sanity check that each of the tensors\
+    \ have the required NDIMS.\n    OP_REQUIRES(ctx, x_tensor->dims() == 2,\n    \
+    \            errors::InvalidArgument(\"x_tensor must be rank 2 but is rank \"\
+    ,\n                                        x_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, cs_prev_tensor->dims() == 2,\n        errors::InvalidArgument(\"\
+    cs_prev_tensor must be rank 2 but is rank \",\n                              \
+    \  cs_prev_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, h_prev_tensor->dims()\
+    \ == 2,\n        errors::InvalidArgument(\"h_prev_tensor must be rank 2 but is\
+    \ rank \",\n                                h_prev_tensor->dims(), \".\"));\n\
+    \    OP_REQUIRES(ctx, w_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    w_tensor must be rank 2 but is rank \",\n                                    \
+    \    w_tensor->dims(), \".\"));\n    OP_REQUIRES(\n        ctx, wci_tensor->dims()\
+    \ == 1,\n        errors::InvalidArgument(\"wci_tensor must be rank 1 but is rank\
+    \ \",\n                                wci_tensor->dims(), \".\"));\n    OP_REQUIRES(\n\
+    \        ctx, wcf_tensor->dims() == 1,\n        errors::InvalidArgument(\"wcf_tensor\
+    \ must be rank 1 but is rank \",\n                                wci_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(\n        ctx, wco_tensor->dims() == 1,\n        errors::InvalidArgument(\"\
+    wco_tensor must be rank 1 but is rank \",\n                                wco_tensor->dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, b_tensor->dims() == 1,\n                errors::InvalidArgument(\"\
+    b_tensor must be rank 1 but is rank \",\n                                    \
+    \    b_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, xh_tensor.dims() == 2,\n\
+    \                errors::InvalidArgument(\"xh_tensor must be rank 2 but is rank\
+    \ \",\n                                        xh_tensor.dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, i_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    i_tensor must be rank 2 but is rank \",\n                                    \
+    \    i_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, cs_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"cs_tensor must be rank 2 but is rank\
+    \ \",\n                                        cs_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(ctx, f_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    f_tensor must be rank 2 but is rank \",\n                                    \
+    \    f_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, o_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"o_tensor must be rank 2 but is rank\
+    \ \",\n                                        o_tensor->dims(), \".\"));\n  \
+    \  OP_REQUIRES(ctx, ci_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    ci_tensor must be rank 2 but is rank \",\n                                   \
+    \     ci_tensor->dims(), \".\"));\n    OP_REQUIRES(ctx, co_tensor->dims() == 2,\n\
+    \                errors::InvalidArgument(\"co_tensor must be rank 2 but is rank\
+    \ \",\n                                        co_tensor->dims(), \".\"));\n \
+    \   OP_REQUIRES(\n        ctx, gates_tensor.dims() == 2,\n        errors::InvalidArgument(\"\
+    gates_tensor must be rank 2 but is rank \",\n                                gates_tensor.dims(),\
+    \ \".\"));\n    OP_REQUIRES(ctx, h_tensor->dims() == 2,\n                errors::InvalidArgument(\"\
+    h_tensor must be rank 2 but is rank \",\n                                    \
+    \    h_tensor->dims(), \".\"));\n\n    functor::LSTMBlockCellFprop<Device, T,\
+    \ USE_CUBLAS, gate_layout>(\n        batch_size, input_size, cell_size)(\n   \
+    \     ctx, device, forget_bias_, cell_clip_, use_peephole_,\n        x_tensor->matrix<T>(),\
+    \ cs_prev_tensor->matrix<T>(),\n        h_prev_tensor->matrix<T>(), w_tensor->matrix<T>(),\
+    \ wci_tensor->vec<T>(),\n        wcf_tensor->vec<T>(), wco_tensor->vec<T>(), b_tensor->vec<T>(),\n\
+    \        xh_tensor.matrix<T>(), i_tensor->matrix<T>(), cs_tensor->matrix<T>(),\n\
+    \        f_tensor->matrix<T>(), o_tensor->matrix<T>(), ci_tensor->matrix<T>(),\n\
+    \        co_tensor->matrix<T>(), gates_tensor.matrix<T>(),\n        h_tensor->matrix<T>());\n\
+    \  }"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 273407
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

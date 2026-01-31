@@ -1,0 +1,312 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ void ip6gre_err(struct sk_buff *skb, struct inet6_skb_parm *opt,\n\t\tu8 type,\
+    \ u8 code, int offset, __be32 info)\n{\n\tconst struct ipv6hdr *ipv6h = (const\
+    \ struct ipv6hdr *)skb->data;\n\t__be16 *p = (__be16 *)(skb->data + offset);\n\
+    \tint grehlen = offset + 4;\n\tstruct ip6_tnl *t;\n\t__be16 flags;\n\n\tflags\
+    \ = p[0];\n\tif (flags&(GRE_CSUM|GRE_KEY|GRE_SEQ|GRE_ROUTING|GRE_VERSION)) {\n\
+    \t\tif (flags&(GRE_VERSION|GRE_ROUTING))\n\t\t\treturn;\n\t\tif (flags&GRE_KEY)\
+    \ {\n\t\t\tgrehlen += 4;\n\t\t\tif (flags&GRE_CSUM)\n\t\t\t\tgrehlen += 4;\n\t\
+    \t}\n\t}\n\n\t/* If only 8 bytes returned, keyed message will be dropped here\
+    \ */\n\tif (!pskb_may_pull(skb, grehlen))\n\t\treturn;\n\tipv6h = (const struct\
+    \ ipv6hdr *)skb->data;\n\tp = (__be16 *)(skb->data + offset);\n\n\tt = ip6gre_tunnel_lookup(skb->dev,\
+    \ &ipv6h->daddr, &ipv6h->saddr,\n\t\t\t\tflags & GRE_KEY ?\n\t\t\t\t*(((__be32\
+    \ *)p) + (grehlen / 4) - 1) : 0,\n\t\t\t\tp[1]);\n\tif (!t)\n\t\treturn;\n\n\t\
+    switch (type) {\n\t\t__u32 teli;\n\t\tstruct ipv6_tlv_tnl_enc_lim *tel;\n\t\t\
+    __u32 mtu;\n\tcase ICMPV6_DEST_UNREACH:\n\t\tnet_dbg_ratelimited(\"%s: Path to\
+    \ destination invalid or inactive!\\n\",\n\t\t\t\t    t->parms.name);\n\t\tbreak;\n\
+    \tcase ICMPV6_TIME_EXCEED:\n\t\tif (code == ICMPV6_EXC_HOPLIMIT) {\n\t\t\tnet_dbg_ratelimited(\"\
+    %s: Too small hop limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t    t->parms.name);\n\
+    \t\t}\n\t\tbreak;\n\tcase ICMPV6_PARAMPROB:\n\t\tteli = 0;\n\t\tif (code == ICMPV6_HDR_FIELD)\n\
+    \t\t\tteli = ip6_tnl_parse_tlv_enc_lim(skb, skb->data);\n\n\t\tif (teli && teli\
+    \ == be32_to_cpu(info) - 2) {\n\t\t\ttel = (struct ipv6_tlv_tnl_enc_lim *) &skb->data[teli];\n\
+    \t\t\tif (tel->encap_limit == 0) {\n\t\t\t\tnet_dbg_ratelimited(\"%s: Too small\
+    \ encapsulation limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t\t    t->parms.name);\n\
+    \t\t\t}\n\t\t} else {\n\t\t\tnet_dbg_ratelimited(\"%s: Recipient unable to parse\
+    \ tunneled packet!\\n\",\n\t\t\t\t\t    t->parms.name);\n\t\t}\n\t\tbreak;\n\t\
+    case ICMPV6_PKT_TOOBIG:\n\t\tmtu = be32_to_cpu(info) - offset;\n\t\tif (mtu <\
+    \ IPV6_MIN_MTU)\n\t\t\tmtu = IPV6_MIN_MTU;\n\t\tt->dev->mtu = mtu;\n\t\tbreak;\n\
+    \t}\n\n\tif (time_before(jiffies, t->err_time + IP6TUNNEL_ERR_TIMEO))\n\t\tt->err_count++;\n\
+    \telse\n\t\tt->err_count = 1;\n\tt->err_time = jiffies;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic void ip6gre_err(struct\
+    \ sk_buff *skb, struct inet6_skb_parm *opt,\n\t\tu8 type, u8 code, int offset,\
+    \ __be32 info)\n{\n\tconst struct ipv6hdr *ipv6h = (const struct ipv6hdr *)skb->data;\n\
+    \t__be16 *p = (__be16 *)(skb->data + offset);\n\tint grehlen = offset + 4;\n\t\
+    struct ip6_tnl *t;\n\t__be16 flags;\n\n\tflags = p[0];\n\tif (flags&(GRE_CSUM|GRE_KEY|GRE_SEQ|GRE_ROUTING|GRE_VERSION))\
+    \ {\n\t\tif (flags&(GRE_VERSION|GRE_ROUTING))\n\t\t\treturn;\n\t\tif (flags&GRE_KEY)\
+    \ {\n\t\t\tgrehlen += 4;\n\t\t\tif (flags&GRE_CSUM)\n\t\t\t\tgrehlen += 4;\n\t\
+    \t}\n\t}\n\n\t/* If only 8 bytes returned, keyed message will be dropped here\
+    \ */\n\tif (!pskb_may_pull(skb, grehlen))\n\t\treturn;\n\tipv6h = (const struct\
+    \ ipv6hdr *)skb->data;\n\tp = (__be16 *)(skb->data + offset);\n\n\tt = ip6gre_tunnel_lookup(skb->dev,\
+    \ &ipv6h->daddr, &ipv6h->saddr,\n\t\t\t\tflags & GRE_KEY ?\n\t\t\t\t*(((__be32\
+    \ *)p) + (grehlen / 4) - 1) : 0,\n\t\t\t\tp[1]);\n\tif (!t)\n\t\treturn;\n\n\t\
+    switch (type) {\n\t\t__u32 teli;\n\t\tstruct ipv6_tlv_tnl_enc_lim *tel;\n\t\t\
+    __u32 mtu;\n\tcase ICMPV6_DEST_UNREACH:\n\t\tnet_dbg_ratelimited(\"%s: Path to\
+    \ destination invalid or inactive!\\n\",\n\t\t\t\t    t->parms.name);\n\t\tbreak;\n\
+    \tcase ICMPV6_TIME_EXCEED:\n\t\tif (code == ICMPV6_EXC_HOPLIMIT) {\n\t\t\tnet_dbg_ratelimited(\"\
+    %s: Too small hop limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t    t->parms.name);\n\
+    \t\t}\n\t\tbreak;\n\tcase ICMPV6_PARAMPROB:\n\t\tteli = 0;\n\t\tif (code == ICMPV6_HDR_FIELD)\n\
+    \t\t\tteli = ip6_tnl_parse_tlv_enc_lim(skb, skb->data);\n\n\t\tif (teli && teli\
+    \ == be32_to_cpu(info) - 2) {\n\t\t\ttel = (struct ipv6_tlv_tnl_enc_lim *) &skb->data[teli];\n\
+    \t\t\tif (tel->encap_limit == 0) {\n\t\t\t\tnet_dbg_ratelimited(\"%s: Too small\
+    \ encapsulation limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t\t    t->parms.name);\n\
+    \t\t\t}\n\t\t} else {\n\t\t\tnet_dbg_ratelimited(\"%s: Recipient unable to parse\
+    \ tunneled packet!\\n\",\n\t\t\t\t\t    t->parms.name);\n\t\t}\n\t\tbreak;\n\t\
+    case ICMPV6_PKT_TOOBIG:\n\t\tmtu = be32_to_cpu(info) - offset;\n\t\tif (mtu <\
+    \ IPV6_MIN_MTU)\n\t\t\tmtu = IPV6_MIN_MTU;\n\t\tt->dev->mtu = mtu;\n\t\tbreak;\n\
+    \t}\n\n\tif (time_before(jiffies, t->err_time + IP6TUNNEL_ERR_TIMEO))\n\t\tt->err_count++;\n\
+    \telse\n\t\tt->err_count = 1;\n\tt->err_time = jiffies;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic void ip6gre_err(struct sk_buff\
+    \ *skb, struct inet6_skb_parm *opt,\n\t\tu8 type, u8 code, int offset, __be32\
+    \ info)\n{\n\tconst struct ipv6hdr *ipv6h = (const struct ipv6hdr *)skb->data;\n\
+    \t__be16 *p = (__be16 *)(skb->data + offset);\n\tint grehlen = offset + 4;\n\t\
+    struct ip6_tnl *t;\n\t__be16 flags;\n\n\tflags = p[0];\n\tif (flags&(GRE_CSUM|GRE_KEY|GRE_SEQ|GRE_ROUTING|GRE_VERSION))\
+    \ {\n\t\tif (flags&(GRE_VERSION|GRE_ROUTING))\n\t\t\treturn;\n\t\tif (flags&GRE_KEY)\
+    \ {\n\t\t\tgrehlen += 4;\n\t\t\tif (flags&GRE_CSUM)\n\t\t\t\tgrehlen += 4;\n\t\
+    \t}\n\t}\n\n\t/* If only 8 bytes returned, keyed message will be dropped here\
+    \ */\n\tif (!pskb_may_pull(skb, grehlen))\n\t\treturn;\n\tipv6h = (const struct\
+    \ ipv6hdr *)skb->data;\n\tp = (__be16 *)(skb->data + offset);\n\n\tt = ip6gre_tunnel_lookup(skb->dev,\
+    \ &ipv6h->daddr, &ipv6h->saddr,\n\t\t\t\tflags & GRE_KEY ?\n\t\t\t\t*(((__be32\
+    \ *)p) + (grehlen / 4) - 1) : 0,\n\t\t\t\tp[1]);\n\tif (!t)\n\t\treturn;\n\n\t\
+    switch (type) {\n\t\t__u32 teli;\n\t\tstruct ipv6_tlv_tnl_enc_lim *tel;\n\t\t\
+    __u32 mtu;\n\tcase ICMPV6_DEST_UNREACH:\n\t\tnet_dbg_ratelimited(\"%s: Path to\
+    \ destination invalid or inactive!\\n\",\n\t\t\t\t    t->parms.name);\n\t\tbreak;\n\
+    \tcase ICMPV6_TIME_EXCEED:\n\t\tif (code == ICMPV6_EXC_HOPLIMIT) {\n\t\t\tnet_dbg_ratelimited(\"\
+    %s: Too small hop limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t    t->parms.name);\n\
+    \t\t}\n\t\tbreak;\n\tcase ICMPV6_PARAMPROB:\n\t\tteli = 0;\n\t\tif (code == ICMPV6_HDR_FIELD)\n\
+    \t\t\tteli = ip6_tnl_parse_tlv_enc_lim(skb, skb->data);\n\n\t\tif (teli && teli\
+    \ == be32_to_cpu(info) - 2) {\n\t\t\ttel = (struct ipv6_tlv_tnl_enc_lim *) &skb->data[teli];\n\
+    \t\t\tif (tel->encap_limit == 0) {\n\t\t\t\tnet_dbg_ratelimited(\"%s: Too small\
+    \ encapsulation limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t\t    t->parms.name);\n\
+    \t\t\t}\n\t\t} else {\n\t\t\tnet_dbg_ratelimited(\"%s: Recipient unable to parse\
+    \ tunneled packet!\\n\",\n\t\t\t\t\t    t->parms.name);\n\t\t}\n\t\tbreak;\n\t\
+    case ICMPV6_PKT_TOOBIG:\n\t\tmtu = be32_to_cpu(info) - offset;\n\t\tif (mtu <\
+    \ IPV6_MIN_MTU)\n\t\t\tmtu = IPV6_MIN_MTU;\n\t\tt->dev->mtu = mtu;\n\t\tbreak;\n\
+    \t}\n\n\tif (time_before(jiffies, t->err_time + IP6TUNNEL_ERR_TIMEO))\n\t\tt->err_count++;\n\
+    \telse\n\t\tt->err_count = 1;\n\tt->err_time = jiffies;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic void ip6gre_err(struct\
+    \ sk_buff *skb, struct inet6_skb_parm *opt,\n\t\tu8 type, u8 code, int offset,\
+    \ __be32 info)\n{\n\tconst struct ipv6hdr *ipv6h = (const struct ipv6hdr *)skb->data;\n\
+    \t__be16 *p = (__be16 *)(skb->data + offset);\n\tint grehlen = offset + 4;\n\t\
+    struct ip6_tnl *t;\n\t__be16 flags;\n\n\tflags = p[0];\n\tif (flags&(GRE_CSUM|GRE_KEY|GRE_SEQ|GRE_ROUTING|GRE_VERSION))\
+    \ {\n\t\tif (flags&(GRE_VERSION|GRE_ROUTING))\n\t\t\treturn;\n\t\tif (flags&GRE_KEY)\
+    \ {\n\t\t\tgrehlen += 4;\n\t\t\tif (flags&GRE_CSUM)\n\t\t\t\tgrehlen += 4;\n\t\
+    \t}\n\t}\n\n\t/* If only 8 bytes returned, keyed message will be dropped here\
+    \ */\n\tif (!pskb_may_pull(skb, grehlen))\n\t\treturn;\n\tipv6h = (const struct\
+    \ ipv6hdr *)skb->data;\n\tp = (__be16 *)(skb->data + offset);\n\n\tt = ip6gre_tunnel_lookup(skb->dev,\
+    \ &ipv6h->daddr, &ipv6h->saddr,\n\t\t\t\tflags & GRE_KEY ?\n\t\t\t\t*(((__be32\
+    \ *)p) + (grehlen / 4) - 1) : 0,\n\t\t\t\tp[1]);\n\tif (!t)\n\t\treturn;\n\n\t\
+    switch (type) {\n\t\t__u32 teli;\n\t\tstruct ipv6_tlv_tnl_enc_lim *tel;\n\t\t\
+    __u32 mtu;\n\tcase ICMPV6_DEST_UNREACH:\n\t\tnet_dbg_ratelimited(\"%s: Path to\
+    \ destination invalid or inactive!\\n\",\n\t\t\t\t    t->parms.name);\n\t\tbreak;\n\
+    \tcase ICMPV6_TIME_EXCEED:\n\t\tif (code == ICMPV6_EXC_HOPLIMIT) {\n\t\t\tnet_dbg_ratelimited(\"\
+    %s: Too small hop limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t    t->parms.name);\n\
+    \t\t}\n\t\tbreak;\n\tcase ICMPV6_PARAMPROB:\n\t\tteli = 0;\n\t\tif (code == ICMPV6_HDR_FIELD)\n\
+    \t\t\tteli = ip6_tnl_parse_tlv_enc_lim(skb, skb->data);\n\n\t\tif (teli && teli\
+    \ == be32_to_cpu(info) - 2) {\n\t\t\ttel = (struct ipv6_tlv_tnl_enc_lim *) &skb->data[teli];\n\
+    \t\t\tif (tel->encap_limit == 0) {\n\t\t\t\tnet_dbg_ratelimited(\"%s: Too small\
+    \ encapsulation limit or routing loop in tunnel!\\n\",\n\t\t\t\t\t\t    t->parms.name);\n\
+    \t\t\t}\n\t\t} else {\n\t\t\tnet_dbg_ratelimited(\"%s: Recipient unable to parse\
+    \ tunneled packet!\\n\",\n\t\t\t\t\t    t->parms.name);\n\t\t}\n\t\tbreak;\n\t\
+    case ICMPV6_PKT_TOOBIG:\n\t\tmtu = be32_to_cpu(info) - offset;\n\t\tif (mtu <\
+    \ IPV6_MIN_MTU)\n\t\t\tmtu = IPV6_MIN_MTU;\n\t\tt->dev->mtu = mtu;\n\t\tbreak;\n\
+    \t}\n\n\tif (time_before(jiffies, t->err_time + IP6TUNNEL_ERR_TIMEO))\n\t\tt->err_count++;\n\
+    \telse\n\t\tt->err_count = 1;\n\tt->err_time = jiffies;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 202659
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

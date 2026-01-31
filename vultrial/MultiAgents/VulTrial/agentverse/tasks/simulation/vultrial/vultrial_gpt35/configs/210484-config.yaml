@@ -1,0 +1,355 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ int io_read(struct io_kiocb *req, unsigned int issue_flags)\n{\n\tstruct iovec\
+    \ inline_vecs[UIO_FASTIOV], *iovec = inline_vecs;\n\tstruct kiocb *kiocb = &req->rw.kiocb;\n\
+    \tstruct iov_iter __iter, *iter = &__iter;\n\tstruct io_async_rw *rw = req->async_data;\n\
+    \tssize_t io_size, ret, ret2;\n\tbool force_nonblock = issue_flags & IO_URING_F_NONBLOCK;\n\
+    \n\tif (rw) {\n\t\titer = &rw->iter;\n\t\tiovec = NULL;\n\t} else {\n\t\tret =\
+    \ io_import_iovec(READ, req, &iovec, iter, !force_nonblock);\n\t\tif (ret < 0)\n\
+    \t\t\treturn ret;\n\t}\n\tio_size = iov_iter_count(iter);\n\treq->result = io_size;\n\
+    \n\t/* Ensure we clear previously set non-block flag */\n\tif (!force_nonblock)\n\
+    \t\tkiocb->ki_flags &= ~IOCB_NOWAIT;\n\telse\n\t\tkiocb->ki_flags |= IOCB_NOWAIT;\n\
+    \n\t/* If the file doesn't support async, just async punt */\n\tif (force_nonblock\
+    \ && !io_file_supports_async(req, READ)) {\n\t\tret = io_setup_async_rw(req, iovec,\
+    \ inline_vecs, iter, true);\n\t\treturn ret ?: -EAGAIN;\n\t}\n\n\tret = rw_verify_area(READ,\
+    \ req->file, io_kiocb_ppos(kiocb), io_size);\n\tif (unlikely(ret)) {\n\t\tkfree(iovec);\n\
+    \t\treturn ret;\n\t}\n\n\tret = io_iter_do_read(req, iter);\n\n\tif (ret == -EAGAIN\
+    \ || (req->flags & REQ_F_REISSUE)) {\n\t\treq->flags &= ~REQ_F_REISSUE;\n\t\t\
+    /* IOPOLL retry should happen for io-wq threads */\n\t\tif (!force_nonblock &&\
+    \ !(req->ctx->flags & IORING_SETUP_IOPOLL))\n\t\t\tgoto done;\n\t\t/* no retry\
+    \ on NONBLOCK nor RWF_NOWAIT */\n\t\tif (req->flags & REQ_F_NOWAIT)\n\t\t\tgoto\
+    \ done;\n\t\t/* some cases will consume bytes even on error returns */\n\t\tiov_iter_revert(iter,\
+    \ io_size - iov_iter_count(iter));\n\t\tret = 0;\n\t} else if (ret == -EIOCBQUEUED)\
+    \ {\n\t\tgoto out_free;\n\t} else if (ret <= 0 || ret == io_size || !force_nonblock\
+    \ ||\n\t\t   (req->flags & REQ_F_NOWAIT) || !(req->flags & REQ_F_ISREG)) {\n\t\
+    \t/* read all, failed, already did sync or don't want to retry */\n\t\tgoto done;\n\
+    \t}\n\n\tret2 = io_setup_async_rw(req, iovec, inline_vecs, iter, true);\n\tif\
+    \ (ret2)\n\t\treturn ret2;\n\n\tiovec = NULL;\n\trw = req->async_data;\n\t/* now\
+    \ use our persistent iterator, if we aren't already */\n\titer = &rw->iter;\n\n\
+    \tdo {\n\t\tio_size -= ret;\n\t\trw->bytes_done += ret;\n\t\t/* if we can retry,\
+    \ do so with the callbacks armed */\n\t\tif (!io_rw_should_retry(req)) {\n\t\t\
+    \tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t\t\treturn -EAGAIN;\n\t\t}\n\n\t\t/*\n\t\t\
+    \ * Now retry read with the IOCB_WAITQ parts set in the iocb. If\n\t\t * we get\
+    \ -EIOCBQUEUED, then we'll get a notification when the\n\t\t * desired page gets\
+    \ unlocked. We can also get a partial read\n\t\t * here, and if we do, then just\
+    \ retry at the new offset.\n\t\t */\n\t\tret = io_iter_do_read(req, iter);\n\t\
+    \tif (ret == -EIOCBQUEUED)\n\t\t\treturn 0;\n\t\t/* we got some bytes, but not\
+    \ all. retry. */\n\t\tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t} while (ret > 0 && ret\
+    \ < io_size);\ndone:\n\tkiocb_done(kiocb, ret, issue_flags);\nout_free:\n\t/*\
+    \ it's faster to check here then delegate to kfree */\n\tif (iovec)\n\t\tkfree(iovec);\n\
+    \treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic int io_read(struct\
+    \ io_kiocb *req, unsigned int issue_flags)\n{\n\tstruct iovec inline_vecs[UIO_FASTIOV],\
+    \ *iovec = inline_vecs;\n\tstruct kiocb *kiocb = &req->rw.kiocb;\n\tstruct iov_iter\
+    \ __iter, *iter = &__iter;\n\tstruct io_async_rw *rw = req->async_data;\n\tssize_t\
+    \ io_size, ret, ret2;\n\tbool force_nonblock = issue_flags & IO_URING_F_NONBLOCK;\n\
+    \n\tif (rw) {\n\t\titer = &rw->iter;\n\t\tiovec = NULL;\n\t} else {\n\t\tret =\
+    \ io_import_iovec(READ, req, &iovec, iter, !force_nonblock);\n\t\tif (ret < 0)\n\
+    \t\t\treturn ret;\n\t}\n\tio_size = iov_iter_count(iter);\n\treq->result = io_size;\n\
+    \n\t/* Ensure we clear previously set non-block flag */\n\tif (!force_nonblock)\n\
+    \t\tkiocb->ki_flags &= ~IOCB_NOWAIT;\n\telse\n\t\tkiocb->ki_flags |= IOCB_NOWAIT;\n\
+    \n\t/* If the file doesn't support async, just async punt */\n\tif (force_nonblock\
+    \ && !io_file_supports_async(req, READ)) {\n\t\tret = io_setup_async_rw(req, iovec,\
+    \ inline_vecs, iter, true);\n\t\treturn ret ?: -EAGAIN;\n\t}\n\n\tret = rw_verify_area(READ,\
+    \ req->file, io_kiocb_ppos(kiocb), io_size);\n\tif (unlikely(ret)) {\n\t\tkfree(iovec);\n\
+    \t\treturn ret;\n\t}\n\n\tret = io_iter_do_read(req, iter);\n\n\tif (ret == -EAGAIN\
+    \ || (req->flags & REQ_F_REISSUE)) {\n\t\treq->flags &= ~REQ_F_REISSUE;\n\t\t\
+    /* IOPOLL retry should happen for io-wq threads */\n\t\tif (!force_nonblock &&\
+    \ !(req->ctx->flags & IORING_SETUP_IOPOLL))\n\t\t\tgoto done;\n\t\t/* no retry\
+    \ on NONBLOCK nor RWF_NOWAIT */\n\t\tif (req->flags & REQ_F_NOWAIT)\n\t\t\tgoto\
+    \ done;\n\t\t/* some cases will consume bytes even on error returns */\n\t\tiov_iter_revert(iter,\
+    \ io_size - iov_iter_count(iter));\n\t\tret = 0;\n\t} else if (ret == -EIOCBQUEUED)\
+    \ {\n\t\tgoto out_free;\n\t} else if (ret <= 0 || ret == io_size || !force_nonblock\
+    \ ||\n\t\t   (req->flags & REQ_F_NOWAIT) || !(req->flags & REQ_F_ISREG)) {\n\t\
+    \t/* read all, failed, already did sync or don't want to retry */\n\t\tgoto done;\n\
+    \t}\n\n\tret2 = io_setup_async_rw(req, iovec, inline_vecs, iter, true);\n\tif\
+    \ (ret2)\n\t\treturn ret2;\n\n\tiovec = NULL;\n\trw = req->async_data;\n\t/* now\
+    \ use our persistent iterator, if we aren't already */\n\titer = &rw->iter;\n\n\
+    \tdo {\n\t\tio_size -= ret;\n\t\trw->bytes_done += ret;\n\t\t/* if we can retry,\
+    \ do so with the callbacks armed */\n\t\tif (!io_rw_should_retry(req)) {\n\t\t\
+    \tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t\t\treturn -EAGAIN;\n\t\t}\n\n\t\t/*\n\t\t\
+    \ * Now retry read with the IOCB_WAITQ parts set in the iocb. If\n\t\t * we get\
+    \ -EIOCBQUEUED, then we'll get a notification when the\n\t\t * desired page gets\
+    \ unlocked. We can also get a partial read\n\t\t * here, and if we do, then just\
+    \ retry at the new offset.\n\t\t */\n\t\tret = io_iter_do_read(req, iter);\n\t\
+    \tif (ret == -EIOCBQUEUED)\n\t\t\treturn 0;\n\t\t/* we got some bytes, but not\
+    \ all. retry. */\n\t\tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t} while (ret > 0 && ret\
+    \ < io_size);\ndone:\n\tkiocb_done(kiocb, ret, issue_flags);\nout_free:\n\t/*\
+    \ it's faster to check here then delegate to kfree */\n\tif (iovec)\n\t\tkfree(iovec);\n\
+    \treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic int io_read(struct io_kiocb *req,\
+    \ unsigned int issue_flags)\n{\n\tstruct iovec inline_vecs[UIO_FASTIOV], *iovec\
+    \ = inline_vecs;\n\tstruct kiocb *kiocb = &req->rw.kiocb;\n\tstruct iov_iter __iter,\
+    \ *iter = &__iter;\n\tstruct io_async_rw *rw = req->async_data;\n\tssize_t io_size,\
+    \ ret, ret2;\n\tbool force_nonblock = issue_flags & IO_URING_F_NONBLOCK;\n\n\t\
+    if (rw) {\n\t\titer = &rw->iter;\n\t\tiovec = NULL;\n\t} else {\n\t\tret = io_import_iovec(READ,\
+    \ req, &iovec, iter, !force_nonblock);\n\t\tif (ret < 0)\n\t\t\treturn ret;\n\t\
+    }\n\tio_size = iov_iter_count(iter);\n\treq->result = io_size;\n\n\t/* Ensure\
+    \ we clear previously set non-block flag */\n\tif (!force_nonblock)\n\t\tkiocb->ki_flags\
+    \ &= ~IOCB_NOWAIT;\n\telse\n\t\tkiocb->ki_flags |= IOCB_NOWAIT;\n\n\t/* If the\
+    \ file doesn't support async, just async punt */\n\tif (force_nonblock && !io_file_supports_async(req,\
+    \ READ)) {\n\t\tret = io_setup_async_rw(req, iovec, inline_vecs, iter, true);\n\
+    \t\treturn ret ?: -EAGAIN;\n\t}\n\n\tret = rw_verify_area(READ, req->file, io_kiocb_ppos(kiocb),\
+    \ io_size);\n\tif (unlikely(ret)) {\n\t\tkfree(iovec);\n\t\treturn ret;\n\t}\n\
+    \n\tret = io_iter_do_read(req, iter);\n\n\tif (ret == -EAGAIN || (req->flags &\
+    \ REQ_F_REISSUE)) {\n\t\treq->flags &= ~REQ_F_REISSUE;\n\t\t/* IOPOLL retry should\
+    \ happen for io-wq threads */\n\t\tif (!force_nonblock && !(req->ctx->flags &\
+    \ IORING_SETUP_IOPOLL))\n\t\t\tgoto done;\n\t\t/* no retry on NONBLOCK nor RWF_NOWAIT\
+    \ */\n\t\tif (req->flags & REQ_F_NOWAIT)\n\t\t\tgoto done;\n\t\t/* some cases\
+    \ will consume bytes even on error returns */\n\t\tiov_iter_revert(iter, io_size\
+    \ - iov_iter_count(iter));\n\t\tret = 0;\n\t} else if (ret == -EIOCBQUEUED) {\n\
+    \t\tgoto out_free;\n\t} else if (ret <= 0 || ret == io_size || !force_nonblock\
+    \ ||\n\t\t   (req->flags & REQ_F_NOWAIT) || !(req->flags & REQ_F_ISREG)) {\n\t\
+    \t/* read all, failed, already did sync or don't want to retry */\n\t\tgoto done;\n\
+    \t}\n\n\tret2 = io_setup_async_rw(req, iovec, inline_vecs, iter, true);\n\tif\
+    \ (ret2)\n\t\treturn ret2;\n\n\tiovec = NULL;\n\trw = req->async_data;\n\t/* now\
+    \ use our persistent iterator, if we aren't already */\n\titer = &rw->iter;\n\n\
+    \tdo {\n\t\tio_size -= ret;\n\t\trw->bytes_done += ret;\n\t\t/* if we can retry,\
+    \ do so with the callbacks armed */\n\t\tif (!io_rw_should_retry(req)) {\n\t\t\
+    \tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t\t\treturn -EAGAIN;\n\t\t}\n\n\t\t/*\n\t\t\
+    \ * Now retry read with the IOCB_WAITQ parts set in the iocb. If\n\t\t * we get\
+    \ -EIOCBQUEUED, then we'll get a notification when the\n\t\t * desired page gets\
+    \ unlocked. We can also get a partial read\n\t\t * here, and if we do, then just\
+    \ retry at the new offset.\n\t\t */\n\t\tret = io_iter_do_read(req, iter);\n\t\
+    \tif (ret == -EIOCBQUEUED)\n\t\t\treturn 0;\n\t\t/* we got some bytes, but not\
+    \ all. retry. */\n\t\tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t} while (ret > 0 && ret\
+    \ < io_size);\ndone:\n\tkiocb_done(kiocb, ret, issue_flags);\nout_free:\n\t/*\
+    \ it's faster to check here then delegate to kfree */\n\tif (iovec)\n\t\tkfree(iovec);\n\
+    \treturn 0;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic int io_read(struct io_kiocb\
+    \ *req, unsigned int issue_flags)\n{\n\tstruct iovec inline_vecs[UIO_FASTIOV],\
+    \ *iovec = inline_vecs;\n\tstruct kiocb *kiocb = &req->rw.kiocb;\n\tstruct iov_iter\
+    \ __iter, *iter = &__iter;\n\tstruct io_async_rw *rw = req->async_data;\n\tssize_t\
+    \ io_size, ret, ret2;\n\tbool force_nonblock = issue_flags & IO_URING_F_NONBLOCK;\n\
+    \n\tif (rw) {\n\t\titer = &rw->iter;\n\t\tiovec = NULL;\n\t} else {\n\t\tret =\
+    \ io_import_iovec(READ, req, &iovec, iter, !force_nonblock);\n\t\tif (ret < 0)\n\
+    \t\t\treturn ret;\n\t}\n\tio_size = iov_iter_count(iter);\n\treq->result = io_size;\n\
+    \n\t/* Ensure we clear previously set non-block flag */\n\tif (!force_nonblock)\n\
+    \t\tkiocb->ki_flags &= ~IOCB_NOWAIT;\n\telse\n\t\tkiocb->ki_flags |= IOCB_NOWAIT;\n\
+    \n\t/* If the file doesn't support async, just async punt */\n\tif (force_nonblock\
+    \ && !io_file_supports_async(req, READ)) {\n\t\tret = io_setup_async_rw(req, iovec,\
+    \ inline_vecs, iter, true);\n\t\treturn ret ?: -EAGAIN;\n\t}\n\n\tret = rw_verify_area(READ,\
+    \ req->file, io_kiocb_ppos(kiocb), io_size);\n\tif (unlikely(ret)) {\n\t\tkfree(iovec);\n\
+    \t\treturn ret;\n\t}\n\n\tret = io_iter_do_read(req, iter);\n\n\tif (ret == -EAGAIN\
+    \ || (req->flags & REQ_F_REISSUE)) {\n\t\treq->flags &= ~REQ_F_REISSUE;\n\t\t\
+    /* IOPOLL retry should happen for io-wq threads */\n\t\tif (!force_nonblock &&\
+    \ !(req->ctx->flags & IORING_SETUP_IOPOLL))\n\t\t\tgoto done;\n\t\t/* no retry\
+    \ on NONBLOCK nor RWF_NOWAIT */\n\t\tif (req->flags & REQ_F_NOWAIT)\n\t\t\tgoto\
+    \ done;\n\t\t/* some cases will consume bytes even on error returns */\n\t\tiov_iter_revert(iter,\
+    \ io_size - iov_iter_count(iter));\n\t\tret = 0;\n\t} else if (ret == -EIOCBQUEUED)\
+    \ {\n\t\tgoto out_free;\n\t} else if (ret <= 0 || ret == io_size || !force_nonblock\
+    \ ||\n\t\t   (req->flags & REQ_F_NOWAIT) || !(req->flags & REQ_F_ISREG)) {\n\t\
+    \t/* read all, failed, already did sync or don't want to retry */\n\t\tgoto done;\n\
+    \t}\n\n\tret2 = io_setup_async_rw(req, iovec, inline_vecs, iter, true);\n\tif\
+    \ (ret2)\n\t\treturn ret2;\n\n\tiovec = NULL;\n\trw = req->async_data;\n\t/* now\
+    \ use our persistent iterator, if we aren't already */\n\titer = &rw->iter;\n\n\
+    \tdo {\n\t\tio_size -= ret;\n\t\trw->bytes_done += ret;\n\t\t/* if we can retry,\
+    \ do so with the callbacks armed */\n\t\tif (!io_rw_should_retry(req)) {\n\t\t\
+    \tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t\t\treturn -EAGAIN;\n\t\t}\n\n\t\t/*\n\t\t\
+    \ * Now retry read with the IOCB_WAITQ parts set in the iocb. If\n\t\t * we get\
+    \ -EIOCBQUEUED, then we'll get a notification when the\n\t\t * desired page gets\
+    \ unlocked. We can also get a partial read\n\t\t * here, and if we do, then just\
+    \ retry at the new offset.\n\t\t */\n\t\tret = io_iter_do_read(req, iter);\n\t\
+    \tif (ret == -EIOCBQUEUED)\n\t\t\treturn 0;\n\t\t/* we got some bytes, but not\
+    \ all. retry. */\n\t\tkiocb->ki_flags &= ~IOCB_WAITQ;\n\t} while (ret > 0 && ret\
+    \ < io_size);\ndone:\n\tkiocb_done(kiocb, ret, issue_flags);\nout_free:\n\t/*\
+    \ it's faster to check here then delegate to kfree */\n\tif (iovec)\n\t\tkfree(iovec);\n\
+    \treturn 0;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 210484
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

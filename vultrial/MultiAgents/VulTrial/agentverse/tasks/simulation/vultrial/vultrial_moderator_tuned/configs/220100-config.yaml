@@ -1,0 +1,294 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nnfs4_file_open(struct\
+    \ inode *inode, struct file *filp)\n{\n\tstruct nfs_open_context *ctx;\n\tstruct\
+    \ dentry *dentry = file_dentry(filp);\n\tstruct dentry *parent = NULL;\n\tstruct\
+    \ inode *dir;\n\tunsigned openflags = filp->f_flags;\n\tstruct iattr attr;\n\t\
+    int err;\n\n\t/*\n\t * If no cached dentry exists or if it's negative, NFSv4 handled\
+    \ the\n\t * opens in ->lookup() or ->create().\n\t *\n\t * We only get this far\
+    \ for a cached positive dentry.  We skipped\n\t * revalidation, so handle it here\
+    \ by dropping the dentry and returning\n\t * -EOPENSTALE.  The VFS will retry\
+    \ the lookup/create/open.\n\t */\n\n\tdprintk(\"NFS: open file(%pd2)\\n\", dentry);\n\
+    \n\terr = nfs_check_flags(openflags);\n\tif (err)\n\t\treturn err;\n\n\tif ((openflags\
+    \ & O_ACCMODE) == 3)\n\t\topenflags--;\n\n\t/* We can't create new files here\
+    \ */\n\topenflags &= ~(O_CREAT|O_EXCL);\n\n\tparent = dget_parent(dentry);\n\t\
+    dir = d_inode(parent);\n\n\tctx = alloc_nfs_open_context(file_dentry(filp), filp->f_mode,\
+    \ filp);\n\terr = PTR_ERR(ctx);\n\tif (IS_ERR(ctx))\n\t\tgoto out;\n\n\tattr.ia_valid\
+    \ = ATTR_OPEN;\n\tif (openflags & O_TRUNC) {\n\t\tattr.ia_valid |= ATTR_SIZE;\n\
+    \t\tattr.ia_size = 0;\n\t\tfilemap_write_and_wait(inode->i_mapping);\n\t}\n\n\t\
+    inode = NFS_PROTO(dir)->open_context(dir, ctx, openflags, &attr, NULL);\n\tif\
+    \ (IS_ERR(inode)) {\n\t\terr = PTR_ERR(inode);\n\t\tswitch (err) {\n\t\tdefault:\n\
+    \t\t\tgoto out_put_ctx;\n\t\tcase -ENOENT:\n\t\tcase -ESTALE:\n\t\tcase -EISDIR:\n\
+    \t\tcase -ENOTDIR:\n\t\tcase -ELOOP:\n\t\t\tgoto out_drop;\n\t\t}\n\t}\n\tif (inode\
+    \ != d_inode(dentry))\n\t\tgoto out_drop;\n\n\tnfs_file_set_open_context(filp,\
+    \ ctx);\n\tnfs_fscache_open_file(inode, filp);\n\terr = 0;\n\nout_put_ctx:\n\t\
+    put_nfs_open_context(ctx);\nout:\n\tdput(parent);\n\treturn err;\n\nout_drop:\n\
+    \td_drop(dentry);\n\terr = -EOPENSTALE;\n\tgoto out_put_ctx;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nnfs4_file_open(struct\
+    \ inode *inode, struct file *filp)\n{\n\tstruct nfs_open_context *ctx;\n\tstruct\
+    \ dentry *dentry = file_dentry(filp);\n\tstruct dentry *parent = NULL;\n\tstruct\
+    \ inode *dir;\n\tunsigned openflags = filp->f_flags;\n\tstruct iattr attr;\n\t\
+    int err;\n\n\t/*\n\t * If no cached dentry exists or if it's negative, NFSv4 handled\
+    \ the\n\t * opens in ->lookup() or ->create().\n\t *\n\t * We only get this far\
+    \ for a cached positive dentry.  We skipped\n\t * revalidation, so handle it here\
+    \ by dropping the dentry and returning\n\t * -EOPENSTALE.  The VFS will retry\
+    \ the lookup/create/open.\n\t */\n\n\tdprintk(\"NFS: open file(%pd2)\\n\", dentry);\n\
+    \n\terr = nfs_check_flags(openflags);\n\tif (err)\n\t\treturn err;\n\n\tif ((openflags\
+    \ & O_ACCMODE) == 3)\n\t\topenflags--;\n\n\t/* We can't create new files here\
+    \ */\n\topenflags &= ~(O_CREAT|O_EXCL);\n\n\tparent = dget_parent(dentry);\n\t\
+    dir = d_inode(parent);\n\n\tctx = alloc_nfs_open_context(file_dentry(filp), filp->f_mode,\
+    \ filp);\n\terr = PTR_ERR(ctx);\n\tif (IS_ERR(ctx))\n\t\tgoto out;\n\n\tattr.ia_valid\
+    \ = ATTR_OPEN;\n\tif (openflags & O_TRUNC) {\n\t\tattr.ia_valid |= ATTR_SIZE;\n\
+    \t\tattr.ia_size = 0;\n\t\tfilemap_write_and_wait(inode->i_mapping);\n\t}\n\n\t\
+    inode = NFS_PROTO(dir)->open_context(dir, ctx, openflags, &attr, NULL);\n\tif\
+    \ (IS_ERR(inode)) {\n\t\terr = PTR_ERR(inode);\n\t\tswitch (err) {\n\t\tdefault:\n\
+    \t\t\tgoto out_put_ctx;\n\t\tcase -ENOENT:\n\t\tcase -ESTALE:\n\t\tcase -EISDIR:\n\
+    \t\tcase -ENOTDIR:\n\t\tcase -ELOOP:\n\t\t\tgoto out_drop;\n\t\t}\n\t}\n\tif (inode\
+    \ != d_inode(dentry))\n\t\tgoto out_drop;\n\n\tnfs_file_set_open_context(filp,\
+    \ ctx);\n\tnfs_fscache_open_file(inode, filp);\n\terr = 0;\n\nout_put_ctx:\n\t\
+    put_nfs_open_context(ctx);\nout:\n\tdput(parent);\n\treturn err;\n\nout_drop:\n\
+    \td_drop(dentry);\n\terr = -EOPENSTALE;\n\tgoto out_put_ctx;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nnfs4_file_open(struct inode *inode, struct\
+    \ file *filp)\n{\n\tstruct nfs_open_context *ctx;\n\tstruct dentry *dentry = file_dentry(filp);\n\
+    \tstruct dentry *parent = NULL;\n\tstruct inode *dir;\n\tunsigned openflags =\
+    \ filp->f_flags;\n\tstruct iattr attr;\n\tint err;\n\n\t/*\n\t * If no cached\
+    \ dentry exists or if it's negative, NFSv4 handled the\n\t * opens in ->lookup()\
+    \ or ->create().\n\t *\n\t * We only get this far for a cached positive dentry.\
+    \  We skipped\n\t * revalidation, so handle it here by dropping the dentry and\
+    \ returning\n\t * -EOPENSTALE.  The VFS will retry the lookup/create/open.\n\t\
+    \ */\n\n\tdprintk(\"NFS: open file(%pd2)\\n\", dentry);\n\n\terr = nfs_check_flags(openflags);\n\
+    \tif (err)\n\t\treturn err;\n\n\tif ((openflags & O_ACCMODE) == 3)\n\t\topenflags--;\n\
+    \n\t/* We can't create new files here */\n\topenflags &= ~(O_CREAT|O_EXCL);\n\n\
+    \tparent = dget_parent(dentry);\n\tdir = d_inode(parent);\n\n\tctx = alloc_nfs_open_context(file_dentry(filp),\
+    \ filp->f_mode, filp);\n\terr = PTR_ERR(ctx);\n\tif (IS_ERR(ctx))\n\t\tgoto out;\n\
+    \n\tattr.ia_valid = ATTR_OPEN;\n\tif (openflags & O_TRUNC) {\n\t\tattr.ia_valid\
+    \ |= ATTR_SIZE;\n\t\tattr.ia_size = 0;\n\t\tfilemap_write_and_wait(inode->i_mapping);\n\
+    \t}\n\n\tinode = NFS_PROTO(dir)->open_context(dir, ctx, openflags, &attr, NULL);\n\
+    \tif (IS_ERR(inode)) {\n\t\terr = PTR_ERR(inode);\n\t\tswitch (err) {\n\t\tdefault:\n\
+    \t\t\tgoto out_put_ctx;\n\t\tcase -ENOENT:\n\t\tcase -ESTALE:\n\t\tcase -EISDIR:\n\
+    \t\tcase -ENOTDIR:\n\t\tcase -ELOOP:\n\t\t\tgoto out_drop;\n\t\t}\n\t}\n\tif (inode\
+    \ != d_inode(dentry))\n\t\tgoto out_drop;\n\n\tnfs_file_set_open_context(filp,\
+    \ ctx);\n\tnfs_fscache_open_file(inode, filp);\n\terr = 0;\n\nout_put_ctx:\n\t\
+    put_nfs_open_context(ctx);\nout:\n\tdput(parent);\n\treturn err;\n\nout_drop:\n\
+    \td_drop(dentry);\n\terr = -EOPENSTALE;\n\tgoto out_put_ctx;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nnfs4_file_open(struct inode\
+    \ *inode, struct file *filp)\n{\n\tstruct nfs_open_context *ctx;\n\tstruct dentry\
+    \ *dentry = file_dentry(filp);\n\tstruct dentry *parent = NULL;\n\tstruct inode\
+    \ *dir;\n\tunsigned openflags = filp->f_flags;\n\tstruct iattr attr;\n\tint err;\n\
+    \n\t/*\n\t * If no cached dentry exists or if it's negative, NFSv4 handled the\n\
+    \t * opens in ->lookup() or ->create().\n\t *\n\t * We only get this far for a\
+    \ cached positive dentry.  We skipped\n\t * revalidation, so handle it here by\
+    \ dropping the dentry and returning\n\t * -EOPENSTALE.  The VFS will retry the\
+    \ lookup/create/open.\n\t */\n\n\tdprintk(\"NFS: open file(%pd2)\\n\", dentry);\n\
+    \n\terr = nfs_check_flags(openflags);\n\tif (err)\n\t\treturn err;\n\n\tif ((openflags\
+    \ & O_ACCMODE) == 3)\n\t\topenflags--;\n\n\t/* We can't create new files here\
+    \ */\n\topenflags &= ~(O_CREAT|O_EXCL);\n\n\tparent = dget_parent(dentry);\n\t\
+    dir = d_inode(parent);\n\n\tctx = alloc_nfs_open_context(file_dentry(filp), filp->f_mode,\
+    \ filp);\n\terr = PTR_ERR(ctx);\n\tif (IS_ERR(ctx))\n\t\tgoto out;\n\n\tattr.ia_valid\
+    \ = ATTR_OPEN;\n\tif (openflags & O_TRUNC) {\n\t\tattr.ia_valid |= ATTR_SIZE;\n\
+    \t\tattr.ia_size = 0;\n\t\tfilemap_write_and_wait(inode->i_mapping);\n\t}\n\n\t\
+    inode = NFS_PROTO(dir)->open_context(dir, ctx, openflags, &attr, NULL);\n\tif\
+    \ (IS_ERR(inode)) {\n\t\terr = PTR_ERR(inode);\n\t\tswitch (err) {\n\t\tdefault:\n\
+    \t\t\tgoto out_put_ctx;\n\t\tcase -ENOENT:\n\t\tcase -ESTALE:\n\t\tcase -EISDIR:\n\
+    \t\tcase -ENOTDIR:\n\t\tcase -ELOOP:\n\t\t\tgoto out_drop;\n\t\t}\n\t}\n\tif (inode\
+    \ != d_inode(dentry))\n\t\tgoto out_drop;\n\n\tnfs_file_set_open_context(filp,\
+    \ ctx);\n\tnfs_fscache_open_file(inode, filp);\n\terr = 0;\n\nout_put_ctx:\n\t\
+    put_nfs_open_context(ctx);\nout:\n\tdput(parent);\n\treturn err;\n\nout_drop:\n\
+    \td_drop(dentry);\n\terr = -EOPENSTALE;\n\tgoto out_put_ctx;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 220100
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

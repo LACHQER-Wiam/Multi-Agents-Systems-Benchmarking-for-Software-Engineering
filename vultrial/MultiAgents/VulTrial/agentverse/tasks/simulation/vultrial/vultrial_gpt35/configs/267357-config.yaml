@@ -1,0 +1,365 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\ncrun_command_exec\
+    \ (struct crun_global_arguments *global_args, int argc, char **argv, libcrun_error_t\
+    \ *err)\n{\n  int first_arg = 0, ret = 0;\n  libcrun_context_t crun_context =\
+    \ {\n    0,\n  };\n  cleanup_process_schema runtime_spec_schema_config_schema_process\
+    \ *process = NULL;\n  struct libcrun_container_exec_options_s exec_opts;\n\n \
+    \ memset (&exec_opts, 0, sizeof (exec_opts));\n  exec_opts.struct_size = sizeof\
+    \ (exec_opts);\n\n  crun_context.preserve_fds = 0;\n  crun_context.listen_fds\
+    \ = 0;\n\n  argp_parse (&run_argp, argc, argv, ARGP_IN_ORDER, &first_arg, &exec_options);\n\
+    \  crun_assert_n_args (argc - first_arg, exec_options.process ? 1 : 2, -1);\n\n\
+    \  ret = init_libcrun_context (&crun_context, argv[first_arg], global_args, err);\n\
+    \  if (UNLIKELY (ret < 0))\n    return ret;\n\n  crun_context.detach = exec_options.detach;\n\
+    \  crun_context.console_socket = exec_options.console_socket;\n  crun_context.pid_file\
+    \ = exec_options.pid_file;\n  crun_context.preserve_fds = exec_options.preserve_fds;\n\
+    \n  if (getenv (\"LISTEN_FDS\"))\n    {\n      crun_context.listen_fds = strtoll\
+    \ (getenv (\"LISTEN_FDS\"), NULL, 10);\n      crun_context.preserve_fds += crun_context.listen_fds;\n\
+    \    }\n\n  if (exec_options.process)\n    exec_opts.path = exec_options.process;\n\
+    \  else\n    {\n      process = xmalloc0 (sizeof (*process));\n      int i;\n\n\
+    \      process->args_len = argc;\n      process->args = xmalloc0 ((argc + 1) *\
+    \ sizeof (*process->args));\n      for (i = 0; i < argc - first_arg; i++)\n  \
+    \      process->args[i] = xstrdup (argv[first_arg + i + 1]);\n      process->args[i]\
+    \ = NULL;\n      if (exec_options.cwd)\n        process->cwd = exec_options.cwd;\n\
+    \      process->terminal = exec_options.tty;\n      process->env = exec_options.env;\n\
+    \      process->env_len = exec_options.env_size;\n      process->user = make_oci_process_user\
+    \ (exec_options.user);\n\n      if (exec_options.process_label != NULL)\n    \
+    \    process->selinux_label = exec_options.process_label;\n\n      if (exec_options.apparmor\
+    \ != NULL)\n        process->apparmor_profile = exec_options.apparmor;\n\n   \
+    \   if (exec_options.cap_size > 0)\n        {\n          runtime_spec_schema_config_schema_process_capabilities\
+    \ *capabilities\n              = xmalloc (sizeof (runtime_spec_schema_config_schema_process_capabilities));\n\
+    \n          capabilities->effective = exec_options.cap;\n          capabilities->effective_len\
+    \ = exec_options.cap_size;\n\n          capabilities->inheritable = NULL;\n  \
+    \        capabilities->inheritable_len = 0;\n\n          capabilities->bounding\
+    \ = dup_array (exec_options.cap, exec_options.cap_size);\n          capabilities->bounding_len\
+    \ = exec_options.cap_size;\n\n          capabilities->ambient = dup_array (exec_options.cap,\
+    \ exec_options.cap_size);\n          capabilities->ambient_len = exec_options.cap_size;\n\
+    \n          capabilities->permitted = dup_array (exec_options.cap, exec_options.cap_size);\n\
+    \          capabilities->permitted_len = exec_options.cap_size;\n\n          process->capabilities\
+    \ = capabilities;\n        }\n\n      // noNewPriviledges will remain `false`\
+    \ if basespec has `false` unless specified\n      // Default is always `true`\
+    \ in generated basespec config\n      if (exec_options.no_new_privs)\n       \
+    \ process->no_new_privileges = 1;\n\n      exec_opts.process = process;\n    }\n\
+    \n  exec_opts.cgroup = exec_options.cgroup;\n\n  return libcrun_container_exec_with_options\
+    \ (&crun_context, argv[first_arg], &exec_opts, err);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\ncrun_command_exec\
+    \ (struct crun_global_arguments *global_args, int argc, char **argv, libcrun_error_t\
+    \ *err)\n{\n  int first_arg = 0, ret = 0;\n  libcrun_context_t crun_context =\
+    \ {\n    0,\n  };\n  cleanup_process_schema runtime_spec_schema_config_schema_process\
+    \ *process = NULL;\n  struct libcrun_container_exec_options_s exec_opts;\n\n \
+    \ memset (&exec_opts, 0, sizeof (exec_opts));\n  exec_opts.struct_size = sizeof\
+    \ (exec_opts);\n\n  crun_context.preserve_fds = 0;\n  crun_context.listen_fds\
+    \ = 0;\n\n  argp_parse (&run_argp, argc, argv, ARGP_IN_ORDER, &first_arg, &exec_options);\n\
+    \  crun_assert_n_args (argc - first_arg, exec_options.process ? 1 : 2, -1);\n\n\
+    \  ret = init_libcrun_context (&crun_context, argv[first_arg], global_args, err);\n\
+    \  if (UNLIKELY (ret < 0))\n    return ret;\n\n  crun_context.detach = exec_options.detach;\n\
+    \  crun_context.console_socket = exec_options.console_socket;\n  crun_context.pid_file\
+    \ = exec_options.pid_file;\n  crun_context.preserve_fds = exec_options.preserve_fds;\n\
+    \n  if (getenv (\"LISTEN_FDS\"))\n    {\n      crun_context.listen_fds = strtoll\
+    \ (getenv (\"LISTEN_FDS\"), NULL, 10);\n      crun_context.preserve_fds += crun_context.listen_fds;\n\
+    \    }\n\n  if (exec_options.process)\n    exec_opts.path = exec_options.process;\n\
+    \  else\n    {\n      process = xmalloc0 (sizeof (*process));\n      int i;\n\n\
+    \      process->args_len = argc;\n      process->args = xmalloc0 ((argc + 1) *\
+    \ sizeof (*process->args));\n      for (i = 0; i < argc - first_arg; i++)\n  \
+    \      process->args[i] = xstrdup (argv[first_arg + i + 1]);\n      process->args[i]\
+    \ = NULL;\n      if (exec_options.cwd)\n        process->cwd = exec_options.cwd;\n\
+    \      process->terminal = exec_options.tty;\n      process->env = exec_options.env;\n\
+    \      process->env_len = exec_options.env_size;\n      process->user = make_oci_process_user\
+    \ (exec_options.user);\n\n      if (exec_options.process_label != NULL)\n    \
+    \    process->selinux_label = exec_options.process_label;\n\n      if (exec_options.apparmor\
+    \ != NULL)\n        process->apparmor_profile = exec_options.apparmor;\n\n   \
+    \   if (exec_options.cap_size > 0)\n        {\n          runtime_spec_schema_config_schema_process_capabilities\
+    \ *capabilities\n              = xmalloc (sizeof (runtime_spec_schema_config_schema_process_capabilities));\n\
+    \n          capabilities->effective = exec_options.cap;\n          capabilities->effective_len\
+    \ = exec_options.cap_size;\n\n          capabilities->inheritable = NULL;\n  \
+    \        capabilities->inheritable_len = 0;\n\n          capabilities->bounding\
+    \ = dup_array (exec_options.cap, exec_options.cap_size);\n          capabilities->bounding_len\
+    \ = exec_options.cap_size;\n\n          capabilities->ambient = dup_array (exec_options.cap,\
+    \ exec_options.cap_size);\n          capabilities->ambient_len = exec_options.cap_size;\n\
+    \n          capabilities->permitted = dup_array (exec_options.cap, exec_options.cap_size);\n\
+    \          capabilities->permitted_len = exec_options.cap_size;\n\n          process->capabilities\
+    \ = capabilities;\n        }\n\n      // noNewPriviledges will remain `false`\
+    \ if basespec has `false` unless specified\n      // Default is always `true`\
+    \ in generated basespec config\n      if (exec_options.no_new_privs)\n       \
+    \ process->no_new_privileges = 1;\n\n      exec_opts.process = process;\n    }\n\
+    \n  exec_opts.cgroup = exec_options.cgroup;\n\n  return libcrun_container_exec_with_options\
+    \ (&crun_context, argv[first_arg], &exec_opts, err);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\ncrun_command_exec (struct crun_global_arguments\
+    \ *global_args, int argc, char **argv, libcrun_error_t *err)\n{\n  int first_arg\
+    \ = 0, ret = 0;\n  libcrun_context_t crun_context = {\n    0,\n  };\n  cleanup_process_schema\
+    \ runtime_spec_schema_config_schema_process *process = NULL;\n  struct libcrun_container_exec_options_s\
+    \ exec_opts;\n\n  memset (&exec_opts, 0, sizeof (exec_opts));\n  exec_opts.struct_size\
+    \ = sizeof (exec_opts);\n\n  crun_context.preserve_fds = 0;\n  crun_context.listen_fds\
+    \ = 0;\n\n  argp_parse (&run_argp, argc, argv, ARGP_IN_ORDER, &first_arg, &exec_options);\n\
+    \  crun_assert_n_args (argc - first_arg, exec_options.process ? 1 : 2, -1);\n\n\
+    \  ret = init_libcrun_context (&crun_context, argv[first_arg], global_args, err);\n\
+    \  if (UNLIKELY (ret < 0))\n    return ret;\n\n  crun_context.detach = exec_options.detach;\n\
+    \  crun_context.console_socket = exec_options.console_socket;\n  crun_context.pid_file\
+    \ = exec_options.pid_file;\n  crun_context.preserve_fds = exec_options.preserve_fds;\n\
+    \n  if (getenv (\"LISTEN_FDS\"))\n    {\n      crun_context.listen_fds = strtoll\
+    \ (getenv (\"LISTEN_FDS\"), NULL, 10);\n      crun_context.preserve_fds += crun_context.listen_fds;\n\
+    \    }\n\n  if (exec_options.process)\n    exec_opts.path = exec_options.process;\n\
+    \  else\n    {\n      process = xmalloc0 (sizeof (*process));\n      int i;\n\n\
+    \      process->args_len = argc;\n      process->args = xmalloc0 ((argc + 1) *\
+    \ sizeof (*process->args));\n      for (i = 0; i < argc - first_arg; i++)\n  \
+    \      process->args[i] = xstrdup (argv[first_arg + i + 1]);\n      process->args[i]\
+    \ = NULL;\n      if (exec_options.cwd)\n        process->cwd = exec_options.cwd;\n\
+    \      process->terminal = exec_options.tty;\n      process->env = exec_options.env;\n\
+    \      process->env_len = exec_options.env_size;\n      process->user = make_oci_process_user\
+    \ (exec_options.user);\n\n      if (exec_options.process_label != NULL)\n    \
+    \    process->selinux_label = exec_options.process_label;\n\n      if (exec_options.apparmor\
+    \ != NULL)\n        process->apparmor_profile = exec_options.apparmor;\n\n   \
+    \   if (exec_options.cap_size > 0)\n        {\n          runtime_spec_schema_config_schema_process_capabilities\
+    \ *capabilities\n              = xmalloc (sizeof (runtime_spec_schema_config_schema_process_capabilities));\n\
+    \n          capabilities->effective = exec_options.cap;\n          capabilities->effective_len\
+    \ = exec_options.cap_size;\n\n          capabilities->inheritable = NULL;\n  \
+    \        capabilities->inheritable_len = 0;\n\n          capabilities->bounding\
+    \ = dup_array (exec_options.cap, exec_options.cap_size);\n          capabilities->bounding_len\
+    \ = exec_options.cap_size;\n\n          capabilities->ambient = dup_array (exec_options.cap,\
+    \ exec_options.cap_size);\n          capabilities->ambient_len = exec_options.cap_size;\n\
+    \n          capabilities->permitted = dup_array (exec_options.cap, exec_options.cap_size);\n\
+    \          capabilities->permitted_len = exec_options.cap_size;\n\n          process->capabilities\
+    \ = capabilities;\n        }\n\n      // noNewPriviledges will remain `false`\
+    \ if basespec has `false` unless specified\n      // Default is always `true`\
+    \ in generated basespec config\n      if (exec_options.no_new_privs)\n       \
+    \ process->no_new_privileges = 1;\n\n      exec_opts.process = process;\n    }\n\
+    \n  exec_opts.cgroup = exec_options.cgroup;\n\n  return libcrun_container_exec_with_options\
+    \ (&crun_context, argv[first_arg], &exec_opts, err);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\ncrun_command_exec (struct crun_global_arguments\
+    \ *global_args, int argc, char **argv, libcrun_error_t *err)\n{\n  int first_arg\
+    \ = 0, ret = 0;\n  libcrun_context_t crun_context = {\n    0,\n  };\n  cleanup_process_schema\
+    \ runtime_spec_schema_config_schema_process *process = NULL;\n  struct libcrun_container_exec_options_s\
+    \ exec_opts;\n\n  memset (&exec_opts, 0, sizeof (exec_opts));\n  exec_opts.struct_size\
+    \ = sizeof (exec_opts);\n\n  crun_context.preserve_fds = 0;\n  crun_context.listen_fds\
+    \ = 0;\n\n  argp_parse (&run_argp, argc, argv, ARGP_IN_ORDER, &first_arg, &exec_options);\n\
+    \  crun_assert_n_args (argc - first_arg, exec_options.process ? 1 : 2, -1);\n\n\
+    \  ret = init_libcrun_context (&crun_context, argv[first_arg], global_args, err);\n\
+    \  if (UNLIKELY (ret < 0))\n    return ret;\n\n  crun_context.detach = exec_options.detach;\n\
+    \  crun_context.console_socket = exec_options.console_socket;\n  crun_context.pid_file\
+    \ = exec_options.pid_file;\n  crun_context.preserve_fds = exec_options.preserve_fds;\n\
+    \n  if (getenv (\"LISTEN_FDS\"))\n    {\n      crun_context.listen_fds = strtoll\
+    \ (getenv (\"LISTEN_FDS\"), NULL, 10);\n      crun_context.preserve_fds += crun_context.listen_fds;\n\
+    \    }\n\n  if (exec_options.process)\n    exec_opts.path = exec_options.process;\n\
+    \  else\n    {\n      process = xmalloc0 (sizeof (*process));\n      int i;\n\n\
+    \      process->args_len = argc;\n      process->args = xmalloc0 ((argc + 1) *\
+    \ sizeof (*process->args));\n      for (i = 0; i < argc - first_arg; i++)\n  \
+    \      process->args[i] = xstrdup (argv[first_arg + i + 1]);\n      process->args[i]\
+    \ = NULL;\n      if (exec_options.cwd)\n        process->cwd = exec_options.cwd;\n\
+    \      process->terminal = exec_options.tty;\n      process->env = exec_options.env;\n\
+    \      process->env_len = exec_options.env_size;\n      process->user = make_oci_process_user\
+    \ (exec_options.user);\n\n      if (exec_options.process_label != NULL)\n    \
+    \    process->selinux_label = exec_options.process_label;\n\n      if (exec_options.apparmor\
+    \ != NULL)\n        process->apparmor_profile = exec_options.apparmor;\n\n   \
+    \   if (exec_options.cap_size > 0)\n        {\n          runtime_spec_schema_config_schema_process_capabilities\
+    \ *capabilities\n              = xmalloc (sizeof (runtime_spec_schema_config_schema_process_capabilities));\n\
+    \n          capabilities->effective = exec_options.cap;\n          capabilities->effective_len\
+    \ = exec_options.cap_size;\n\n          capabilities->inheritable = NULL;\n  \
+    \        capabilities->inheritable_len = 0;\n\n          capabilities->bounding\
+    \ = dup_array (exec_options.cap, exec_options.cap_size);\n          capabilities->bounding_len\
+    \ = exec_options.cap_size;\n\n          capabilities->ambient = dup_array (exec_options.cap,\
+    \ exec_options.cap_size);\n          capabilities->ambient_len = exec_options.cap_size;\n\
+    \n          capabilities->permitted = dup_array (exec_options.cap, exec_options.cap_size);\n\
+    \          capabilities->permitted_len = exec_options.cap_size;\n\n          process->capabilities\
+    \ = capabilities;\n        }\n\n      // noNewPriviledges will remain `false`\
+    \ if basespec has `false` unless specified\n      // Default is always `true`\
+    \ in generated basespec config\n      if (exec_options.no_new_privs)\n       \
+    \ process->no_new_privileges = 1;\n\n      exec_opts.process = process;\n    }\n\
+    \n  exec_opts.cgroup = exec_options.cgroup;\n\n  return libcrun_container_exec_with_options\
+    \ (&crun_context, argv[first_arg], &exec_opts, err);\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 267357
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

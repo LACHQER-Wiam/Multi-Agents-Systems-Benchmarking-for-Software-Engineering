@@ -1,0 +1,355 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\n  void\
+    \ Compute(OpKernelContext* ctx) override {\n    const Tensor& gradient = ctx->input(0);\n\
+    \    const Tensor& input = ctx->input(1);\n    Tensor* input_backprop = nullptr;\n\
+    \    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(0, input.shape(),\
+    \ &input_backprop));\n    OP_REQUIRES(\n        ctx, axis_ >= -1,\n        errors::InvalidArgument(\"\
+    Axis must be at least -1. Found \", axis_));\n    OP_REQUIRES(ctx, (axis_ == -1\
+    \ || axis_ < input.shape().dims()),\n                errors::InvalidArgument(\n\
+    \                    \"Axis should be -1 or 0 or a positive value less than \"\
+    ,\n                    input.shape().dims(), \"but given axis value was \", axis_));\n\
+    \n    OP_REQUIRES(\n        ctx, input.IsSameSize(gradient),\n        errors::InvalidArgument(\"\
+    gradient and input must be the same size\"));\n    const int depth = (axis_ ==\
+    \ -1) ? 1 : input.dim_size(axis_);\n    const Tensor& input_min_tensor = ctx->input(2);\n\
+    \    OP_REQUIRES(ctx,\n                input_min_tensor.dims() == 0 || input_min_tensor.dims()\
+    \ == 1,\n                errors::InvalidArgument(\n                    \"Input\
+    \ min tensor must have dimension 1. Recieved \",\n                    input_min_tensor.dims(),\
+    \ \".\"));\n    const Tensor& input_max_tensor = ctx->input(3);\n    OP_REQUIRES(ctx,\n\
+    \                input_max_tensor.dims() == 0 || input_max_tensor.dims() == 1,\n\
+    \                errors::InvalidArgument(\n                    \"Input max tensor\
+    \ must have dimension 1. Recieved \",\n                    input_max_tensor.dims(),\
+    \ \".\"));\n    if (axis_ != -1) {\n      OP_REQUIRES(\n          ctx, input_min_tensor.dim_size(0)\
+    \ == depth,\n          errors::InvalidArgument(\"min has incorrect size, expected\
+    \ \", depth,\n                                  \" was \", input_min_tensor.dim_size(0)));\n\
+    \      OP_REQUIRES(\n          ctx, input_max_tensor.dim_size(0) == depth,\n \
+    \         errors::InvalidArgument(\"max has incorrect size, expected \", depth,\n\
+    \                                  \" was \", input_max_tensor.dim_size(0)));\n\
+    \    }\n\n    TensorShape min_max_shape(input_min_tensor.shape());\n    Tensor*\
+    \ input_min_backprop;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(1,\
+    \ min_max_shape, &input_min_backprop));\n\n    Tensor* input_max_backprop;\n \
+    \   OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(2, min_max_shape,\
+    \ &input_max_backprop));\n\n    if (axis_ == -1) {\n      functor::QuantizeAndDequantizeOneScaleGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(), gradient.template flat<T>(),\n \
+    \       input.template flat<T>(), input_min_tensor.scalar<T>(),\n        input_max_tensor.scalar<T>(),\
+    \ input_backprop->template flat<T>(),\n        input_min_backprop->template scalar<T>(),\n\
+    \        input_max_backprop->template scalar<T>());\n    } else {\n      functor::QuantizeAndDequantizePerChannelGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(),\n        gradient.template flat_inner_outer_dims<T,\
+    \ 3>(axis_ - 1),\n        input.template flat_inner_outer_dims<T, 3>(axis_ - 1),\n\
+    \        &input_min_tensor, &input_max_tensor,\n        input_backprop->template\
+    \ flat_inner_outer_dims<T, 3>(axis_ - 1),\n        input_min_backprop->template\
+    \ flat<T>(),\n        input_max_backprop->template flat<T>());\n    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor& gradient = ctx->input(0);\n    const Tensor&\
+    \ input = ctx->input(1);\n    Tensor* input_backprop = nullptr;\n    OP_REQUIRES_OK(ctx,\n\
+    \                   ctx->allocate_output(0, input.shape(), &input_backprop));\n\
+    \    OP_REQUIRES(\n        ctx, axis_ >= -1,\n        errors::InvalidArgument(\"\
+    Axis must be at least -1. Found \", axis_));\n    OP_REQUIRES(ctx, (axis_ == -1\
+    \ || axis_ < input.shape().dims()),\n                errors::InvalidArgument(\n\
+    \                    \"Axis should be -1 or 0 or a positive value less than \"\
+    ,\n                    input.shape().dims(), \"but given axis value was \", axis_));\n\
+    \n    OP_REQUIRES(\n        ctx, input.IsSameSize(gradient),\n        errors::InvalidArgument(\"\
+    gradient and input must be the same size\"));\n    const int depth = (axis_ ==\
+    \ -1) ? 1 : input.dim_size(axis_);\n    const Tensor& input_min_tensor = ctx->input(2);\n\
+    \    OP_REQUIRES(ctx,\n                input_min_tensor.dims() == 0 || input_min_tensor.dims()\
+    \ == 1,\n                errors::InvalidArgument(\n                    \"Input\
+    \ min tensor must have dimension 1. Recieved \",\n                    input_min_tensor.dims(),\
+    \ \".\"));\n    const Tensor& input_max_tensor = ctx->input(3);\n    OP_REQUIRES(ctx,\n\
+    \                input_max_tensor.dims() == 0 || input_max_tensor.dims() == 1,\n\
+    \                errors::InvalidArgument(\n                    \"Input max tensor\
+    \ must have dimension 1. Recieved \",\n                    input_max_tensor.dims(),\
+    \ \".\"));\n    if (axis_ != -1) {\n      OP_REQUIRES(\n          ctx, input_min_tensor.dim_size(0)\
+    \ == depth,\n          errors::InvalidArgument(\"min has incorrect size, expected\
+    \ \", depth,\n                                  \" was \", input_min_tensor.dim_size(0)));\n\
+    \      OP_REQUIRES(\n          ctx, input_max_tensor.dim_size(0) == depth,\n \
+    \         errors::InvalidArgument(\"max has incorrect size, expected \", depth,\n\
+    \                                  \" was \", input_max_tensor.dim_size(0)));\n\
+    \    }\n\n    TensorShape min_max_shape(input_min_tensor.shape());\n    Tensor*\
+    \ input_min_backprop;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(1,\
+    \ min_max_shape, &input_min_backprop));\n\n    Tensor* input_max_backprop;\n \
+    \   OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(2, min_max_shape,\
+    \ &input_max_backprop));\n\n    if (axis_ == -1) {\n      functor::QuantizeAndDequantizeOneScaleGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(), gradient.template flat<T>(),\n \
+    \       input.template flat<T>(), input_min_tensor.scalar<T>(),\n        input_max_tensor.scalar<T>(),\
+    \ input_backprop->template flat<T>(),\n        input_min_backprop->template scalar<T>(),\n\
+    \        input_max_backprop->template scalar<T>());\n    } else {\n      functor::QuantizeAndDequantizePerChannelGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(),\n        gradient.template flat_inner_outer_dims<T,\
+    \ 3>(axis_ - 1),\n        input.template flat_inner_outer_dims<T, 3>(axis_ - 1),\n\
+    \        &input_min_tensor, &input_max_tensor,\n        input_backprop->template\
+    \ flat_inner_outer_dims<T, 3>(axis_ - 1),\n        input_min_backprop->template\
+    \ flat<T>(),\n        input_max_backprop->template flat<T>());\n    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\n  void Compute(OpKernelContext* ctx) override\
+    \ {\n    const Tensor& gradient = ctx->input(0);\n    const Tensor& input = ctx->input(1);\n\
+    \    Tensor* input_backprop = nullptr;\n    OP_REQUIRES_OK(ctx,\n            \
+    \       ctx->allocate_output(0, input.shape(), &input_backprop));\n    OP_REQUIRES(\n\
+    \        ctx, axis_ >= -1,\n        errors::InvalidArgument(\"Axis must be at\
+    \ least -1. Found \", axis_));\n    OP_REQUIRES(ctx, (axis_ == -1 || axis_ < input.shape().dims()),\n\
+    \                errors::InvalidArgument(\n                    \"Axis should be\
+    \ -1 or 0 or a positive value less than \",\n                    input.shape().dims(),\
+    \ \"but given axis value was \", axis_));\n\n    OP_REQUIRES(\n        ctx, input.IsSameSize(gradient),\n\
+    \        errors::InvalidArgument(\"gradient and input must be the same size\"\
+    ));\n    const int depth = (axis_ == -1) ? 1 : input.dim_size(axis_);\n    const\
+    \ Tensor& input_min_tensor = ctx->input(2);\n    OP_REQUIRES(ctx,\n          \
+    \      input_min_tensor.dims() == 0 || input_min_tensor.dims() == 1,\n       \
+    \         errors::InvalidArgument(\n                    \"Input min tensor must\
+    \ have dimension 1. Recieved \",\n                    input_min_tensor.dims(),\
+    \ \".\"));\n    const Tensor& input_max_tensor = ctx->input(3);\n    OP_REQUIRES(ctx,\n\
+    \                input_max_tensor.dims() == 0 || input_max_tensor.dims() == 1,\n\
+    \                errors::InvalidArgument(\n                    \"Input max tensor\
+    \ must have dimension 1. Recieved \",\n                    input_max_tensor.dims(),\
+    \ \".\"));\n    if (axis_ != -1) {\n      OP_REQUIRES(\n          ctx, input_min_tensor.dim_size(0)\
+    \ == depth,\n          errors::InvalidArgument(\"min has incorrect size, expected\
+    \ \", depth,\n                                  \" was \", input_min_tensor.dim_size(0)));\n\
+    \      OP_REQUIRES(\n          ctx, input_max_tensor.dim_size(0) == depth,\n \
+    \         errors::InvalidArgument(\"max has incorrect size, expected \", depth,\n\
+    \                                  \" was \", input_max_tensor.dim_size(0)));\n\
+    \    }\n\n    TensorShape min_max_shape(input_min_tensor.shape());\n    Tensor*\
+    \ input_min_backprop;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(1,\
+    \ min_max_shape, &input_min_backprop));\n\n    Tensor* input_max_backprop;\n \
+    \   OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(2, min_max_shape,\
+    \ &input_max_backprop));\n\n    if (axis_ == -1) {\n      functor::QuantizeAndDequantizeOneScaleGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(), gradient.template flat<T>(),\n \
+    \       input.template flat<T>(), input_min_tensor.scalar<T>(),\n        input_max_tensor.scalar<T>(),\
+    \ input_backprop->template flat<T>(),\n        input_min_backprop->template scalar<T>(),\n\
+    \        input_max_backprop->template scalar<T>());\n    } else {\n      functor::QuantizeAndDequantizePerChannelGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(),\n        gradient.template flat_inner_outer_dims<T,\
+    \ 3>(axis_ - 1),\n        input.template flat_inner_outer_dims<T, 3>(axis_ - 1),\n\
+    \        &input_min_tensor, &input_max_tensor,\n        input_backprop->template\
+    \ flat_inner_outer_dims<T, 3>(axis_ - 1),\n        input_min_backprop->template\
+    \ flat<T>(),\n        input_max_backprop->template flat<T>());\n    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor& gradient = ctx->input(0);\n    const Tensor&\
+    \ input = ctx->input(1);\n    Tensor* input_backprop = nullptr;\n    OP_REQUIRES_OK(ctx,\n\
+    \                   ctx->allocate_output(0, input.shape(), &input_backprop));\n\
+    \    OP_REQUIRES(\n        ctx, axis_ >= -1,\n        errors::InvalidArgument(\"\
+    Axis must be at least -1. Found \", axis_));\n    OP_REQUIRES(ctx, (axis_ == -1\
+    \ || axis_ < input.shape().dims()),\n                errors::InvalidArgument(\n\
+    \                    \"Axis should be -1 or 0 or a positive value less than \"\
+    ,\n                    input.shape().dims(), \"but given axis value was \", axis_));\n\
+    \n    OP_REQUIRES(\n        ctx, input.IsSameSize(gradient),\n        errors::InvalidArgument(\"\
+    gradient and input must be the same size\"));\n    const int depth = (axis_ ==\
+    \ -1) ? 1 : input.dim_size(axis_);\n    const Tensor& input_min_tensor = ctx->input(2);\n\
+    \    OP_REQUIRES(ctx,\n                input_min_tensor.dims() == 0 || input_min_tensor.dims()\
+    \ == 1,\n                errors::InvalidArgument(\n                    \"Input\
+    \ min tensor must have dimension 1. Recieved \",\n                    input_min_tensor.dims(),\
+    \ \".\"));\n    const Tensor& input_max_tensor = ctx->input(3);\n    OP_REQUIRES(ctx,\n\
+    \                input_max_tensor.dims() == 0 || input_max_tensor.dims() == 1,\n\
+    \                errors::InvalidArgument(\n                    \"Input max tensor\
+    \ must have dimension 1. Recieved \",\n                    input_max_tensor.dims(),\
+    \ \".\"));\n    if (axis_ != -1) {\n      OP_REQUIRES(\n          ctx, input_min_tensor.dim_size(0)\
+    \ == depth,\n          errors::InvalidArgument(\"min has incorrect size, expected\
+    \ \", depth,\n                                  \" was \", input_min_tensor.dim_size(0)));\n\
+    \      OP_REQUIRES(\n          ctx, input_max_tensor.dim_size(0) == depth,\n \
+    \         errors::InvalidArgument(\"max has incorrect size, expected \", depth,\n\
+    \                                  \" was \", input_max_tensor.dim_size(0)));\n\
+    \    }\n\n    TensorShape min_max_shape(input_min_tensor.shape());\n    Tensor*\
+    \ input_min_backprop;\n    OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(1,\
+    \ min_max_shape, &input_min_backprop));\n\n    Tensor* input_max_backprop;\n \
+    \   OP_REQUIRES_OK(ctx,\n                   ctx->allocate_output(2, min_max_shape,\
+    \ &input_max_backprop));\n\n    if (axis_ == -1) {\n      functor::QuantizeAndDequantizeOneScaleGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(), gradient.template flat<T>(),\n \
+    \       input.template flat<T>(), input_min_tensor.scalar<T>(),\n        input_max_tensor.scalar<T>(),\
+    \ input_backprop->template flat<T>(),\n        input_min_backprop->template scalar<T>(),\n\
+    \        input_max_backprop->template scalar<T>());\n    } else {\n      functor::QuantizeAndDequantizePerChannelGradientFunctor<Device,\
+    \ T> f;\n      f(ctx->eigen_device<Device>(),\n        gradient.template flat_inner_outer_dims<T,\
+    \ 3>(axis_ - 1),\n        input.template flat_inner_outer_dims<T, 3>(axis_ - 1),\n\
+    \        &input_min_tensor, &input_max_tensor,\n        input_backprop->template\
+    \ flat_inner_outer_dims<T, 3>(axis_ - 1),\n        input_min_backprop->template\
+    \ flat<T>(),\n        input_max_backprop->template flat<T>());\n    }\n  }"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 197518
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

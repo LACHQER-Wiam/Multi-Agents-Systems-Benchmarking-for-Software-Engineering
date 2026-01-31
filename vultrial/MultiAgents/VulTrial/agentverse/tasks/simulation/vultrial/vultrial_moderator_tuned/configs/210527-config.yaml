@@ -1,0 +1,288 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ netdev_tx_t mcba_usb_start_xmit(struct sk_buff *skb,\n\t\t\t\t       struct\
+    \ net_device *netdev)\n{\n\tstruct mcba_priv *priv = netdev_priv(netdev);\n\t\
+    struct can_frame *cf = (struct can_frame *)skb->data;\n\tstruct mcba_usb_ctx *ctx\
+    \ = NULL;\n\tstruct net_device_stats *stats = &priv->netdev->stats;\n\tu16 sid;\n\
+    \tint err;\n\tstruct mcba_usb_msg_can usb_msg = {\n\t\t.cmd_id = MBCA_CMD_TRANSMIT_MESSAGE_EV\n\
+    \t};\n\n\tif (can_dropped_invalid_skb(netdev, skb))\n\t\treturn NETDEV_TX_OK;\n\
+    \n\tctx = mcba_usb_get_free_ctx(priv, cf);\n\tif (!ctx)\n\t\treturn NETDEV_TX_BUSY;\n\
+    \n\tif (cf->can_id & CAN_EFF_FLAG) {\n\t\t/* SIDH    | SIDL                 |\
+    \ EIDH   | EIDL\n\t\t * 28 - 21 | 20 19 18 x x x 17 16 | 15 - 8 | 7 - 0\n\t\t\
+    \ */\n\t\tsid = MCBA_SIDL_EXID_MASK;\n\t\t/* store 28-18 bits */\n\t\tsid |= (cf->can_id\
+    \ & 0x1ffc0000) >> 13;\n\t\t/* store 17-16 bits */\n\t\tsid |= (cf->can_id & 0x30000)\
+    \ >> 16;\n\t\tput_unaligned_be16(sid, &usb_msg.sid);\n\n\t\t/* store 15-0 bits\
+    \ */\n\t\tput_unaligned_be16(cf->can_id & 0xffff, &usb_msg.eid);\n\t} else {\n\
+    \t\t/* SIDH   | SIDL\n\t\t * 10 - 3 | 2 1 0 x x x x x\n\t\t */\n\t\tput_unaligned_be16((cf->can_id\
+    \ & CAN_SFF_MASK) << 5,\n\t\t\t\t   &usb_msg.sid);\n\t\tusb_msg.eid = 0;\n\t}\n\
+    \n\tusb_msg.dlc = cf->len;\n\n\tmemcpy(usb_msg.data, cf->data, usb_msg.dlc);\n\
+    \n\tif (cf->can_id & CAN_RTR_FLAG)\n\t\tusb_msg.dlc |= MCBA_DLC_RTR_MASK;\n\n\t\
+    can_put_echo_skb(skb, priv->netdev, ctx->ndx, 0);\n\n\terr = mcba_usb_xmit(priv,\
+    \ (struct mcba_usb_msg *)&usb_msg, ctx);\n\tif (err)\n\t\tgoto xmit_failed;\n\n\
+    \treturn NETDEV_TX_OK;\n\nxmit_failed:\n\tcan_free_echo_skb(priv->netdev, ctx->ndx,\
+    \ NULL);\n\tmcba_usb_free_ctx(ctx);\n\tdev_kfree_skb(skb);\n\tstats->tx_dropped++;\n\
+    \n\treturn NETDEV_TX_OK;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic netdev_tx_t\
+    \ mcba_usb_start_xmit(struct sk_buff *skb,\n\t\t\t\t       struct net_device *netdev)\n\
+    {\n\tstruct mcba_priv *priv = netdev_priv(netdev);\n\tstruct can_frame *cf = (struct\
+    \ can_frame *)skb->data;\n\tstruct mcba_usb_ctx *ctx = NULL;\n\tstruct net_device_stats\
+    \ *stats = &priv->netdev->stats;\n\tu16 sid;\n\tint err;\n\tstruct mcba_usb_msg_can\
+    \ usb_msg = {\n\t\t.cmd_id = MBCA_CMD_TRANSMIT_MESSAGE_EV\n\t};\n\n\tif (can_dropped_invalid_skb(netdev,\
+    \ skb))\n\t\treturn NETDEV_TX_OK;\n\n\tctx = mcba_usb_get_free_ctx(priv, cf);\n\
+    \tif (!ctx)\n\t\treturn NETDEV_TX_BUSY;\n\n\tif (cf->can_id & CAN_EFF_FLAG) {\n\
+    \t\t/* SIDH    | SIDL                 | EIDH   | EIDL\n\t\t * 28 - 21 | 20 19\
+    \ 18 x x x 17 16 | 15 - 8 | 7 - 0\n\t\t */\n\t\tsid = MCBA_SIDL_EXID_MASK;\n\t\
+    \t/* store 28-18 bits */\n\t\tsid |= (cf->can_id & 0x1ffc0000) >> 13;\n\t\t/*\
+    \ store 17-16 bits */\n\t\tsid |= (cf->can_id & 0x30000) >> 16;\n\t\tput_unaligned_be16(sid,\
+    \ &usb_msg.sid);\n\n\t\t/* store 15-0 bits */\n\t\tput_unaligned_be16(cf->can_id\
+    \ & 0xffff, &usb_msg.eid);\n\t} else {\n\t\t/* SIDH   | SIDL\n\t\t * 10 - 3 |\
+    \ 2 1 0 x x x x x\n\t\t */\n\t\tput_unaligned_be16((cf->can_id & CAN_SFF_MASK)\
+    \ << 5,\n\t\t\t\t   &usb_msg.sid);\n\t\tusb_msg.eid = 0;\n\t}\n\n\tusb_msg.dlc\
+    \ = cf->len;\n\n\tmemcpy(usb_msg.data, cf->data, usb_msg.dlc);\n\n\tif (cf->can_id\
+    \ & CAN_RTR_FLAG)\n\t\tusb_msg.dlc |= MCBA_DLC_RTR_MASK;\n\n\tcan_put_echo_skb(skb,\
+    \ priv->netdev, ctx->ndx, 0);\n\n\terr = mcba_usb_xmit(priv, (struct mcba_usb_msg\
+    \ *)&usb_msg, ctx);\n\tif (err)\n\t\tgoto xmit_failed;\n\n\treturn NETDEV_TX_OK;\n\
+    \nxmit_failed:\n\tcan_free_echo_skb(priv->netdev, ctx->ndx, NULL);\n\tmcba_usb_free_ctx(ctx);\n\
+    \tdev_kfree_skb(skb);\n\tstats->tx_dropped++;\n\n\treturn NETDEV_TX_OK;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic netdev_tx_t mcba_usb_start_xmit(struct\
+    \ sk_buff *skb,\n\t\t\t\t       struct net_device *netdev)\n{\n\tstruct mcba_priv\
+    \ *priv = netdev_priv(netdev);\n\tstruct can_frame *cf = (struct can_frame *)skb->data;\n\
+    \tstruct mcba_usb_ctx *ctx = NULL;\n\tstruct net_device_stats *stats = &priv->netdev->stats;\n\
+    \tu16 sid;\n\tint err;\n\tstruct mcba_usb_msg_can usb_msg = {\n\t\t.cmd_id = MBCA_CMD_TRANSMIT_MESSAGE_EV\n\
+    \t};\n\n\tif (can_dropped_invalid_skb(netdev, skb))\n\t\treturn NETDEV_TX_OK;\n\
+    \n\tctx = mcba_usb_get_free_ctx(priv, cf);\n\tif (!ctx)\n\t\treturn NETDEV_TX_BUSY;\n\
+    \n\tif (cf->can_id & CAN_EFF_FLAG) {\n\t\t/* SIDH    | SIDL                 |\
+    \ EIDH   | EIDL\n\t\t * 28 - 21 | 20 19 18 x x x 17 16 | 15 - 8 | 7 - 0\n\t\t\
+    \ */\n\t\tsid = MCBA_SIDL_EXID_MASK;\n\t\t/* store 28-18 bits */\n\t\tsid |= (cf->can_id\
+    \ & 0x1ffc0000) >> 13;\n\t\t/* store 17-16 bits */\n\t\tsid |= (cf->can_id & 0x30000)\
+    \ >> 16;\n\t\tput_unaligned_be16(sid, &usb_msg.sid);\n\n\t\t/* store 15-0 bits\
+    \ */\n\t\tput_unaligned_be16(cf->can_id & 0xffff, &usb_msg.eid);\n\t} else {\n\
+    \t\t/* SIDH   | SIDL\n\t\t * 10 - 3 | 2 1 0 x x x x x\n\t\t */\n\t\tput_unaligned_be16((cf->can_id\
+    \ & CAN_SFF_MASK) << 5,\n\t\t\t\t   &usb_msg.sid);\n\t\tusb_msg.eid = 0;\n\t}\n\
+    \n\tusb_msg.dlc = cf->len;\n\n\tmemcpy(usb_msg.data, cf->data, usb_msg.dlc);\n\
+    \n\tif (cf->can_id & CAN_RTR_FLAG)\n\t\tusb_msg.dlc |= MCBA_DLC_RTR_MASK;\n\n\t\
+    can_put_echo_skb(skb, priv->netdev, ctx->ndx, 0);\n\n\terr = mcba_usb_xmit(priv,\
+    \ (struct mcba_usb_msg *)&usb_msg, ctx);\n\tif (err)\n\t\tgoto xmit_failed;\n\n\
+    \treturn NETDEV_TX_OK;\n\nxmit_failed:\n\tcan_free_echo_skb(priv->netdev, ctx->ndx,\
+    \ NULL);\n\tmcba_usb_free_ctx(ctx);\n\tdev_kfree_skb(skb);\n\tstats->tx_dropped++;\n\
+    \n\treturn NETDEV_TX_OK;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic netdev_tx_t mcba_usb_start_xmit(struct\
+    \ sk_buff *skb,\n\t\t\t\t       struct net_device *netdev)\n{\n\tstruct mcba_priv\
+    \ *priv = netdev_priv(netdev);\n\tstruct can_frame *cf = (struct can_frame *)skb->data;\n\
+    \tstruct mcba_usb_ctx *ctx = NULL;\n\tstruct net_device_stats *stats = &priv->netdev->stats;\n\
+    \tu16 sid;\n\tint err;\n\tstruct mcba_usb_msg_can usb_msg = {\n\t\t.cmd_id = MBCA_CMD_TRANSMIT_MESSAGE_EV\n\
+    \t};\n\n\tif (can_dropped_invalid_skb(netdev, skb))\n\t\treturn NETDEV_TX_OK;\n\
+    \n\tctx = mcba_usb_get_free_ctx(priv, cf);\n\tif (!ctx)\n\t\treturn NETDEV_TX_BUSY;\n\
+    \n\tif (cf->can_id & CAN_EFF_FLAG) {\n\t\t/* SIDH    | SIDL                 |\
+    \ EIDH   | EIDL\n\t\t * 28 - 21 | 20 19 18 x x x 17 16 | 15 - 8 | 7 - 0\n\t\t\
+    \ */\n\t\tsid = MCBA_SIDL_EXID_MASK;\n\t\t/* store 28-18 bits */\n\t\tsid |= (cf->can_id\
+    \ & 0x1ffc0000) >> 13;\n\t\t/* store 17-16 bits */\n\t\tsid |= (cf->can_id & 0x30000)\
+    \ >> 16;\n\t\tput_unaligned_be16(sid, &usb_msg.sid);\n\n\t\t/* store 15-0 bits\
+    \ */\n\t\tput_unaligned_be16(cf->can_id & 0xffff, &usb_msg.eid);\n\t} else {\n\
+    \t\t/* SIDH   | SIDL\n\t\t * 10 - 3 | 2 1 0 x x x x x\n\t\t */\n\t\tput_unaligned_be16((cf->can_id\
+    \ & CAN_SFF_MASK) << 5,\n\t\t\t\t   &usb_msg.sid);\n\t\tusb_msg.eid = 0;\n\t}\n\
+    \n\tusb_msg.dlc = cf->len;\n\n\tmemcpy(usb_msg.data, cf->data, usb_msg.dlc);\n\
+    \n\tif (cf->can_id & CAN_RTR_FLAG)\n\t\tusb_msg.dlc |= MCBA_DLC_RTR_MASK;\n\n\t\
+    can_put_echo_skb(skb, priv->netdev, ctx->ndx, 0);\n\n\terr = mcba_usb_xmit(priv,\
+    \ (struct mcba_usb_msg *)&usb_msg, ctx);\n\tif (err)\n\t\tgoto xmit_failed;\n\n\
+    \treturn NETDEV_TX_OK;\n\nxmit_failed:\n\tcan_free_echo_skb(priv->netdev, ctx->ndx,\
+    \ NULL);\n\tmcba_usb_free_ctx(ctx);\n\tdev_kfree_skb(skb);\n\tstats->tx_dropped++;\n\
+    \n\treturn NETDEV_TX_OK;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 210527
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

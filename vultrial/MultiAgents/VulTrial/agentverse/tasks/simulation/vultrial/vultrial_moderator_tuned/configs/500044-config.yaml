@@ -1,0 +1,291 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\n    kssl_keytab_is_available(KSSL_CTX\
+    \ *kssl_ctx)\n{\n    krb5_context\t\tkrb5context = NULL;\n    krb5_keytab \t\t\
+    krb5keytab = NULL;\n    krb5_keytab_entry           entry;\n    krb5_principal\
+    \              princ = NULL;\n    krb5_error_code  \t\tkrb5rc = KRB5KRB_ERR_GENERIC;\n\
+    \    int rc = 0;\n\n    if ((krb5rc = krb5_init_context(&krb5context)))\n    \
+    \    return(0);\n\n    /*\tkssl_ctx->keytab_file == NULL ==> use Kerberos default\n\
+    \    */\n    if (kssl_ctx->keytab_file)\n    {\n        krb5rc = krb5_kt_resolve(krb5context,\
+    \ kssl_ctx->keytab_file,\n                                  &krb5keytab);\n  \
+    \      if (krb5rc)\n            goto exit;\n    }\n    else\n    {\n        krb5rc\
+    \ = krb5_kt_default(krb5context,&krb5keytab);\n        if (krb5rc)\n         \
+    \   goto exit;\n    }\n\n    /* the host key we are looking for */\n    krb5rc\
+    \ = krb5_sname_to_principal(krb5context, NULL, \n                            \
+    \         kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,\n        \
+    \                             KRB5_NT_SRV_HST, &princ);\n\n    if (krb5rc)\n\t\
+    goto exit;\n\n    krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, \n     \
+    \                           princ,\n                                0 /* IGNORE_VNO\
+    \ */,\n                                0 /* IGNORE_ENCTYPE */,\n             \
+    \                   &entry);\n    if ( krb5rc == KRB5_KT_NOTFOUND ) {\n      \
+    \  rc = 1;\n        goto exit;\n    } else if ( krb5rc )\n        goto exit;\n\
+    \    \n    krb5_kt_free_entry(krb5context, &entry);\n    rc = 1;\n\n  exit:\n\
+    \    if (krb5keytab)     krb5_kt_close(krb5context, krb5keytab);\n    if (princ)\
+    \          krb5_free_principal(krb5context, princ);\n    if (krb5context)\tkrb5_free_context(krb5context);\n\
+    \    return(rc);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\n    kssl_keytab_is_available(KSSL_CTX\
+    \ *kssl_ctx)\n{\n    krb5_context\t\tkrb5context = NULL;\n    krb5_keytab \t\t\
+    krb5keytab = NULL;\n    krb5_keytab_entry           entry;\n    krb5_principal\
+    \              princ = NULL;\n    krb5_error_code  \t\tkrb5rc = KRB5KRB_ERR_GENERIC;\n\
+    \    int rc = 0;\n\n    if ((krb5rc = krb5_init_context(&krb5context)))\n    \
+    \    return(0);\n\n    /*\tkssl_ctx->keytab_file == NULL ==> use Kerberos default\n\
+    \    */\n    if (kssl_ctx->keytab_file)\n    {\n        krb5rc = krb5_kt_resolve(krb5context,\
+    \ kssl_ctx->keytab_file,\n                                  &krb5keytab);\n  \
+    \      if (krb5rc)\n            goto exit;\n    }\n    else\n    {\n        krb5rc\
+    \ = krb5_kt_default(krb5context,&krb5keytab);\n        if (krb5rc)\n         \
+    \   goto exit;\n    }\n\n    /* the host key we are looking for */\n    krb5rc\
+    \ = krb5_sname_to_principal(krb5context, NULL, \n                            \
+    \         kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,\n        \
+    \                             KRB5_NT_SRV_HST, &princ);\n\n    if (krb5rc)\n\t\
+    goto exit;\n\n    krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, \n     \
+    \                           princ,\n                                0 /* IGNORE_VNO\
+    \ */,\n                                0 /* IGNORE_ENCTYPE */,\n             \
+    \                   &entry);\n    if ( krb5rc == KRB5_KT_NOTFOUND ) {\n      \
+    \  rc = 1;\n        goto exit;\n    } else if ( krb5rc )\n        goto exit;\n\
+    \    \n    krb5_kt_free_entry(krb5context, &entry);\n    rc = 1;\n\n  exit:\n\
+    \    if (krb5keytab)     krb5_kt_close(krb5context, krb5keytab);\n    if (princ)\
+    \          krb5_free_principal(krb5context, princ);\n    if (krb5context)\tkrb5_free_context(krb5context);\n\
+    \    return(rc);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\n    kssl_keytab_is_available(KSSL_CTX\
+    \ *kssl_ctx)\n{\n    krb5_context\t\tkrb5context = NULL;\n    krb5_keytab \t\t\
+    krb5keytab = NULL;\n    krb5_keytab_entry           entry;\n    krb5_principal\
+    \              princ = NULL;\n    krb5_error_code  \t\tkrb5rc = KRB5KRB_ERR_GENERIC;\n\
+    \    int rc = 0;\n\n    if ((krb5rc = krb5_init_context(&krb5context)))\n    \
+    \    return(0);\n\n    /*\tkssl_ctx->keytab_file == NULL ==> use Kerberos default\n\
+    \    */\n    if (kssl_ctx->keytab_file)\n    {\n        krb5rc = krb5_kt_resolve(krb5context,\
+    \ kssl_ctx->keytab_file,\n                                  &krb5keytab);\n  \
+    \      if (krb5rc)\n            goto exit;\n    }\n    else\n    {\n        krb5rc\
+    \ = krb5_kt_default(krb5context,&krb5keytab);\n        if (krb5rc)\n         \
+    \   goto exit;\n    }\n\n    /* the host key we are looking for */\n    krb5rc\
+    \ = krb5_sname_to_principal(krb5context, NULL, \n                            \
+    \         kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,\n        \
+    \                             KRB5_NT_SRV_HST, &princ);\n\n    if (krb5rc)\n\t\
+    goto exit;\n\n    krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, \n     \
+    \                           princ,\n                                0 /* IGNORE_VNO\
+    \ */,\n                                0 /* IGNORE_ENCTYPE */,\n             \
+    \                   &entry);\n    if ( krb5rc == KRB5_KT_NOTFOUND ) {\n      \
+    \  rc = 1;\n        goto exit;\n    } else if ( krb5rc )\n        goto exit;\n\
+    \    \n    krb5_kt_free_entry(krb5context, &entry);\n    rc = 1;\n\n  exit:\n\
+    \    if (krb5keytab)     krb5_kt_close(krb5context, krb5keytab);\n    if (princ)\
+    \          krb5_free_principal(krb5context, princ);\n    if (krb5context)\tkrb5_free_context(krb5context);\n\
+    \    return(rc);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\n    kssl_keytab_is_available(KSSL_CTX\
+    \ *kssl_ctx)\n{\n    krb5_context\t\tkrb5context = NULL;\n    krb5_keytab \t\t\
+    krb5keytab = NULL;\n    krb5_keytab_entry           entry;\n    krb5_principal\
+    \              princ = NULL;\n    krb5_error_code  \t\tkrb5rc = KRB5KRB_ERR_GENERIC;\n\
+    \    int rc = 0;\n\n    if ((krb5rc = krb5_init_context(&krb5context)))\n    \
+    \    return(0);\n\n    /*\tkssl_ctx->keytab_file == NULL ==> use Kerberos default\n\
+    \    */\n    if (kssl_ctx->keytab_file)\n    {\n        krb5rc = krb5_kt_resolve(krb5context,\
+    \ kssl_ctx->keytab_file,\n                                  &krb5keytab);\n  \
+    \      if (krb5rc)\n            goto exit;\n    }\n    else\n    {\n        krb5rc\
+    \ = krb5_kt_default(krb5context,&krb5keytab);\n        if (krb5rc)\n         \
+    \   goto exit;\n    }\n\n    /* the host key we are looking for */\n    krb5rc\
+    \ = krb5_sname_to_principal(krb5context, NULL, \n                            \
+    \         kssl_ctx->service_name ? kssl_ctx->service_name: KRB5SVC,\n        \
+    \                             KRB5_NT_SRV_HST, &princ);\n\n    if (krb5rc)\n\t\
+    goto exit;\n\n    krb5rc = krb5_kt_get_entry(krb5context, krb5keytab, \n     \
+    \                           princ,\n                                0 /* IGNORE_VNO\
+    \ */,\n                                0 /* IGNORE_ENCTYPE */,\n             \
+    \                   &entry);\n    if ( krb5rc == KRB5_KT_NOTFOUND ) {\n      \
+    \  rc = 1;\n        goto exit;\n    } else if ( krb5rc )\n        goto exit;\n\
+    \    \n    krb5_kt_free_entry(krb5context, &entry);\n    rc = 1;\n\n  exit:\n\
+    \    if (krb5keytab)     krb5_kt_close(krb5context, krb5keytab);\n    if (princ)\
+    \          krb5_free_principal(krb5context, princ);\n    if (krb5context)\tkrb5_free_context(krb5context);\n\
+    \    return(rc);\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 500044
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

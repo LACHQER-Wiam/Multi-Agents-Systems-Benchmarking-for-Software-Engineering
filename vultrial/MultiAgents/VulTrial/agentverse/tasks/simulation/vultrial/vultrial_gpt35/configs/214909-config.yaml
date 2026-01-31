@@ -1,0 +1,319 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ int mlx5_fpga_conn_create_cq(struct mlx5_fpga_conn *conn, int cq_size)\n{\n\t\
+    struct mlx5_fpga_device *fdev = conn->fdev;\n\tstruct mlx5_core_dev *mdev = fdev->mdev;\n\
+    \tu32 temp_cqc[MLX5_ST_SZ_DW(cqc)] = {0};\n\tu32 out[MLX5_ST_SZ_DW(create_cq_out)];\n\
+    \tstruct mlx5_wq_param wqp;\n\tstruct mlx5_cqe64 *cqe;\n\tint inlen, err, eqn;\n\
+    \tunsigned int irqn;\n\tvoid *cqc, *in;\n\t__be64 *pas;\n\tu32 i;\n\n\tcq_size\
+    \ = roundup_pow_of_two(cq_size);\n\tMLX5_SET(cqc, temp_cqc, log_cq_size, ilog2(cq_size));\n\
+    \n\twqp.buf_numa_node = mdev->priv.numa_node;\n\twqp.db_numa_node  = mdev->priv.numa_node;\n\
+    \n\terr = mlx5_cqwq_create(mdev, &wqp, temp_cqc, &conn->cq.wq,\n\t\t\t       &conn->cq.wq_ctrl);\n\
+    \tif (err)\n\t\treturn err;\n\n\tfor (i = 0; i < mlx5_cqwq_get_size(&conn->cq.wq);\
+    \ i++) {\n\t\tcqe = mlx5_cqwq_get_wqe(&conn->cq.wq, i);\n\t\tcqe->op_own = MLX5_CQE_INVALID\
+    \ << 4 | MLX5_CQE_OWNER_MASK;\n\t}\n\n\tinlen = MLX5_ST_SZ_BYTES(create_cq_in)\
+    \ +\n\t\tsizeof(u64) * conn->cq.wq_ctrl.buf.npages;\n\tin = kvzalloc(inlen, GFP_KERNEL);\n\
+    \tif (!in) {\n\t\terr = -ENOMEM;\n\t\tgoto err_cqwq;\n\t}\n\n\terr = mlx5_vector2eqn(mdev,\
+    \ smp_processor_id(), &eqn, &irqn);\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tcqc =\
+    \ MLX5_ADDR_OF(create_cq_in, in, cq_context);\n\tMLX5_SET(cqc, cqc, log_cq_size,\
+    \ ilog2(cq_size));\n\tMLX5_SET(cqc, cqc, c_eqn, eqn);\n\tMLX5_SET(cqc, cqc, uar_page,\
+    \ fdev->conn_res.uar->index);\n\tMLX5_SET(cqc, cqc, log_page_size, conn->cq.wq_ctrl.buf.page_shift\
+    \ -\n\t\t\t   MLX5_ADAPTER_PAGE_SHIFT);\n\tMLX5_SET64(cqc, cqc, dbr_addr, conn->cq.wq_ctrl.db.dma);\n\
+    \n\tpas = (__be64 *)MLX5_ADDR_OF(create_cq_in, in, pas);\n\tmlx5_fill_page_frag_array(&conn->cq.wq_ctrl.buf,\
+    \ pas);\n\n\terr = mlx5_core_create_cq(mdev, &conn->cq.mcq, in, inlen, out, sizeof(out));\n\
+    \tkvfree(in);\n\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tconn->cq.mcq.cqe_sz     =\
+    \ 64;\n\tconn->cq.mcq.set_ci_db  = conn->cq.wq_ctrl.db.db;\n\tconn->cq.mcq.arm_db\
+    \     = conn->cq.wq_ctrl.db.db + 1;\n\t*conn->cq.mcq.set_ci_db = 0;\n\t*conn->cq.mcq.arm_db\
+    \    = 0;\n\tconn->cq.mcq.vector     = 0;\n\tconn->cq.mcq.comp       = mlx5_fpga_conn_cq_complete;\n\
+    \tconn->cq.mcq.event      = mlx5_fpga_conn_cq_event;\n\tconn->cq.mcq.irqn    \
+    \   = irqn;\n\tconn->cq.mcq.uar        = fdev->conn_res.uar;\n\ttasklet_init(&conn->cq.tasklet,\
+    \ mlx5_fpga_conn_cq_tasklet,\n\t\t     (unsigned long)conn);\n\n\tmlx5_fpga_dbg(fdev,\
+    \ \"Created CQ #0x%x\\n\", conn->cq.mcq.cqn);\n\n\tgoto out;\n\nerr_cqwq:\n\t\
+    mlx5_wq_destroy(&conn->cq.wq_ctrl);\nout:\n\treturn err;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic int mlx5_fpga_conn_create_cq(struct\
+    \ mlx5_fpga_conn *conn, int cq_size)\n{\n\tstruct mlx5_fpga_device *fdev = conn->fdev;\n\
+    \tstruct mlx5_core_dev *mdev = fdev->mdev;\n\tu32 temp_cqc[MLX5_ST_SZ_DW(cqc)]\
+    \ = {0};\n\tu32 out[MLX5_ST_SZ_DW(create_cq_out)];\n\tstruct mlx5_wq_param wqp;\n\
+    \tstruct mlx5_cqe64 *cqe;\n\tint inlen, err, eqn;\n\tunsigned int irqn;\n\tvoid\
+    \ *cqc, *in;\n\t__be64 *pas;\n\tu32 i;\n\n\tcq_size = roundup_pow_of_two(cq_size);\n\
+    \tMLX5_SET(cqc, temp_cqc, log_cq_size, ilog2(cq_size));\n\n\twqp.buf_numa_node\
+    \ = mdev->priv.numa_node;\n\twqp.db_numa_node  = mdev->priv.numa_node;\n\n\terr\
+    \ = mlx5_cqwq_create(mdev, &wqp, temp_cqc, &conn->cq.wq,\n\t\t\t       &conn->cq.wq_ctrl);\n\
+    \tif (err)\n\t\treturn err;\n\n\tfor (i = 0; i < mlx5_cqwq_get_size(&conn->cq.wq);\
+    \ i++) {\n\t\tcqe = mlx5_cqwq_get_wqe(&conn->cq.wq, i);\n\t\tcqe->op_own = MLX5_CQE_INVALID\
+    \ << 4 | MLX5_CQE_OWNER_MASK;\n\t}\n\n\tinlen = MLX5_ST_SZ_BYTES(create_cq_in)\
+    \ +\n\t\tsizeof(u64) * conn->cq.wq_ctrl.buf.npages;\n\tin = kvzalloc(inlen, GFP_KERNEL);\n\
+    \tif (!in) {\n\t\terr = -ENOMEM;\n\t\tgoto err_cqwq;\n\t}\n\n\terr = mlx5_vector2eqn(mdev,\
+    \ smp_processor_id(), &eqn, &irqn);\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tcqc =\
+    \ MLX5_ADDR_OF(create_cq_in, in, cq_context);\n\tMLX5_SET(cqc, cqc, log_cq_size,\
+    \ ilog2(cq_size));\n\tMLX5_SET(cqc, cqc, c_eqn, eqn);\n\tMLX5_SET(cqc, cqc, uar_page,\
+    \ fdev->conn_res.uar->index);\n\tMLX5_SET(cqc, cqc, log_page_size, conn->cq.wq_ctrl.buf.page_shift\
+    \ -\n\t\t\t   MLX5_ADAPTER_PAGE_SHIFT);\n\tMLX5_SET64(cqc, cqc, dbr_addr, conn->cq.wq_ctrl.db.dma);\n\
+    \n\tpas = (__be64 *)MLX5_ADDR_OF(create_cq_in, in, pas);\n\tmlx5_fill_page_frag_array(&conn->cq.wq_ctrl.buf,\
+    \ pas);\n\n\terr = mlx5_core_create_cq(mdev, &conn->cq.mcq, in, inlen, out, sizeof(out));\n\
+    \tkvfree(in);\n\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tconn->cq.mcq.cqe_sz     =\
+    \ 64;\n\tconn->cq.mcq.set_ci_db  = conn->cq.wq_ctrl.db.db;\n\tconn->cq.mcq.arm_db\
+    \     = conn->cq.wq_ctrl.db.db + 1;\n\t*conn->cq.mcq.set_ci_db = 0;\n\t*conn->cq.mcq.arm_db\
+    \    = 0;\n\tconn->cq.mcq.vector     = 0;\n\tconn->cq.mcq.comp       = mlx5_fpga_conn_cq_complete;\n\
+    \tconn->cq.mcq.event      = mlx5_fpga_conn_cq_event;\n\tconn->cq.mcq.irqn    \
+    \   = irqn;\n\tconn->cq.mcq.uar        = fdev->conn_res.uar;\n\ttasklet_init(&conn->cq.tasklet,\
+    \ mlx5_fpga_conn_cq_tasklet,\n\t\t     (unsigned long)conn);\n\n\tmlx5_fpga_dbg(fdev,\
+    \ \"Created CQ #0x%x\\n\", conn->cq.mcq.cqn);\n\n\tgoto out;\n\nerr_cqwq:\n\t\
+    mlx5_wq_destroy(&conn->cq.wq_ctrl);\nout:\n\treturn err;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic int mlx5_fpga_conn_create_cq(struct\
+    \ mlx5_fpga_conn *conn, int cq_size)\n{\n\tstruct mlx5_fpga_device *fdev = conn->fdev;\n\
+    \tstruct mlx5_core_dev *mdev = fdev->mdev;\n\tu32 temp_cqc[MLX5_ST_SZ_DW(cqc)]\
+    \ = {0};\n\tu32 out[MLX5_ST_SZ_DW(create_cq_out)];\n\tstruct mlx5_wq_param wqp;\n\
+    \tstruct mlx5_cqe64 *cqe;\n\tint inlen, err, eqn;\n\tunsigned int irqn;\n\tvoid\
+    \ *cqc, *in;\n\t__be64 *pas;\n\tu32 i;\n\n\tcq_size = roundup_pow_of_two(cq_size);\n\
+    \tMLX5_SET(cqc, temp_cqc, log_cq_size, ilog2(cq_size));\n\n\twqp.buf_numa_node\
+    \ = mdev->priv.numa_node;\n\twqp.db_numa_node  = mdev->priv.numa_node;\n\n\terr\
+    \ = mlx5_cqwq_create(mdev, &wqp, temp_cqc, &conn->cq.wq,\n\t\t\t       &conn->cq.wq_ctrl);\n\
+    \tif (err)\n\t\treturn err;\n\n\tfor (i = 0; i < mlx5_cqwq_get_size(&conn->cq.wq);\
+    \ i++) {\n\t\tcqe = mlx5_cqwq_get_wqe(&conn->cq.wq, i);\n\t\tcqe->op_own = MLX5_CQE_INVALID\
+    \ << 4 | MLX5_CQE_OWNER_MASK;\n\t}\n\n\tinlen = MLX5_ST_SZ_BYTES(create_cq_in)\
+    \ +\n\t\tsizeof(u64) * conn->cq.wq_ctrl.buf.npages;\n\tin = kvzalloc(inlen, GFP_KERNEL);\n\
+    \tif (!in) {\n\t\terr = -ENOMEM;\n\t\tgoto err_cqwq;\n\t}\n\n\terr = mlx5_vector2eqn(mdev,\
+    \ smp_processor_id(), &eqn, &irqn);\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tcqc =\
+    \ MLX5_ADDR_OF(create_cq_in, in, cq_context);\n\tMLX5_SET(cqc, cqc, log_cq_size,\
+    \ ilog2(cq_size));\n\tMLX5_SET(cqc, cqc, c_eqn, eqn);\n\tMLX5_SET(cqc, cqc, uar_page,\
+    \ fdev->conn_res.uar->index);\n\tMLX5_SET(cqc, cqc, log_page_size, conn->cq.wq_ctrl.buf.page_shift\
+    \ -\n\t\t\t   MLX5_ADAPTER_PAGE_SHIFT);\n\tMLX5_SET64(cqc, cqc, dbr_addr, conn->cq.wq_ctrl.db.dma);\n\
+    \n\tpas = (__be64 *)MLX5_ADDR_OF(create_cq_in, in, pas);\n\tmlx5_fill_page_frag_array(&conn->cq.wq_ctrl.buf,\
+    \ pas);\n\n\terr = mlx5_core_create_cq(mdev, &conn->cq.mcq, in, inlen, out, sizeof(out));\n\
+    \tkvfree(in);\n\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tconn->cq.mcq.cqe_sz     =\
+    \ 64;\n\tconn->cq.mcq.set_ci_db  = conn->cq.wq_ctrl.db.db;\n\tconn->cq.mcq.arm_db\
+    \     = conn->cq.wq_ctrl.db.db + 1;\n\t*conn->cq.mcq.set_ci_db = 0;\n\t*conn->cq.mcq.arm_db\
+    \    = 0;\n\tconn->cq.mcq.vector     = 0;\n\tconn->cq.mcq.comp       = mlx5_fpga_conn_cq_complete;\n\
+    \tconn->cq.mcq.event      = mlx5_fpga_conn_cq_event;\n\tconn->cq.mcq.irqn    \
+    \   = irqn;\n\tconn->cq.mcq.uar        = fdev->conn_res.uar;\n\ttasklet_init(&conn->cq.tasklet,\
+    \ mlx5_fpga_conn_cq_tasklet,\n\t\t     (unsigned long)conn);\n\n\tmlx5_fpga_dbg(fdev,\
+    \ \"Created CQ #0x%x\\n\", conn->cq.mcq.cqn);\n\n\tgoto out;\n\nerr_cqwq:\n\t\
+    mlx5_wq_destroy(&conn->cq.wq_ctrl);\nout:\n\treturn err;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic int mlx5_fpga_conn_create_cq(struct\
+    \ mlx5_fpga_conn *conn, int cq_size)\n{\n\tstruct mlx5_fpga_device *fdev = conn->fdev;\n\
+    \tstruct mlx5_core_dev *mdev = fdev->mdev;\n\tu32 temp_cqc[MLX5_ST_SZ_DW(cqc)]\
+    \ = {0};\n\tu32 out[MLX5_ST_SZ_DW(create_cq_out)];\n\tstruct mlx5_wq_param wqp;\n\
+    \tstruct mlx5_cqe64 *cqe;\n\tint inlen, err, eqn;\n\tunsigned int irqn;\n\tvoid\
+    \ *cqc, *in;\n\t__be64 *pas;\n\tu32 i;\n\n\tcq_size = roundup_pow_of_two(cq_size);\n\
+    \tMLX5_SET(cqc, temp_cqc, log_cq_size, ilog2(cq_size));\n\n\twqp.buf_numa_node\
+    \ = mdev->priv.numa_node;\n\twqp.db_numa_node  = mdev->priv.numa_node;\n\n\terr\
+    \ = mlx5_cqwq_create(mdev, &wqp, temp_cqc, &conn->cq.wq,\n\t\t\t       &conn->cq.wq_ctrl);\n\
+    \tif (err)\n\t\treturn err;\n\n\tfor (i = 0; i < mlx5_cqwq_get_size(&conn->cq.wq);\
+    \ i++) {\n\t\tcqe = mlx5_cqwq_get_wqe(&conn->cq.wq, i);\n\t\tcqe->op_own = MLX5_CQE_INVALID\
+    \ << 4 | MLX5_CQE_OWNER_MASK;\n\t}\n\n\tinlen = MLX5_ST_SZ_BYTES(create_cq_in)\
+    \ +\n\t\tsizeof(u64) * conn->cq.wq_ctrl.buf.npages;\n\tin = kvzalloc(inlen, GFP_KERNEL);\n\
+    \tif (!in) {\n\t\terr = -ENOMEM;\n\t\tgoto err_cqwq;\n\t}\n\n\terr = mlx5_vector2eqn(mdev,\
+    \ smp_processor_id(), &eqn, &irqn);\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tcqc =\
+    \ MLX5_ADDR_OF(create_cq_in, in, cq_context);\n\tMLX5_SET(cqc, cqc, log_cq_size,\
+    \ ilog2(cq_size));\n\tMLX5_SET(cqc, cqc, c_eqn, eqn);\n\tMLX5_SET(cqc, cqc, uar_page,\
+    \ fdev->conn_res.uar->index);\n\tMLX5_SET(cqc, cqc, log_page_size, conn->cq.wq_ctrl.buf.page_shift\
+    \ -\n\t\t\t   MLX5_ADAPTER_PAGE_SHIFT);\n\tMLX5_SET64(cqc, cqc, dbr_addr, conn->cq.wq_ctrl.db.dma);\n\
+    \n\tpas = (__be64 *)MLX5_ADDR_OF(create_cq_in, in, pas);\n\tmlx5_fill_page_frag_array(&conn->cq.wq_ctrl.buf,\
+    \ pas);\n\n\terr = mlx5_core_create_cq(mdev, &conn->cq.mcq, in, inlen, out, sizeof(out));\n\
+    \tkvfree(in);\n\n\tif (err)\n\t\tgoto err_cqwq;\n\n\tconn->cq.mcq.cqe_sz     =\
+    \ 64;\n\tconn->cq.mcq.set_ci_db  = conn->cq.wq_ctrl.db.db;\n\tconn->cq.mcq.arm_db\
+    \     = conn->cq.wq_ctrl.db.db + 1;\n\t*conn->cq.mcq.set_ci_db = 0;\n\t*conn->cq.mcq.arm_db\
+    \    = 0;\n\tconn->cq.mcq.vector     = 0;\n\tconn->cq.mcq.comp       = mlx5_fpga_conn_cq_complete;\n\
+    \tconn->cq.mcq.event      = mlx5_fpga_conn_cq_event;\n\tconn->cq.mcq.irqn    \
+    \   = irqn;\n\tconn->cq.mcq.uar        = fdev->conn_res.uar;\n\ttasklet_init(&conn->cq.tasklet,\
+    \ mlx5_fpga_conn_cq_tasklet,\n\t\t     (unsigned long)conn);\n\n\tmlx5_fpga_dbg(fdev,\
+    \ \"Created CQ #0x%x\\n\", conn->cq.mcq.cqn);\n\n\tgoto out;\n\nerr_cqwq:\n\t\
+    mlx5_wq_destroy(&conn->cq.wq_ctrl);\nout:\n\treturn err;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 214909
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."
