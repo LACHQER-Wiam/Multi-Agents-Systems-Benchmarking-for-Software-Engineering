@@ -1,0 +1,403 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nvoid RestoreTensor(OpKernelContext*\
+    \ context,\n                   checkpoint::TensorSliceReader::OpenTableFunction\
+    \ open_func,\n                   int preferred_shard, bool restore_slice, int\
+    \ restore_index) {\n  const Tensor& file_pattern_t = context->input(0);\n  {\n\
+    \    const int64_t size = file_pattern_t.NumElements();\n    OP_REQUIRES(\n  \
+    \      context, size == 1,\n        errors::InvalidArgument(\n            \"Input\
+    \ 0 (file_pattern) must be a string scalar; got a tensor of \",\n            size,\
+    \ \" elements\"));\n  }\n  const string& file_pattern = file_pattern_t.flat<tstring>()(0);\n\
+    \n  const Tensor& tensor_name_t = context->input(1);\n  {\n    const int64_t size\
+    \ = tensor_name_t.NumElements();\n    OP_REQUIRES(context, size > restore_index,\n\
+    \                errors::InvalidArgument(\n                    \"Input 1 (file_pattern)\
+    \ must be a have at least \",\n                    restore_index + 1, \" elements\"\
+    ));\n  }\n  const string& tensor_name = tensor_name_t.flat<tstring>()(restore_index);\n\
+    \n  // If we cannot find a cached reader we will allocate our own.\n  std::unique_ptr<checkpoint::TensorSliceReader>\
+    \ allocated_reader;\n\n  const checkpoint::TensorSliceReader* reader = nullptr;\n\
+    \n  if (context->slice_reader_cache()) {\n    reader = context->slice_reader_cache()->GetReader(file_pattern,\
+    \ open_func,\n                                                      preferred_shard);\n\
+    \  }\n  if (!reader) {\n    allocated_reader.reset(new checkpoint::TensorSliceReader(\n\
+    \        file_pattern, open_func, preferred_shard));\n    reader = allocated_reader.get();\n\
+    \  }\n  OP_REQUIRES_OK(context, CHECK_NOTNULL(reader)->status());\n\n  // Get\
+    \ the shape and type from the save file.\n  DataType type;\n  TensorShape saved_shape;\n\
+    \  OP_REQUIRES(\n      context, reader->HasTensor(tensor_name, &saved_shape, &type),\n\
+    \      errors::NotFound(\"Tensor name \\\"\", tensor_name,\n                 \
+    \      \"\\\" not found in checkpoint files \", file_pattern));\n  OP_REQUIRES(\n\
+    \      context, type == context->expected_output_dtype(restore_index),\n     \
+    \ errors::InvalidArgument(\"Expected to restore a tensor of type \",\n       \
+    \                       DataTypeString(context->expected_output_dtype(0)),\n \
+    \                             \", got a tensor of type \", DataTypeString(type),\n\
+    \                              \" instead: tensor_name = \", tensor_name));\n\n\
+    \  // Shape of the output and slice to load.\n  TensorShape output_shape(saved_shape);\n\
+    \  TensorSlice slice_to_load(saved_shape.dims());\n  if (restore_slice) {\n  \
+    \  const tstring& shape_spec =\n        context->input(2).flat<tstring>()(restore_index);\n\
+    \    if (!shape_spec.empty()) {\n      TensorShape parsed_shape;\n      OP_REQUIRES_OK(context,\
+    \ checkpoint::ParseShapeAndSlice(\n                                  shape_spec,\
+    \ &parsed_shape, &slice_to_load,\n                                  &output_shape));\n\
+    \      OP_REQUIRES(\n          context, parsed_shape.IsSameSize(saved_shape),\n\
+    \          errors::InvalidArgument(\n              \"Shape in shape_and_slice\
+    \ spec does not match the shape in the \"\n              \"save file: \",\n  \
+    \            parsed_shape.DebugString(),\n              \", save file shape: \"\
+    , saved_shape.DebugString()));\n    }\n  }\n\n  Tensor* t = nullptr;\n  OP_REQUIRES_OK(context,\n\
+    \                 context->allocate_output(restore_index, output_shape, &t));\n\
+    \n  if (output_shape.num_elements() == 0) return;\n\n#define READER_COPY(T)  \
+    \                                              \\\n  case DataTypeToEnum<T>::value:\
+    \                                      \\\n    OP_REQUIRES(context,          \
+    \                                    \\\n                reader->CopySliceData(tensor_name,\
+    \ slice_to_load,     \\\n                                      t->flat<T>().data()),\
+    \           \\\n                errors::InvalidArgument(\"Error copying slice\
+    \ data\")); \\\n    break;\n\n  switch (type) {\n    TF_CALL_SAVE_RESTORE_TYPES(READER_COPY)\n\
+    \    default:\n      context->SetStatus(errors::Unimplemented(\n          \"Restoring\
+    \ data type \", DataTypeString(type), \" not yet supported\"));\n  }\n#undef READER_COPY\n\
+    }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nvoid RestoreTensor(OpKernelContext*\
+    \ context,\n                   checkpoint::TensorSliceReader::OpenTableFunction\
+    \ open_func,\n                   int preferred_shard, bool restore_slice, int\
+    \ restore_index) {\n  const Tensor& file_pattern_t = context->input(0);\n  {\n\
+    \    const int64_t size = file_pattern_t.NumElements();\n    OP_REQUIRES(\n  \
+    \      context, size == 1,\n        errors::InvalidArgument(\n            \"Input\
+    \ 0 (file_pattern) must be a string scalar; got a tensor of \",\n            size,\
+    \ \" elements\"));\n  }\n  const string& file_pattern = file_pattern_t.flat<tstring>()(0);\n\
+    \n  const Tensor& tensor_name_t = context->input(1);\n  {\n    const int64_t size\
+    \ = tensor_name_t.NumElements();\n    OP_REQUIRES(context, size > restore_index,\n\
+    \                errors::InvalidArgument(\n                    \"Input 1 (file_pattern)\
+    \ must be a have at least \",\n                    restore_index + 1, \" elements\"\
+    ));\n  }\n  const string& tensor_name = tensor_name_t.flat<tstring>()(restore_index);\n\
+    \n  // If we cannot find a cached reader we will allocate our own.\n  std::unique_ptr<checkpoint::TensorSliceReader>\
+    \ allocated_reader;\n\n  const checkpoint::TensorSliceReader* reader = nullptr;\n\
+    \n  if (context->slice_reader_cache()) {\n    reader = context->slice_reader_cache()->GetReader(file_pattern,\
+    \ open_func,\n                                                      preferred_shard);\n\
+    \  }\n  if (!reader) {\n    allocated_reader.reset(new checkpoint::TensorSliceReader(\n\
+    \        file_pattern, open_func, preferred_shard));\n    reader = allocated_reader.get();\n\
+    \  }\n  OP_REQUIRES_OK(context, CHECK_NOTNULL(reader)->status());\n\n  // Get\
+    \ the shape and type from the save file.\n  DataType type;\n  TensorShape saved_shape;\n\
+    \  OP_REQUIRES(\n      context, reader->HasTensor(tensor_name, &saved_shape, &type),\n\
+    \      errors::NotFound(\"Tensor name \\\"\", tensor_name,\n                 \
+    \      \"\\\" not found in checkpoint files \", file_pattern));\n  OP_REQUIRES(\n\
+    \      context, type == context->expected_output_dtype(restore_index),\n     \
+    \ errors::InvalidArgument(\"Expected to restore a tensor of type \",\n       \
+    \                       DataTypeString(context->expected_output_dtype(0)),\n \
+    \                             \", got a tensor of type \", DataTypeString(type),\n\
+    \                              \" instead: tensor_name = \", tensor_name));\n\n\
+    \  // Shape of the output and slice to load.\n  TensorShape output_shape(saved_shape);\n\
+    \  TensorSlice slice_to_load(saved_shape.dims());\n  if (restore_slice) {\n  \
+    \  const tstring& shape_spec =\n        context->input(2).flat<tstring>()(restore_index);\n\
+    \    if (!shape_spec.empty()) {\n      TensorShape parsed_shape;\n      OP_REQUIRES_OK(context,\
+    \ checkpoint::ParseShapeAndSlice(\n                                  shape_spec,\
+    \ &parsed_shape, &slice_to_load,\n                                  &output_shape));\n\
+    \      OP_REQUIRES(\n          context, parsed_shape.IsSameSize(saved_shape),\n\
+    \          errors::InvalidArgument(\n              \"Shape in shape_and_slice\
+    \ spec does not match the shape in the \"\n              \"save file: \",\n  \
+    \            parsed_shape.DebugString(),\n              \", save file shape: \"\
+    , saved_shape.DebugString()));\n    }\n  }\n\n  Tensor* t = nullptr;\n  OP_REQUIRES_OK(context,\n\
+    \                 context->allocate_output(restore_index, output_shape, &t));\n\
+    \n  if (output_shape.num_elements() == 0) return;\n\n#define READER_COPY(T)  \
+    \                                              \\\n  case DataTypeToEnum<T>::value:\
+    \                                      \\\n    OP_REQUIRES(context,          \
+    \                                    \\\n                reader->CopySliceData(tensor_name,\
+    \ slice_to_load,     \\\n                                      t->flat<T>().data()),\
+    \           \\\n                errors::InvalidArgument(\"Error copying slice\
+    \ data\")); \\\n    break;\n\n  switch (type) {\n    TF_CALL_SAVE_RESTORE_TYPES(READER_COPY)\n\
+    \    default:\n      context->SetStatus(errors::Unimplemented(\n          \"Restoring\
+    \ data type \", DataTypeString(type), \" not yet supported\"));\n  }\n#undef READER_COPY\n\
+    }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nvoid RestoreTensor(OpKernelContext* context,\n\
+    \                   checkpoint::TensorSliceReader::OpenTableFunction open_func,\n\
+    \                   int preferred_shard, bool restore_slice, int restore_index)\
+    \ {\n  const Tensor& file_pattern_t = context->input(0);\n  {\n    const int64_t\
+    \ size = file_pattern_t.NumElements();\n    OP_REQUIRES(\n        context, size\
+    \ == 1,\n        errors::InvalidArgument(\n            \"Input 0 (file_pattern)\
+    \ must be a string scalar; got a tensor of \",\n            size, \" elements\"\
+    ));\n  }\n  const string& file_pattern = file_pattern_t.flat<tstring>()(0);\n\n\
+    \  const Tensor& tensor_name_t = context->input(1);\n  {\n    const int64_t size\
+    \ = tensor_name_t.NumElements();\n    OP_REQUIRES(context, size > restore_index,\n\
+    \                errors::InvalidArgument(\n                    \"Input 1 (file_pattern)\
+    \ must be a have at least \",\n                    restore_index + 1, \" elements\"\
+    ));\n  }\n  const string& tensor_name = tensor_name_t.flat<tstring>()(restore_index);\n\
+    \n  // If we cannot find a cached reader we will allocate our own.\n  std::unique_ptr<checkpoint::TensorSliceReader>\
+    \ allocated_reader;\n\n  const checkpoint::TensorSliceReader* reader = nullptr;\n\
+    \n  if (context->slice_reader_cache()) {\n    reader = context->slice_reader_cache()->GetReader(file_pattern,\
+    \ open_func,\n                                                      preferred_shard);\n\
+    \  }\n  if (!reader) {\n    allocated_reader.reset(new checkpoint::TensorSliceReader(\n\
+    \        file_pattern, open_func, preferred_shard));\n    reader = allocated_reader.get();\n\
+    \  }\n  OP_REQUIRES_OK(context, CHECK_NOTNULL(reader)->status());\n\n  // Get\
+    \ the shape and type from the save file.\n  DataType type;\n  TensorShape saved_shape;\n\
+    \  OP_REQUIRES(\n      context, reader->HasTensor(tensor_name, &saved_shape, &type),\n\
+    \      errors::NotFound(\"Tensor name \\\"\", tensor_name,\n                 \
+    \      \"\\\" not found in checkpoint files \", file_pattern));\n  OP_REQUIRES(\n\
+    \      context, type == context->expected_output_dtype(restore_index),\n     \
+    \ errors::InvalidArgument(\"Expected to restore a tensor of type \",\n       \
+    \                       DataTypeString(context->expected_output_dtype(0)),\n \
+    \                             \", got a tensor of type \", DataTypeString(type),\n\
+    \                              \" instead: tensor_name = \", tensor_name));\n\n\
+    \  // Shape of the output and slice to load.\n  TensorShape output_shape(saved_shape);\n\
+    \  TensorSlice slice_to_load(saved_shape.dims());\n  if (restore_slice) {\n  \
+    \  const tstring& shape_spec =\n        context->input(2).flat<tstring>()(restore_index);\n\
+    \    if (!shape_spec.empty()) {\n      TensorShape parsed_shape;\n      OP_REQUIRES_OK(context,\
+    \ checkpoint::ParseShapeAndSlice(\n                                  shape_spec,\
+    \ &parsed_shape, &slice_to_load,\n                                  &output_shape));\n\
+    \      OP_REQUIRES(\n          context, parsed_shape.IsSameSize(saved_shape),\n\
+    \          errors::InvalidArgument(\n              \"Shape in shape_and_slice\
+    \ spec does not match the shape in the \"\n              \"save file: \",\n  \
+    \            parsed_shape.DebugString(),\n              \", save file shape: \"\
+    , saved_shape.DebugString()));\n    }\n  }\n\n  Tensor* t = nullptr;\n  OP_REQUIRES_OK(context,\n\
+    \                 context->allocate_output(restore_index, output_shape, &t));\n\
+    \n  if (output_shape.num_elements() == 0) return;\n\n#define READER_COPY(T)  \
+    \                                              \\\n  case DataTypeToEnum<T>::value:\
+    \                                      \\\n    OP_REQUIRES(context,          \
+    \                                    \\\n                reader->CopySliceData(tensor_name,\
+    \ slice_to_load,     \\\n                                      t->flat<T>().data()),\
+    \           \\\n                errors::InvalidArgument(\"Error copying slice\
+    \ data\")); \\\n    break;\n\n  switch (type) {\n    TF_CALL_SAVE_RESTORE_TYPES(READER_COPY)\n\
+    \    default:\n      context->SetStatus(errors::Unimplemented(\n          \"Restoring\
+    \ data type \", DataTypeString(type), \" not yet supported\"));\n  }\n#undef READER_COPY\n\
+    }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nvoid RestoreTensor(OpKernelContext*\
+    \ context,\n                   checkpoint::TensorSliceReader::OpenTableFunction\
+    \ open_func,\n                   int preferred_shard, bool restore_slice, int\
+    \ restore_index) {\n  const Tensor& file_pattern_t = context->input(0);\n  {\n\
+    \    const int64_t size = file_pattern_t.NumElements();\n    OP_REQUIRES(\n  \
+    \      context, size == 1,\n        errors::InvalidArgument(\n            \"Input\
+    \ 0 (file_pattern) must be a string scalar; got a tensor of \",\n            size,\
+    \ \" elements\"));\n  }\n  const string& file_pattern = file_pattern_t.flat<tstring>()(0);\n\
+    \n  const Tensor& tensor_name_t = context->input(1);\n  {\n    const int64_t size\
+    \ = tensor_name_t.NumElements();\n    OP_REQUIRES(context, size > restore_index,\n\
+    \                errors::InvalidArgument(\n                    \"Input 1 (file_pattern)\
+    \ must be a have at least \",\n                    restore_index + 1, \" elements\"\
+    ));\n  }\n  const string& tensor_name = tensor_name_t.flat<tstring>()(restore_index);\n\
+    \n  // If we cannot find a cached reader we will allocate our own.\n  std::unique_ptr<checkpoint::TensorSliceReader>\
+    \ allocated_reader;\n\n  const checkpoint::TensorSliceReader* reader = nullptr;\n\
+    \n  if (context->slice_reader_cache()) {\n    reader = context->slice_reader_cache()->GetReader(file_pattern,\
+    \ open_func,\n                                                      preferred_shard);\n\
+    \  }\n  if (!reader) {\n    allocated_reader.reset(new checkpoint::TensorSliceReader(\n\
+    \        file_pattern, open_func, preferred_shard));\n    reader = allocated_reader.get();\n\
+    \  }\n  OP_REQUIRES_OK(context, CHECK_NOTNULL(reader)->status());\n\n  // Get\
+    \ the shape and type from the save file.\n  DataType type;\n  TensorShape saved_shape;\n\
+    \  OP_REQUIRES(\n      context, reader->HasTensor(tensor_name, &saved_shape, &type),\n\
+    \      errors::NotFound(\"Tensor name \\\"\", tensor_name,\n                 \
+    \      \"\\\" not found in checkpoint files \", file_pattern));\n  OP_REQUIRES(\n\
+    \      context, type == context->expected_output_dtype(restore_index),\n     \
+    \ errors::InvalidArgument(\"Expected to restore a tensor of type \",\n       \
+    \                       DataTypeString(context->expected_output_dtype(0)),\n \
+    \                             \", got a tensor of type \", DataTypeString(type),\n\
+    \                              \" instead: tensor_name = \", tensor_name));\n\n\
+    \  // Shape of the output and slice to load.\n  TensorShape output_shape(saved_shape);\n\
+    \  TensorSlice slice_to_load(saved_shape.dims());\n  if (restore_slice) {\n  \
+    \  const tstring& shape_spec =\n        context->input(2).flat<tstring>()(restore_index);\n\
+    \    if (!shape_spec.empty()) {\n      TensorShape parsed_shape;\n      OP_REQUIRES_OK(context,\
+    \ checkpoint::ParseShapeAndSlice(\n                                  shape_spec,\
+    \ &parsed_shape, &slice_to_load,\n                                  &output_shape));\n\
+    \      OP_REQUIRES(\n          context, parsed_shape.IsSameSize(saved_shape),\n\
+    \          errors::InvalidArgument(\n              \"Shape in shape_and_slice\
+    \ spec does not match the shape in the \"\n              \"save file: \",\n  \
+    \            parsed_shape.DebugString(),\n              \", save file shape: \"\
+    , saved_shape.DebugString()));\n    }\n  }\n\n  Tensor* t = nullptr;\n  OP_REQUIRES_OK(context,\n\
+    \                 context->allocate_output(restore_index, output_shape, &t));\n\
+    \n  if (output_shape.num_elements() == 0) return;\n\n#define READER_COPY(T)  \
+    \                                              \\\n  case DataTypeToEnum<T>::value:\
+    \                                      \\\n    OP_REQUIRES(context,          \
+    \                                    \\\n                reader->CopySliceData(tensor_name,\
+    \ slice_to_load,     \\\n                                      t->flat<T>().data()),\
+    \           \\\n                errors::InvalidArgument(\"Error copying slice\
+    \ data\")); \\\n    break;\n\n  switch (type) {\n    TF_CALL_SAVE_RESTORE_TYPES(READER_COPY)\n\
+    \    default:\n      context->SetStatus(errors::Unimplemented(\n          \"Restoring\
+    \ data type \", DataTypeString(type), \" not yet supported\"));\n  }\n#undef READER_COPY\n\
+    }"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 259081
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

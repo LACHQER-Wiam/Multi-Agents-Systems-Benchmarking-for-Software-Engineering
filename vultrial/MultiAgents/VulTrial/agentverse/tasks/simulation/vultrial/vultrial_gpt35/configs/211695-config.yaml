@@ -1,0 +1,291 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nreg_match_visual(void)\n\
+    {\n    pos_T\ttop, bot;\n    linenr_T    lnum;\n    colnr_T\tcol;\n    win_T\t\
+    *wp = rex.reg_win == NULL ? curwin : rex.reg_win;\n    int\t\tmode;\n    colnr_T\t\
+    start, end;\n    colnr_T\tstart2, end2;\n    colnr_T\tcols;\n    colnr_T\tcurswant;\n\
+    \n    // Check if the buffer is the current buffer.\n    if (rex.reg_buf != curbuf\
+    \ || VIsual.lnum == 0)\n\treturn FALSE;\n\n    if (VIsual_active)\n    {\n\tif\
+    \ (LT_POS(VIsual, wp->w_cursor))\n\t{\n\t    top = VIsual;\n\t    bot = wp->w_cursor;\n\
+    \t}\n\telse\n\t{\n\t    top = wp->w_cursor;\n\t    bot = VIsual;\n\t}\n\tmode\
+    \ = VIsual_mode;\n\tcurswant = wp->w_curswant;\n    }\n    else\n    {\n\tif (LT_POS(curbuf->b_visual.vi_start,\
+    \ curbuf->b_visual.vi_end))\n\t{\n\t    top = curbuf->b_visual.vi_start;\n\t \
+    \   bot = curbuf->b_visual.vi_end;\n\t}\n\telse\n\t{\n\t    top = curbuf->b_visual.vi_end;\n\
+    \t    bot = curbuf->b_visual.vi_start;\n\t}\n\tmode = curbuf->b_visual.vi_mode;\n\
+    \tcurswant = curbuf->b_visual.vi_curswant;\n    }\n    lnum = rex.lnum + rex.reg_firstlnum;\n\
+    \    if (lnum < top.lnum || lnum > bot.lnum)\n\treturn FALSE;\n\n    if (mode\
+    \ == 'v')\n    {\n\tcol = (colnr_T)(rex.input - rex.line);\n\tif ((lnum == top.lnum\
+    \ && col < top.col)\n\t\t|| (lnum == bot.lnum && col >= bot.col + (*p_sel != 'e')))\n\
+    \t    return FALSE;\n    }\n    else if (mode == Ctrl_V)\n    {\n\tgetvvcol(wp,\
+    \ &top, &start, NULL, &end);\n\tgetvvcol(wp, &bot, &start2, NULL, &end2);\n\t\
+    if (start2 < start)\n\t    start = start2;\n\tif (end2 > end)\n\t    end = end2;\n\
+    \tif (top.col == MAXCOL || bot.col == MAXCOL || curswant == MAXCOL)\n\t    end\
+    \ = MAXCOL;\n\tcols = win_linetabsize(wp, rex.line, (colnr_T)(rex.input - rex.line));\n\
+    \tif (cols < start || cols > end - (*p_sel == 'e'))\n\t    return FALSE;\n   \
+    \ }\n    return TRUE;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nreg_match_visual(void)\n\
+    {\n    pos_T\ttop, bot;\n    linenr_T    lnum;\n    colnr_T\tcol;\n    win_T\t\
+    *wp = rex.reg_win == NULL ? curwin : rex.reg_win;\n    int\t\tmode;\n    colnr_T\t\
+    start, end;\n    colnr_T\tstart2, end2;\n    colnr_T\tcols;\n    colnr_T\tcurswant;\n\
+    \n    // Check if the buffer is the current buffer.\n    if (rex.reg_buf != curbuf\
+    \ || VIsual.lnum == 0)\n\treturn FALSE;\n\n    if (VIsual_active)\n    {\n\tif\
+    \ (LT_POS(VIsual, wp->w_cursor))\n\t{\n\t    top = VIsual;\n\t    bot = wp->w_cursor;\n\
+    \t}\n\telse\n\t{\n\t    top = wp->w_cursor;\n\t    bot = VIsual;\n\t}\n\tmode\
+    \ = VIsual_mode;\n\tcurswant = wp->w_curswant;\n    }\n    else\n    {\n\tif (LT_POS(curbuf->b_visual.vi_start,\
+    \ curbuf->b_visual.vi_end))\n\t{\n\t    top = curbuf->b_visual.vi_start;\n\t \
+    \   bot = curbuf->b_visual.vi_end;\n\t}\n\telse\n\t{\n\t    top = curbuf->b_visual.vi_end;\n\
+    \t    bot = curbuf->b_visual.vi_start;\n\t}\n\tmode = curbuf->b_visual.vi_mode;\n\
+    \tcurswant = curbuf->b_visual.vi_curswant;\n    }\n    lnum = rex.lnum + rex.reg_firstlnum;\n\
+    \    if (lnum < top.lnum || lnum > bot.lnum)\n\treturn FALSE;\n\n    if (mode\
+    \ == 'v')\n    {\n\tcol = (colnr_T)(rex.input - rex.line);\n\tif ((lnum == top.lnum\
+    \ && col < top.col)\n\t\t|| (lnum == bot.lnum && col >= bot.col + (*p_sel != 'e')))\n\
+    \t    return FALSE;\n    }\n    else if (mode == Ctrl_V)\n    {\n\tgetvvcol(wp,\
+    \ &top, &start, NULL, &end);\n\tgetvvcol(wp, &bot, &start2, NULL, &end2);\n\t\
+    if (start2 < start)\n\t    start = start2;\n\tif (end2 > end)\n\t    end = end2;\n\
+    \tif (top.col == MAXCOL || bot.col == MAXCOL || curswant == MAXCOL)\n\t    end\
+    \ = MAXCOL;\n\tcols = win_linetabsize(wp, rex.line, (colnr_T)(rex.input - rex.line));\n\
+    \tif (cols < start || cols > end - (*p_sel == 'e'))\n\t    return FALSE;\n   \
+    \ }\n    return TRUE;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nreg_match_visual(void)\n{\n    pos_T\t\
+    top, bot;\n    linenr_T    lnum;\n    colnr_T\tcol;\n    win_T\t*wp = rex.reg_win\
+    \ == NULL ? curwin : rex.reg_win;\n    int\t\tmode;\n    colnr_T\tstart, end;\n\
+    \    colnr_T\tstart2, end2;\n    colnr_T\tcols;\n    colnr_T\tcurswant;\n\n  \
+    \  // Check if the buffer is the current buffer.\n    if (rex.reg_buf != curbuf\
+    \ || VIsual.lnum == 0)\n\treturn FALSE;\n\n    if (VIsual_active)\n    {\n\tif\
+    \ (LT_POS(VIsual, wp->w_cursor))\n\t{\n\t    top = VIsual;\n\t    bot = wp->w_cursor;\n\
+    \t}\n\telse\n\t{\n\t    top = wp->w_cursor;\n\t    bot = VIsual;\n\t}\n\tmode\
+    \ = VIsual_mode;\n\tcurswant = wp->w_curswant;\n    }\n    else\n    {\n\tif (LT_POS(curbuf->b_visual.vi_start,\
+    \ curbuf->b_visual.vi_end))\n\t{\n\t    top = curbuf->b_visual.vi_start;\n\t \
+    \   bot = curbuf->b_visual.vi_end;\n\t}\n\telse\n\t{\n\t    top = curbuf->b_visual.vi_end;\n\
+    \t    bot = curbuf->b_visual.vi_start;\n\t}\n\tmode = curbuf->b_visual.vi_mode;\n\
+    \tcurswant = curbuf->b_visual.vi_curswant;\n    }\n    lnum = rex.lnum + rex.reg_firstlnum;\n\
+    \    if (lnum < top.lnum || lnum > bot.lnum)\n\treturn FALSE;\n\n    if (mode\
+    \ == 'v')\n    {\n\tcol = (colnr_T)(rex.input - rex.line);\n\tif ((lnum == top.lnum\
+    \ && col < top.col)\n\t\t|| (lnum == bot.lnum && col >= bot.col + (*p_sel != 'e')))\n\
+    \t    return FALSE;\n    }\n    else if (mode == Ctrl_V)\n    {\n\tgetvvcol(wp,\
+    \ &top, &start, NULL, &end);\n\tgetvvcol(wp, &bot, &start2, NULL, &end2);\n\t\
+    if (start2 < start)\n\t    start = start2;\n\tif (end2 > end)\n\t    end = end2;\n\
+    \tif (top.col == MAXCOL || bot.col == MAXCOL || curswant == MAXCOL)\n\t    end\
+    \ = MAXCOL;\n\tcols = win_linetabsize(wp, rex.line, (colnr_T)(rex.input - rex.line));\n\
+    \tif (cols < start || cols > end - (*p_sel == 'e'))\n\t    return FALSE;\n   \
+    \ }\n    return TRUE;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-3.5-turbo
+    model: gpt-3.5-turbo
+    model_type: gpt-3.5-turbo
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nreg_match_visual(void)\n{\n\
+    \    pos_T\ttop, bot;\n    linenr_T    lnum;\n    colnr_T\tcol;\n    win_T\t*wp\
+    \ = rex.reg_win == NULL ? curwin : rex.reg_win;\n    int\t\tmode;\n    colnr_T\t\
+    start, end;\n    colnr_T\tstart2, end2;\n    colnr_T\tcols;\n    colnr_T\tcurswant;\n\
+    \n    // Check if the buffer is the current buffer.\n    if (rex.reg_buf != curbuf\
+    \ || VIsual.lnum == 0)\n\treturn FALSE;\n\n    if (VIsual_active)\n    {\n\tif\
+    \ (LT_POS(VIsual, wp->w_cursor))\n\t{\n\t    top = VIsual;\n\t    bot = wp->w_cursor;\n\
+    \t}\n\telse\n\t{\n\t    top = wp->w_cursor;\n\t    bot = VIsual;\n\t}\n\tmode\
+    \ = VIsual_mode;\n\tcurswant = wp->w_curswant;\n    }\n    else\n    {\n\tif (LT_POS(curbuf->b_visual.vi_start,\
+    \ curbuf->b_visual.vi_end))\n\t{\n\t    top = curbuf->b_visual.vi_start;\n\t \
+    \   bot = curbuf->b_visual.vi_end;\n\t}\n\telse\n\t{\n\t    top = curbuf->b_visual.vi_end;\n\
+    \t    bot = curbuf->b_visual.vi_start;\n\t}\n\tmode = curbuf->b_visual.vi_mode;\n\
+    \tcurswant = curbuf->b_visual.vi_curswant;\n    }\n    lnum = rex.lnum + rex.reg_firstlnum;\n\
+    \    if (lnum < top.lnum || lnum > bot.lnum)\n\treturn FALSE;\n\n    if (mode\
+    \ == 'v')\n    {\n\tcol = (colnr_T)(rex.input - rex.line);\n\tif ((lnum == top.lnum\
+    \ && col < top.col)\n\t\t|| (lnum == bot.lnum && col >= bot.col + (*p_sel != 'e')))\n\
+    \t    return FALSE;\n    }\n    else if (mode == Ctrl_V)\n    {\n\tgetvvcol(wp,\
+    \ &top, &start, NULL, &end);\n\tgetvvcol(wp, &bot, &start2, NULL, &end2);\n\t\
+    if (start2 < start)\n\t    start = start2;\n\tif (end2 > end)\n\t    end = end2;\n\
+    \tif (top.col == MAXCOL || bot.col == MAXCOL || curswant == MAXCOL)\n\t    end\
+    \ = MAXCOL;\n\tcols = win_linetabsize(wp, rex.line, (colnr_T)(rex.input - rex.line));\n\
+    \tif (cols < start || cols > end - (*p_sel == 'e'))\n\t    return FALSE;\n   \
+    \ }\n    return TRUE;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 211695
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

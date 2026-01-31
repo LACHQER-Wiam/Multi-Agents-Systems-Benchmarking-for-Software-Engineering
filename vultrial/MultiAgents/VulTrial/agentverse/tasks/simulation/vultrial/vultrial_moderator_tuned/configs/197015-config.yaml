@@ -1,0 +1,336 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nGF_Err\
+    \ SetupWriters(MovieWriter *mw, GF_List *writers, u8 interleaving)\n{\n\tu32 i,\
+    \ trackCount;\n\tTrackWriter *writer;\n\tGF_TrackBox *trak;\n\tGF_ISOFile *movie\
+    \ = mw->movie;\n\n\tmw->total_samples = mw->nb_done = 0;\n\tif (!movie->moov)\
+    \ return GF_OK;\n\n\ttrackCount = gf_list_count(movie->moov->trackList);\n\tfor\
+    \ (i = 0; i < trackCount; i++) {\n\t\ttrak = gf_isom_get_track(movie->moov, i+1);\n\
+    \n\t\tGF_SAFEALLOC(writer, TrackWriter);\n\t\tif (!writer) goto exit;\n\t\twriter->sampleNumber\
+    \ = 1;\n\t\twriter->mdia = trak->Media;\n\t\twriter->stbl = trak->Media->information->sampleTable;\n\
+    \t\twriter->timeScale = trak->Media->mediaHeader->timeScale;\n\t\twriter->all_dref_mode\
+    \ = Media_SelfContainedType(writer->mdia);\n\n\t\tif (trak->sample_encryption)\n\
+    \t\t\twriter->prevent_dispatch = GF_TRUE;\n\n\t\twriter->isDone = 0;\n\t\twriter->DTSprev\
+    \ = 0;\n\t\twriter->chunkDur = 0;\n\t\twriter->chunkSize = 0;\n\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\t\tif (writer->stbl->SampleSize->sampleSize)\n\
+    \t\t\twriter->constant_size = writer->stbl->SampleSize->sampleSize;\n\t\tif (writer->stbl->TimeToSample->nb_entries==1)\
+    \ {\n\t\t\twriter->constant_dur = writer->stbl->TimeToSample->entries[0].sampleDelta;\n\
+    \t\t\tif (writer->constant_dur>1) writer->constant_dur = 0;\n\t\t}\n\t\tif (!writer->constant_dur\
+    \ || !writer->constant_size || (writer->constant_size>=10))\n\t\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\n\t\twriter->stsc = (GF_SampleToChunkBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_STSC);\n\
+    \t\tif (!writer->stsc) return GF_OUT_OF_MEM;\n\t\tif (writer->stbl->ChunkOffset->type\
+    \ == GF_ISOM_BOX_TYPE_STCO) {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_STCO);\n\
+    \t\t} else {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_CO64);\n\t\
+    \t}\n\t\tif (!writer->stco) return GF_OUT_OF_MEM;\n\t\t/*stops from chunk escape*/\n\
+    \t\tif (interleaving) writer->stbl->MaxSamplePerChunk = 0;\n\t\t/*for progress,\
+    \ assume only one descIndex*/\n\t\tif (Media_IsSelfContained(writer->mdia, 1))\n\
+    \t\t\tmw->total_samples += writer->stbl->SampleSize->sampleCount;\n\t\t/*optimization\
+    \ for interleaving: put audio last (this can be overridden by priorities)*/\n\t\
+    \tif (movie->storageMode != GF_ISOM_STORE_INTERLEAVED) {\n\t\t\tgf_list_add(writers,\
+    \ writer);\n\t\t} else {\n\t\t\tif (writer->mdia->information->InfoHeader && writer->mdia->information->InfoHeader->type\
+    \ == GF_ISOM_BOX_TYPE_SMHD) {\n\t\t\t\tgf_list_add(writers, writer);\n\t\t\t}\
+    \ else {\n\t\t\t\tgf_list_insert(writers, writer, 0);\n\t\t\t}\n\t\t}\n\t\tif\
+    \ (movie->sample_groups_in_traf && trak->Media->information->sampleTable) {\n\t\
+    \t\tgf_isom_box_array_del_parent(&trak->Media->information->sampleTable->child_boxes,\
+    \ trak->Media->information->sampleTable->sampleGroupsDescription);\n\t\t\ttrak->Media->information->sampleTable->sampleGroupsDescription\
+    \ = NULL;\n\t\t}\n\t}\n\treturn GF_OK;\n\nexit:\n\tCleanWriters(writers);\n\t\
+    return GF_OUT_OF_MEM;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nGF_Err SetupWriters(MovieWriter\
+    \ *mw, GF_List *writers, u8 interleaving)\n{\n\tu32 i, trackCount;\n\tTrackWriter\
+    \ *writer;\n\tGF_TrackBox *trak;\n\tGF_ISOFile *movie = mw->movie;\n\n\tmw->total_samples\
+    \ = mw->nb_done = 0;\n\tif (!movie->moov) return GF_OK;\n\n\ttrackCount = gf_list_count(movie->moov->trackList);\n\
+    \tfor (i = 0; i < trackCount; i++) {\n\t\ttrak = gf_isom_get_track(movie->moov,\
+    \ i+1);\n\n\t\tGF_SAFEALLOC(writer, TrackWriter);\n\t\tif (!writer) goto exit;\n\
+    \t\twriter->sampleNumber = 1;\n\t\twriter->mdia = trak->Media;\n\t\twriter->stbl\
+    \ = trak->Media->information->sampleTable;\n\t\twriter->timeScale = trak->Media->mediaHeader->timeScale;\n\
+    \t\twriter->all_dref_mode = Media_SelfContainedType(writer->mdia);\n\n\t\tif (trak->sample_encryption)\n\
+    \t\t\twriter->prevent_dispatch = GF_TRUE;\n\n\t\twriter->isDone = 0;\n\t\twriter->DTSprev\
+    \ = 0;\n\t\twriter->chunkDur = 0;\n\t\twriter->chunkSize = 0;\n\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\t\tif (writer->stbl->SampleSize->sampleSize)\n\
+    \t\t\twriter->constant_size = writer->stbl->SampleSize->sampleSize;\n\t\tif (writer->stbl->TimeToSample->nb_entries==1)\
+    \ {\n\t\t\twriter->constant_dur = writer->stbl->TimeToSample->entries[0].sampleDelta;\n\
+    \t\t\tif (writer->constant_dur>1) writer->constant_dur = 0;\n\t\t}\n\t\tif (!writer->constant_dur\
+    \ || !writer->constant_size || (writer->constant_size>=10))\n\t\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\n\t\twriter->stsc = (GF_SampleToChunkBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_STSC);\n\
+    \t\tif (!writer->stsc) return GF_OUT_OF_MEM;\n\t\tif (writer->stbl->ChunkOffset->type\
+    \ == GF_ISOM_BOX_TYPE_STCO) {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_STCO);\n\
+    \t\t} else {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_CO64);\n\t\
+    \t}\n\t\tif (!writer->stco) return GF_OUT_OF_MEM;\n\t\t/*stops from chunk escape*/\n\
+    \t\tif (interleaving) writer->stbl->MaxSamplePerChunk = 0;\n\t\t/*for progress,\
+    \ assume only one descIndex*/\n\t\tif (Media_IsSelfContained(writer->mdia, 1))\n\
+    \t\t\tmw->total_samples += writer->stbl->SampleSize->sampleCount;\n\t\t/*optimization\
+    \ for interleaving: put audio last (this can be overridden by priorities)*/\n\t\
+    \tif (movie->storageMode != GF_ISOM_STORE_INTERLEAVED) {\n\t\t\tgf_list_add(writers,\
+    \ writer);\n\t\t} else {\n\t\t\tif (writer->mdia->information->InfoHeader && writer->mdia->information->InfoHeader->type\
+    \ == GF_ISOM_BOX_TYPE_SMHD) {\n\t\t\t\tgf_list_add(writers, writer);\n\t\t\t}\
+    \ else {\n\t\t\t\tgf_list_insert(writers, writer, 0);\n\t\t\t}\n\t\t}\n\t\tif\
+    \ (movie->sample_groups_in_traf && trak->Media->information->sampleTable) {\n\t\
+    \t\tgf_isom_box_array_del_parent(&trak->Media->information->sampleTable->child_boxes,\
+    \ trak->Media->information->sampleTable->sampleGroupsDescription);\n\t\t\ttrak->Media->information->sampleTable->sampleGroupsDescription\
+    \ = NULL;\n\t\t}\n\t}\n\treturn GF_OK;\n\nexit:\n\tCleanWriters(writers);\n\t\
+    return GF_OUT_OF_MEM;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nGF_Err SetupWriters(MovieWriter *mw, GF_List\
+    \ *writers, u8 interleaving)\n{\n\tu32 i, trackCount;\n\tTrackWriter *writer;\n\
+    \tGF_TrackBox *trak;\n\tGF_ISOFile *movie = mw->movie;\n\n\tmw->total_samples\
+    \ = mw->nb_done = 0;\n\tif (!movie->moov) return GF_OK;\n\n\ttrackCount = gf_list_count(movie->moov->trackList);\n\
+    \tfor (i = 0; i < trackCount; i++) {\n\t\ttrak = gf_isom_get_track(movie->moov,\
+    \ i+1);\n\n\t\tGF_SAFEALLOC(writer, TrackWriter);\n\t\tif (!writer) goto exit;\n\
+    \t\twriter->sampleNumber = 1;\n\t\twriter->mdia = trak->Media;\n\t\twriter->stbl\
+    \ = trak->Media->information->sampleTable;\n\t\twriter->timeScale = trak->Media->mediaHeader->timeScale;\n\
+    \t\twriter->all_dref_mode = Media_SelfContainedType(writer->mdia);\n\n\t\tif (trak->sample_encryption)\n\
+    \t\t\twriter->prevent_dispatch = GF_TRUE;\n\n\t\twriter->isDone = 0;\n\t\twriter->DTSprev\
+    \ = 0;\n\t\twriter->chunkDur = 0;\n\t\twriter->chunkSize = 0;\n\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\t\tif (writer->stbl->SampleSize->sampleSize)\n\
+    \t\t\twriter->constant_size = writer->stbl->SampleSize->sampleSize;\n\t\tif (writer->stbl->TimeToSample->nb_entries==1)\
+    \ {\n\t\t\twriter->constant_dur = writer->stbl->TimeToSample->entries[0].sampleDelta;\n\
+    \t\t\tif (writer->constant_dur>1) writer->constant_dur = 0;\n\t\t}\n\t\tif (!writer->constant_dur\
+    \ || !writer->constant_size || (writer->constant_size>=10))\n\t\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\n\t\twriter->stsc = (GF_SampleToChunkBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_STSC);\n\
+    \t\tif (!writer->stsc) return GF_OUT_OF_MEM;\n\t\tif (writer->stbl->ChunkOffset->type\
+    \ == GF_ISOM_BOX_TYPE_STCO) {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_STCO);\n\
+    \t\t} else {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_CO64);\n\t\
+    \t}\n\t\tif (!writer->stco) return GF_OUT_OF_MEM;\n\t\t/*stops from chunk escape*/\n\
+    \t\tif (interleaving) writer->stbl->MaxSamplePerChunk = 0;\n\t\t/*for progress,\
+    \ assume only one descIndex*/\n\t\tif (Media_IsSelfContained(writer->mdia, 1))\n\
+    \t\t\tmw->total_samples += writer->stbl->SampleSize->sampleCount;\n\t\t/*optimization\
+    \ for interleaving: put audio last (this can be overridden by priorities)*/\n\t\
+    \tif (movie->storageMode != GF_ISOM_STORE_INTERLEAVED) {\n\t\t\tgf_list_add(writers,\
+    \ writer);\n\t\t} else {\n\t\t\tif (writer->mdia->information->InfoHeader && writer->mdia->information->InfoHeader->type\
+    \ == GF_ISOM_BOX_TYPE_SMHD) {\n\t\t\t\tgf_list_add(writers, writer);\n\t\t\t}\
+    \ else {\n\t\t\t\tgf_list_insert(writers, writer, 0);\n\t\t\t}\n\t\t}\n\t\tif\
+    \ (movie->sample_groups_in_traf && trak->Media->information->sampleTable) {\n\t\
+    \t\tgf_isom_box_array_del_parent(&trak->Media->information->sampleTable->child_boxes,\
+    \ trak->Media->information->sampleTable->sampleGroupsDescription);\n\t\t\ttrak->Media->information->sampleTable->sampleGroupsDescription\
+    \ = NULL;\n\t\t}\n\t}\n\treturn GF_OK;\n\nexit:\n\tCleanWriters(writers);\n\t\
+    return GF_OUT_OF_MEM;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nGF_Err SetupWriters(MovieWriter\
+    \ *mw, GF_List *writers, u8 interleaving)\n{\n\tu32 i, trackCount;\n\tTrackWriter\
+    \ *writer;\n\tGF_TrackBox *trak;\n\tGF_ISOFile *movie = mw->movie;\n\n\tmw->total_samples\
+    \ = mw->nb_done = 0;\n\tif (!movie->moov) return GF_OK;\n\n\ttrackCount = gf_list_count(movie->moov->trackList);\n\
+    \tfor (i = 0; i < trackCount; i++) {\n\t\ttrak = gf_isom_get_track(movie->moov,\
+    \ i+1);\n\n\t\tGF_SAFEALLOC(writer, TrackWriter);\n\t\tif (!writer) goto exit;\n\
+    \t\twriter->sampleNumber = 1;\n\t\twriter->mdia = trak->Media;\n\t\twriter->stbl\
+    \ = trak->Media->information->sampleTable;\n\t\twriter->timeScale = trak->Media->mediaHeader->timeScale;\n\
+    \t\twriter->all_dref_mode = Media_SelfContainedType(writer->mdia);\n\n\t\tif (trak->sample_encryption)\n\
+    \t\t\twriter->prevent_dispatch = GF_TRUE;\n\n\t\twriter->isDone = 0;\n\t\twriter->DTSprev\
+    \ = 0;\n\t\twriter->chunkDur = 0;\n\t\twriter->chunkSize = 0;\n\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\t\tif (writer->stbl->SampleSize->sampleSize)\n\
+    \t\t\twriter->constant_size = writer->stbl->SampleSize->sampleSize;\n\t\tif (writer->stbl->TimeToSample->nb_entries==1)\
+    \ {\n\t\t\twriter->constant_dur = writer->stbl->TimeToSample->entries[0].sampleDelta;\n\
+    \t\t\tif (writer->constant_dur>1) writer->constant_dur = 0;\n\t\t}\n\t\tif (!writer->constant_dur\
+    \ || !writer->constant_size || (writer->constant_size>=10))\n\t\t\twriter->constant_size\
+    \ = writer->constant_dur = 0;\n\n\t\twriter->stsc = (GF_SampleToChunkBox *) gf_isom_box_new(GF_ISOM_BOX_TYPE_STSC);\n\
+    \t\tif (!writer->stsc) return GF_OUT_OF_MEM;\n\t\tif (writer->stbl->ChunkOffset->type\
+    \ == GF_ISOM_BOX_TYPE_STCO) {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_STCO);\n\
+    \t\t} else {\n\t\t\twriter->stco = gf_isom_box_new(GF_ISOM_BOX_TYPE_CO64);\n\t\
+    \t}\n\t\tif (!writer->stco) return GF_OUT_OF_MEM;\n\t\t/*stops from chunk escape*/\n\
+    \t\tif (interleaving) writer->stbl->MaxSamplePerChunk = 0;\n\t\t/*for progress,\
+    \ assume only one descIndex*/\n\t\tif (Media_IsSelfContained(writer->mdia, 1))\n\
+    \t\t\tmw->total_samples += writer->stbl->SampleSize->sampleCount;\n\t\t/*optimization\
+    \ for interleaving: put audio last (this can be overridden by priorities)*/\n\t\
+    \tif (movie->storageMode != GF_ISOM_STORE_INTERLEAVED) {\n\t\t\tgf_list_add(writers,\
+    \ writer);\n\t\t} else {\n\t\t\tif (writer->mdia->information->InfoHeader && writer->mdia->information->InfoHeader->type\
+    \ == GF_ISOM_BOX_TYPE_SMHD) {\n\t\t\t\tgf_list_add(writers, writer);\n\t\t\t}\
+    \ else {\n\t\t\t\tgf_list_insert(writers, writer, 0);\n\t\t\t}\n\t\t}\n\t\tif\
+    \ (movie->sample_groups_in_traf && trak->Media->information->sampleTable) {\n\t\
+    \t\tgf_isom_box_array_del_parent(&trak->Media->information->sampleTable->child_boxes,\
+    \ trak->Media->information->sampleTable->sampleGroupsDescription);\n\t\t\ttrak->Media->information->sampleTable->sampleGroupsDescription\
+    \ = NULL;\n\t\t}\n\t}\n\treturn GF_OK;\n\nexit:\n\tCleanWriters(writers);\n\t\
+    return GF_OUT_OF_MEM;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 197015
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

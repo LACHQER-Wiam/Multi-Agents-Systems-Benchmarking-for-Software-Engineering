@@ -1,0 +1,584 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\n  void\
+    \ Compute(OpKernelContext* ctx) override {\n    const Tensor* hypothesis_indices;\n\
+    \    const Tensor* hypothesis_values;\n    const Tensor* hypothesis_shape;\n \
+    \   const Tensor* truth_indices;\n    const Tensor* truth_values;\n    const Tensor*\
+    \ truth_shape;\n    OP_REQUIRES_OK(ctx, ctx->input(\"hypothesis_indices\", &hypothesis_indices));\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"hypothesis_values\", &hypothesis_values));\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"hypothesis_shape\", &hypothesis_shape));\n\
+    \    OP_REQUIRES_OK(ctx, ctx->input(\"truth_indices\", &truth_indices));\n   \
+    \ OP_REQUIRES_OK(ctx, ctx->input(\"truth_values\", &truth_values));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"truth_shape\", &truth_shape));\n\n    OP_REQUIRES_OK(\n       \
+    \ ctx, ValidateShapes(ctx, *hypothesis_indices, *hypothesis_values,\n        \
+    \                    *hypothesis_shape, *truth_indices, *truth_values,\n     \
+    \                       *truth_shape));\n\n    TensorShape hypothesis_st_shape;\n\
+    \    OP_REQUIRES_OK(ctx,\n                   TensorShapeUtils::MakeShape(\n  \
+    \                     hypothesis_shape->vec<int64_t>().data(),\n             \
+    \          hypothesis_shape->NumElements(), &hypothesis_st_shape));\n    TensorShape\
+    \ truth_st_shape;\n    OP_REQUIRES_OK(ctx, TensorShapeUtils::MakeShape(\n    \
+    \                        truth_shape->vec<int64_t>().data(),\n               \
+    \             truth_shape->NumElements(), &truth_st_shape));\n\n    // Assume\
+    \ indices are sorted in row-major order.\n    std::vector<int64_t> sorted_order(truth_st_shape.dims());\n\
+    \    std::iota(sorted_order.begin(), sorted_order.end(), 0);\n\n    sparse::SparseTensor\
+    \ hypothesis;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n       \
+    \                     *hypothesis_indices, *hypothesis_values,\n             \
+    \               hypothesis_st_shape, sorted_order, &hypothesis));\n\n    sparse::SparseTensor\
+    \ truth;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n            \
+    \                *truth_indices, *truth_values, truth_st_shape,\n            \
+    \                sorted_order, &truth));\n\n    // Group dims 0, 1, ..., RANK\
+    \ - 1.  The very last dim is assumed\n    // to store the variable length sequences.\n\
+    \    std::vector<int64_t> group_dims(truth_st_shape.dims() - 1);\n    std::iota(group_dims.begin(),\
+    \ group_dims.end(), 0);\n\n    TensorShape output_shape;\n    for (int d = 0;\
+    \ d < static_cast<int>(group_dims.size()); ++d) {\n      output_shape.AddDim(std::max(hypothesis_st_shape.dim_size(d),\n\
+    \                                   truth_st_shape.dim_size(d)));\n    }\n   \
+    \ const auto output_elements = output_shape.num_elements();\n    OP_REQUIRES(\n\
+    \        ctx, output_elements > 0,\n        errors::InvalidArgument(\"Got output\
+    \ shape \", output_shape.DebugString(),\n                                \" which\
+    \ has 0 elements\"));\n\n    Tensor* output = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->allocate_output(\"output\", output_shape, &output));\n    auto output_t\
+    \ = output->flat<float>();\n    output_t.setZero();\n\n    std::vector<int64_t>\
+    \ output_strides(output_shape.dims());\n    output_strides[output_shape.dims()\
+    \ - 1] = 1;\n    for (int d = output_shape.dims() - 2; d >= 0; --d) {\n      output_strides[d]\
+    \ = output_strides[d + 1] * output_shape.dim_size(d + 1);\n    }\n\n    auto hypothesis_grouper\
+    \ = hypothesis.group(group_dims);\n    auto truth_grouper = truth.group(group_dims);\n\
+    \n    auto hypothesis_iter = hypothesis_grouper.begin();\n    auto truth_iter\
+    \ = truth_grouper.begin();\n\n    auto cmp = std::equal_to<T>();\n\n    while\
+    \ (hypothesis_iter != hypothesis_grouper.end() &&\n           truth_iter != truth_grouper.end())\
+    \ {\n      sparse::Group truth_i = *truth_iter;\n      sparse::Group hypothesis_j\
+    \ = *hypothesis_iter;\n      std::vector<int64_t> g_truth = truth_i.group();\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto truth_seq\
+    \ = truth_i.values<T>();\n      auto hypothesis_seq = hypothesis_j.values<T>();\n\
+    \n      if (g_truth == g_hypothesis) {\n        auto loc = std::inner_product(g_truth.begin(),\
+    \ g_truth.end(),\n                                      output_strides.begin(),\
+    \ int64_t{0});\n        OP_REQUIRES(\n            ctx, loc < output_elements,\n\
+    \            errors::Internal(\"Got an inner product \", loc,\n              \
+    \               \" which would require in writing to outside of \"\n         \
+    \                    \"the buffer for the output tensor (max elements \",\n  \
+    \                           output_elements, \")\"));\n        output_t(loc) =\n\
+    \            gtl::LevenshteinDistance<T>(truth_seq, hypothesis_seq, cmp);\n  \
+    \      if (normalize_) output_t(loc) /= truth_seq.size();\n\n        ++hypothesis_iter;\n\
+    \        ++truth_iter;\n      } else if (g_truth > g_hypothesis) {  // zero-length\
+    \ truth\n        auto loc = std::inner_product(g_hypothesis.begin(), g_hypothesis.end(),\n\
+    \                                      output_strides.begin(), int64_t{0});\n\
+    \        OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = hypothesis_seq.size();\n        if (normalize_\
+    \ && output_t(loc) != 0.0f) {\n          output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \        }\n        ++hypothesis_iter;\n      } else {  // zero-length hypothesis\n\
+    \        auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n     \
+    \                                 output_strides.begin(), int64_t{0});\n     \
+    \   OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n \
+    \       ++truth_iter;\n      }\n    }\n    while (hypothesis_iter != hypothesis_grouper.end())\
+    \ {  // zero-length truths\n      sparse::Group hypothesis_j = *hypothesis_iter;\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto hypothesis_seq\
+    \ = hypothesis_j.values<T>();\n      auto loc = std::inner_product(g_hypothesis.begin(),\
+    \ g_hypothesis.end(),\n                                    output_strides.begin(),\
+    \ int64_t{0});\n      OP_REQUIRES(\n          ctx, loc < output_elements,\n  \
+    \        errors::Internal(\"Got an inner product \", loc,\n                  \
+    \         \" which would require in writing to outside of the \"\n           \
+    \                \"buffer for the output tensor (max elements \",\n          \
+    \                 output_elements, \")\"));\n      output_t(loc) = hypothesis_seq.size();\n\
+    \      if (normalize_ && output_t(loc) != 0.0f) {\n        output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \      }\n      ++hypothesis_iter;\n    }\n    while (truth_iter != truth_grouper.end())\
+    \ {  // missing hypotheses\n      sparse::Group truth_i = *truth_iter;\n     \
+    \ std::vector<int64_t> g_truth = truth_i.group();\n      auto truth_seq = truth_i.values<T>();\n\
+    \      auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n       \
+    \                             output_strides.begin(), int64_t{0});\n      OP_REQUIRES(\n\
+    \          ctx, loc < output_elements,\n          errors::Internal(\"Got an inner\
+    \ product \", loc,\n                           \" which would require in writing\
+    \ to outside of the \"\n                           \"buffer for the output tensor\
+    \ (max elements \",\n                           output_elements, \")\"));\n  \
+    \    output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n      ++truth_iter;\n\
+    \    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor* hypothesis_indices;\n    const Tensor* hypothesis_values;\n\
+    \    const Tensor* hypothesis_shape;\n    const Tensor* truth_indices;\n    const\
+    \ Tensor* truth_values;\n    const Tensor* truth_shape;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_indices\", &hypothesis_indices));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_values\", &hypothesis_values));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_shape\", &hypothesis_shape));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"truth_indices\", &truth_indices));\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    truth_values\", &truth_values));\n    OP_REQUIRES_OK(ctx, ctx->input(\"truth_shape\"\
+    , &truth_shape));\n\n    OP_REQUIRES_OK(\n        ctx, ValidateShapes(ctx, *hypothesis_indices,\
+    \ *hypothesis_values,\n                            *hypothesis_shape, *truth_indices,\
+    \ *truth_values,\n                            *truth_shape));\n\n    TensorShape\
+    \ hypothesis_st_shape;\n    OP_REQUIRES_OK(ctx,\n                   TensorShapeUtils::MakeShape(\n\
+    \                       hypothesis_shape->vec<int64_t>().data(),\n           \
+    \            hypothesis_shape->NumElements(), &hypothesis_st_shape));\n    TensorShape\
+    \ truth_st_shape;\n    OP_REQUIRES_OK(ctx, TensorShapeUtils::MakeShape(\n    \
+    \                        truth_shape->vec<int64_t>().data(),\n               \
+    \             truth_shape->NumElements(), &truth_st_shape));\n\n    // Assume\
+    \ indices are sorted in row-major order.\n    std::vector<int64_t> sorted_order(truth_st_shape.dims());\n\
+    \    std::iota(sorted_order.begin(), sorted_order.end(), 0);\n\n    sparse::SparseTensor\
+    \ hypothesis;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n       \
+    \                     *hypothesis_indices, *hypothesis_values,\n             \
+    \               hypothesis_st_shape, sorted_order, &hypothesis));\n\n    sparse::SparseTensor\
+    \ truth;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n            \
+    \                *truth_indices, *truth_values, truth_st_shape,\n            \
+    \                sorted_order, &truth));\n\n    // Group dims 0, 1, ..., RANK\
+    \ - 1.  The very last dim is assumed\n    // to store the variable length sequences.\n\
+    \    std::vector<int64_t> group_dims(truth_st_shape.dims() - 1);\n    std::iota(group_dims.begin(),\
+    \ group_dims.end(), 0);\n\n    TensorShape output_shape;\n    for (int d = 0;\
+    \ d < static_cast<int>(group_dims.size()); ++d) {\n      output_shape.AddDim(std::max(hypothesis_st_shape.dim_size(d),\n\
+    \                                   truth_st_shape.dim_size(d)));\n    }\n   \
+    \ const auto output_elements = output_shape.num_elements();\n    OP_REQUIRES(\n\
+    \        ctx, output_elements > 0,\n        errors::InvalidArgument(\"Got output\
+    \ shape \", output_shape.DebugString(),\n                                \" which\
+    \ has 0 elements\"));\n\n    Tensor* output = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->allocate_output(\"output\", output_shape, &output));\n    auto output_t\
+    \ = output->flat<float>();\n    output_t.setZero();\n\n    std::vector<int64_t>\
+    \ output_strides(output_shape.dims());\n    output_strides[output_shape.dims()\
+    \ - 1] = 1;\n    for (int d = output_shape.dims() - 2; d >= 0; --d) {\n      output_strides[d]\
+    \ = output_strides[d + 1] * output_shape.dim_size(d + 1);\n    }\n\n    auto hypothesis_grouper\
+    \ = hypothesis.group(group_dims);\n    auto truth_grouper = truth.group(group_dims);\n\
+    \n    auto hypothesis_iter = hypothesis_grouper.begin();\n    auto truth_iter\
+    \ = truth_grouper.begin();\n\n    auto cmp = std::equal_to<T>();\n\n    while\
+    \ (hypothesis_iter != hypothesis_grouper.end() &&\n           truth_iter != truth_grouper.end())\
+    \ {\n      sparse::Group truth_i = *truth_iter;\n      sparse::Group hypothesis_j\
+    \ = *hypothesis_iter;\n      std::vector<int64_t> g_truth = truth_i.group();\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto truth_seq\
+    \ = truth_i.values<T>();\n      auto hypothesis_seq = hypothesis_j.values<T>();\n\
+    \n      if (g_truth == g_hypothesis) {\n        auto loc = std::inner_product(g_truth.begin(),\
+    \ g_truth.end(),\n                                      output_strides.begin(),\
+    \ int64_t{0});\n        OP_REQUIRES(\n            ctx, loc < output_elements,\n\
+    \            errors::Internal(\"Got an inner product \", loc,\n              \
+    \               \" which would require in writing to outside of \"\n         \
+    \                    \"the buffer for the output tensor (max elements \",\n  \
+    \                           output_elements, \")\"));\n        output_t(loc) =\n\
+    \            gtl::LevenshteinDistance<T>(truth_seq, hypothesis_seq, cmp);\n  \
+    \      if (normalize_) output_t(loc) /= truth_seq.size();\n\n        ++hypothesis_iter;\n\
+    \        ++truth_iter;\n      } else if (g_truth > g_hypothesis) {  // zero-length\
+    \ truth\n        auto loc = std::inner_product(g_hypothesis.begin(), g_hypothesis.end(),\n\
+    \                                      output_strides.begin(), int64_t{0});\n\
+    \        OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = hypothesis_seq.size();\n        if (normalize_\
+    \ && output_t(loc) != 0.0f) {\n          output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \        }\n        ++hypothesis_iter;\n      } else {  // zero-length hypothesis\n\
+    \        auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n     \
+    \                                 output_strides.begin(), int64_t{0});\n     \
+    \   OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n \
+    \       ++truth_iter;\n      }\n    }\n    while (hypothesis_iter != hypothesis_grouper.end())\
+    \ {  // zero-length truths\n      sparse::Group hypothesis_j = *hypothesis_iter;\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto hypothesis_seq\
+    \ = hypothesis_j.values<T>();\n      auto loc = std::inner_product(g_hypothesis.begin(),\
+    \ g_hypothesis.end(),\n                                    output_strides.begin(),\
+    \ int64_t{0});\n      OP_REQUIRES(\n          ctx, loc < output_elements,\n  \
+    \        errors::Internal(\"Got an inner product \", loc,\n                  \
+    \         \" which would require in writing to outside of the \"\n           \
+    \                \"buffer for the output tensor (max elements \",\n          \
+    \                 output_elements, \")\"));\n      output_t(loc) = hypothesis_seq.size();\n\
+    \      if (normalize_ && output_t(loc) != 0.0f) {\n        output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \      }\n      ++hypothesis_iter;\n    }\n    while (truth_iter != truth_grouper.end())\
+    \ {  // missing hypotheses\n      sparse::Group truth_i = *truth_iter;\n     \
+    \ std::vector<int64_t> g_truth = truth_i.group();\n      auto truth_seq = truth_i.values<T>();\n\
+    \      auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n       \
+    \                             output_strides.begin(), int64_t{0});\n      OP_REQUIRES(\n\
+    \          ctx, loc < output_elements,\n          errors::Internal(\"Got an inner\
+    \ product \", loc,\n                           \" which would require in writing\
+    \ to outside of the \"\n                           \"buffer for the output tensor\
+    \ (max elements \",\n                           output_elements, \")\"));\n  \
+    \    output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n      ++truth_iter;\n\
+    \    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\n  void Compute(OpKernelContext* ctx) override\
+    \ {\n    const Tensor* hypothesis_indices;\n    const Tensor* hypothesis_values;\n\
+    \    const Tensor* hypothesis_shape;\n    const Tensor* truth_indices;\n    const\
+    \ Tensor* truth_values;\n    const Tensor* truth_shape;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_indices\", &hypothesis_indices));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_values\", &hypothesis_values));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_shape\", &hypothesis_shape));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"truth_indices\", &truth_indices));\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    truth_values\", &truth_values));\n    OP_REQUIRES_OK(ctx, ctx->input(\"truth_shape\"\
+    , &truth_shape));\n\n    OP_REQUIRES_OK(\n        ctx, ValidateShapes(ctx, *hypothesis_indices,\
+    \ *hypothesis_values,\n                            *hypothesis_shape, *truth_indices,\
+    \ *truth_values,\n                            *truth_shape));\n\n    TensorShape\
+    \ hypothesis_st_shape;\n    OP_REQUIRES_OK(ctx,\n                   TensorShapeUtils::MakeShape(\n\
+    \                       hypothesis_shape->vec<int64_t>().data(),\n           \
+    \            hypothesis_shape->NumElements(), &hypothesis_st_shape));\n    TensorShape\
+    \ truth_st_shape;\n    OP_REQUIRES_OK(ctx, TensorShapeUtils::MakeShape(\n    \
+    \                        truth_shape->vec<int64_t>().data(),\n               \
+    \             truth_shape->NumElements(), &truth_st_shape));\n\n    // Assume\
+    \ indices are sorted in row-major order.\n    std::vector<int64_t> sorted_order(truth_st_shape.dims());\n\
+    \    std::iota(sorted_order.begin(), sorted_order.end(), 0);\n\n    sparse::SparseTensor\
+    \ hypothesis;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n       \
+    \                     *hypothesis_indices, *hypothesis_values,\n             \
+    \               hypothesis_st_shape, sorted_order, &hypothesis));\n\n    sparse::SparseTensor\
+    \ truth;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n            \
+    \                *truth_indices, *truth_values, truth_st_shape,\n            \
+    \                sorted_order, &truth));\n\n    // Group dims 0, 1, ..., RANK\
+    \ - 1.  The very last dim is assumed\n    // to store the variable length sequences.\n\
+    \    std::vector<int64_t> group_dims(truth_st_shape.dims() - 1);\n    std::iota(group_dims.begin(),\
+    \ group_dims.end(), 0);\n\n    TensorShape output_shape;\n    for (int d = 0;\
+    \ d < static_cast<int>(group_dims.size()); ++d) {\n      output_shape.AddDim(std::max(hypothesis_st_shape.dim_size(d),\n\
+    \                                   truth_st_shape.dim_size(d)));\n    }\n   \
+    \ const auto output_elements = output_shape.num_elements();\n    OP_REQUIRES(\n\
+    \        ctx, output_elements > 0,\n        errors::InvalidArgument(\"Got output\
+    \ shape \", output_shape.DebugString(),\n                                \" which\
+    \ has 0 elements\"));\n\n    Tensor* output = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->allocate_output(\"output\", output_shape, &output));\n    auto output_t\
+    \ = output->flat<float>();\n    output_t.setZero();\n\n    std::vector<int64_t>\
+    \ output_strides(output_shape.dims());\n    output_strides[output_shape.dims()\
+    \ - 1] = 1;\n    for (int d = output_shape.dims() - 2; d >= 0; --d) {\n      output_strides[d]\
+    \ = output_strides[d + 1] * output_shape.dim_size(d + 1);\n    }\n\n    auto hypothesis_grouper\
+    \ = hypothesis.group(group_dims);\n    auto truth_grouper = truth.group(group_dims);\n\
+    \n    auto hypothesis_iter = hypothesis_grouper.begin();\n    auto truth_iter\
+    \ = truth_grouper.begin();\n\n    auto cmp = std::equal_to<T>();\n\n    while\
+    \ (hypothesis_iter != hypothesis_grouper.end() &&\n           truth_iter != truth_grouper.end())\
+    \ {\n      sparse::Group truth_i = *truth_iter;\n      sparse::Group hypothesis_j\
+    \ = *hypothesis_iter;\n      std::vector<int64_t> g_truth = truth_i.group();\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto truth_seq\
+    \ = truth_i.values<T>();\n      auto hypothesis_seq = hypothesis_j.values<T>();\n\
+    \n      if (g_truth == g_hypothesis) {\n        auto loc = std::inner_product(g_truth.begin(),\
+    \ g_truth.end(),\n                                      output_strides.begin(),\
+    \ int64_t{0});\n        OP_REQUIRES(\n            ctx, loc < output_elements,\n\
+    \            errors::Internal(\"Got an inner product \", loc,\n              \
+    \               \" which would require in writing to outside of \"\n         \
+    \                    \"the buffer for the output tensor (max elements \",\n  \
+    \                           output_elements, \")\"));\n        output_t(loc) =\n\
+    \            gtl::LevenshteinDistance<T>(truth_seq, hypothesis_seq, cmp);\n  \
+    \      if (normalize_) output_t(loc) /= truth_seq.size();\n\n        ++hypothesis_iter;\n\
+    \        ++truth_iter;\n      } else if (g_truth > g_hypothesis) {  // zero-length\
+    \ truth\n        auto loc = std::inner_product(g_hypothesis.begin(), g_hypothesis.end(),\n\
+    \                                      output_strides.begin(), int64_t{0});\n\
+    \        OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = hypothesis_seq.size();\n        if (normalize_\
+    \ && output_t(loc) != 0.0f) {\n          output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \        }\n        ++hypothesis_iter;\n      } else {  // zero-length hypothesis\n\
+    \        auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n     \
+    \                                 output_strides.begin(), int64_t{0});\n     \
+    \   OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n \
+    \       ++truth_iter;\n      }\n    }\n    while (hypothesis_iter != hypothesis_grouper.end())\
+    \ {  // zero-length truths\n      sparse::Group hypothesis_j = *hypothesis_iter;\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto hypothesis_seq\
+    \ = hypothesis_j.values<T>();\n      auto loc = std::inner_product(g_hypothesis.begin(),\
+    \ g_hypothesis.end(),\n                                    output_strides.begin(),\
+    \ int64_t{0});\n      OP_REQUIRES(\n          ctx, loc < output_elements,\n  \
+    \        errors::Internal(\"Got an inner product \", loc,\n                  \
+    \         \" which would require in writing to outside of the \"\n           \
+    \                \"buffer for the output tensor (max elements \",\n          \
+    \                 output_elements, \")\"));\n      output_t(loc) = hypothesis_seq.size();\n\
+    \      if (normalize_ && output_t(loc) != 0.0f) {\n        output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \      }\n      ++hypothesis_iter;\n    }\n    while (truth_iter != truth_grouper.end())\
+    \ {  // missing hypotheses\n      sparse::Group truth_i = *truth_iter;\n     \
+    \ std::vector<int64_t> g_truth = truth_i.group();\n      auto truth_seq = truth_i.values<T>();\n\
+    \      auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n       \
+    \                             output_strides.begin(), int64_t{0});\n      OP_REQUIRES(\n\
+    \          ctx, loc < output_elements,\n          errors::Internal(\"Got an inner\
+    \ product \", loc,\n                           \" which would require in writing\
+    \ to outside of the \"\n                           \"buffer for the output tensor\
+    \ (max elements \",\n                           output_elements, \")\"));\n  \
+    \    output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n      ++truth_iter;\n\
+    \    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\n  void Compute(OpKernelContext*\
+    \ ctx) override {\n    const Tensor* hypothesis_indices;\n    const Tensor* hypothesis_values;\n\
+    \    const Tensor* hypothesis_shape;\n    const Tensor* truth_indices;\n    const\
+    \ Tensor* truth_values;\n    const Tensor* truth_shape;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_indices\", &hypothesis_indices));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_values\", &hypothesis_values));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"hypothesis_shape\", &hypothesis_shape));\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->input(\"truth_indices\", &truth_indices));\n    OP_REQUIRES_OK(ctx, ctx->input(\"\
+    truth_values\", &truth_values));\n    OP_REQUIRES_OK(ctx, ctx->input(\"truth_shape\"\
+    , &truth_shape));\n\n    OP_REQUIRES_OK(\n        ctx, ValidateShapes(ctx, *hypothesis_indices,\
+    \ *hypothesis_values,\n                            *hypothesis_shape, *truth_indices,\
+    \ *truth_values,\n                            *truth_shape));\n\n    TensorShape\
+    \ hypothesis_st_shape;\n    OP_REQUIRES_OK(ctx,\n                   TensorShapeUtils::MakeShape(\n\
+    \                       hypothesis_shape->vec<int64_t>().data(),\n           \
+    \            hypothesis_shape->NumElements(), &hypothesis_st_shape));\n    TensorShape\
+    \ truth_st_shape;\n    OP_REQUIRES_OK(ctx, TensorShapeUtils::MakeShape(\n    \
+    \                        truth_shape->vec<int64_t>().data(),\n               \
+    \             truth_shape->NumElements(), &truth_st_shape));\n\n    // Assume\
+    \ indices are sorted in row-major order.\n    std::vector<int64_t> sorted_order(truth_st_shape.dims());\n\
+    \    std::iota(sorted_order.begin(), sorted_order.end(), 0);\n\n    sparse::SparseTensor\
+    \ hypothesis;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n       \
+    \                     *hypothesis_indices, *hypothesis_values,\n             \
+    \               hypothesis_st_shape, sorted_order, &hypothesis));\n\n    sparse::SparseTensor\
+    \ truth;\n    OP_REQUIRES_OK(ctx, sparse::SparseTensor::Create(\n            \
+    \                *truth_indices, *truth_values, truth_st_shape,\n            \
+    \                sorted_order, &truth));\n\n    // Group dims 0, 1, ..., RANK\
+    \ - 1.  The very last dim is assumed\n    // to store the variable length sequences.\n\
+    \    std::vector<int64_t> group_dims(truth_st_shape.dims() - 1);\n    std::iota(group_dims.begin(),\
+    \ group_dims.end(), 0);\n\n    TensorShape output_shape;\n    for (int d = 0;\
+    \ d < static_cast<int>(group_dims.size()); ++d) {\n      output_shape.AddDim(std::max(hypothesis_st_shape.dim_size(d),\n\
+    \                                   truth_st_shape.dim_size(d)));\n    }\n   \
+    \ const auto output_elements = output_shape.num_elements();\n    OP_REQUIRES(\n\
+    \        ctx, output_elements > 0,\n        errors::InvalidArgument(\"Got output\
+    \ shape \", output_shape.DebugString(),\n                                \" which\
+    \ has 0 elements\"));\n\n    Tensor* output = nullptr;\n    OP_REQUIRES_OK(ctx,\
+    \ ctx->allocate_output(\"output\", output_shape, &output));\n    auto output_t\
+    \ = output->flat<float>();\n    output_t.setZero();\n\n    std::vector<int64_t>\
+    \ output_strides(output_shape.dims());\n    output_strides[output_shape.dims()\
+    \ - 1] = 1;\n    for (int d = output_shape.dims() - 2; d >= 0; --d) {\n      output_strides[d]\
+    \ = output_strides[d + 1] * output_shape.dim_size(d + 1);\n    }\n\n    auto hypothesis_grouper\
+    \ = hypothesis.group(group_dims);\n    auto truth_grouper = truth.group(group_dims);\n\
+    \n    auto hypothesis_iter = hypothesis_grouper.begin();\n    auto truth_iter\
+    \ = truth_grouper.begin();\n\n    auto cmp = std::equal_to<T>();\n\n    while\
+    \ (hypothesis_iter != hypothesis_grouper.end() &&\n           truth_iter != truth_grouper.end())\
+    \ {\n      sparse::Group truth_i = *truth_iter;\n      sparse::Group hypothesis_j\
+    \ = *hypothesis_iter;\n      std::vector<int64_t> g_truth = truth_i.group();\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto truth_seq\
+    \ = truth_i.values<T>();\n      auto hypothesis_seq = hypothesis_j.values<T>();\n\
+    \n      if (g_truth == g_hypothesis) {\n        auto loc = std::inner_product(g_truth.begin(),\
+    \ g_truth.end(),\n                                      output_strides.begin(),\
+    \ int64_t{0});\n        OP_REQUIRES(\n            ctx, loc < output_elements,\n\
+    \            errors::Internal(\"Got an inner product \", loc,\n              \
+    \               \" which would require in writing to outside of \"\n         \
+    \                    \"the buffer for the output tensor (max elements \",\n  \
+    \                           output_elements, \")\"));\n        output_t(loc) =\n\
+    \            gtl::LevenshteinDistance<T>(truth_seq, hypothesis_seq, cmp);\n  \
+    \      if (normalize_) output_t(loc) /= truth_seq.size();\n\n        ++hypothesis_iter;\n\
+    \        ++truth_iter;\n      } else if (g_truth > g_hypothesis) {  // zero-length\
+    \ truth\n        auto loc = std::inner_product(g_hypothesis.begin(), g_hypothesis.end(),\n\
+    \                                      output_strides.begin(), int64_t{0});\n\
+    \        OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = hypothesis_seq.size();\n        if (normalize_\
+    \ && output_t(loc) != 0.0f) {\n          output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \        }\n        ++hypothesis_iter;\n      } else {  // zero-length hypothesis\n\
+    \        auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n     \
+    \                                 output_strides.begin(), int64_t{0});\n     \
+    \   OP_REQUIRES(\n            ctx, loc < output_elements,\n            errors::Internal(\"\
+    Got an inner product \", loc,\n                             \" which would require\
+    \ in writing to outside of \"\n                             \"the buffer for the\
+    \ output tensor (max elements \",\n                             output_elements,\
+    \ \")\"));\n        output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n \
+    \       ++truth_iter;\n      }\n    }\n    while (hypothesis_iter != hypothesis_grouper.end())\
+    \ {  // zero-length truths\n      sparse::Group hypothesis_j = *hypothesis_iter;\n\
+    \      std::vector<int64_t> g_hypothesis = hypothesis_j.group();\n      auto hypothesis_seq\
+    \ = hypothesis_j.values<T>();\n      auto loc = std::inner_product(g_hypothesis.begin(),\
+    \ g_hypothesis.end(),\n                                    output_strides.begin(),\
+    \ int64_t{0});\n      OP_REQUIRES(\n          ctx, loc < output_elements,\n  \
+    \        errors::Internal(\"Got an inner product \", loc,\n                  \
+    \         \" which would require in writing to outside of the \"\n           \
+    \                \"buffer for the output tensor (max elements \",\n          \
+    \                 output_elements, \")\"));\n      output_t(loc) = hypothesis_seq.size();\n\
+    \      if (normalize_ && output_t(loc) != 0.0f) {\n        output_t(loc) = std::numeric_limits<float>::infinity();\n\
+    \      }\n      ++hypothesis_iter;\n    }\n    while (truth_iter != truth_grouper.end())\
+    \ {  // missing hypotheses\n      sparse::Group truth_i = *truth_iter;\n     \
+    \ std::vector<int64_t> g_truth = truth_i.group();\n      auto truth_seq = truth_i.values<T>();\n\
+    \      auto loc = std::inner_product(g_truth.begin(), g_truth.end(),\n       \
+    \                             output_strides.begin(), int64_t{0});\n      OP_REQUIRES(\n\
+    \          ctx, loc < output_elements,\n          errors::Internal(\"Got an inner\
+    \ product \", loc,\n                           \" which would require in writing\
+    \ to outside of the \"\n                           \"buffer for the output tensor\
+    \ (max elements \",\n                           output_elements, \")\"));\n  \
+    \    output_t(loc) = (normalize_) ? 1.0 : truth_seq.size();\n      ++truth_iter;\n\
+    \    }\n  }"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 195965
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

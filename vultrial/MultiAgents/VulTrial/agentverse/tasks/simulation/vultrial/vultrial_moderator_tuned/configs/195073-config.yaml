@@ -1,0 +1,435 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\n  void\
+    \ DecodePngV2(OpKernelContext* context, StringPiece input) {\n    int channel_bits\
+    \ = (data_type_ == DataType::DT_UINT8) ? 8 : 16;\n    png::DecodeContext decode;\n\
+    \    OP_REQUIRES(\n        context, png::CommonInitDecode(input, channels_, channel_bits,\
+    \ &decode),\n        errors::InvalidArgument(\"Invalid PNG. Failed to initialize\
+    \ decoder.\"));\n\n    // Verify that width and height are not too large:\n  \
+    \  // - verify width and height don't overflow int.\n    // - width can later\
+    \ be multiplied by channels_ and sizeof(uint16), so\n    //   verify single dimension\
+    \ is not too large.\n    // - verify when width and height are multiplied together,\
+    \ there are a few\n    //   bits to spare as well.\n    const int width = static_cast<int>(decode.width);\n\
+    \    const int height = static_cast<int>(decode.height);\n    const int64_t total_size\
+    \ =\n        static_cast<int64_t>(width) * static_cast<int64_t>(height);\n   \
+    \ if (width != static_cast<int64_t>(decode.width) || width <= 0 ||\n        width\
+    \ >= (1LL << 27) || height != static_cast<int64_t>(decode.height) ||\n       \
+    \ height <= 0 || height >= (1LL << 27) || total_size >= (1LL << 29)) {\n     \
+    \ png::CommonFreeDecode(&decode);\n      OP_REQUIRES(context, false,\n       \
+    \           errors::InvalidArgument(\"PNG size too large for int: \",\n      \
+    \                                    decode.width, \" by \", decode.height));\n\
+    \    }\n\n    Tensor* output = nullptr;\n    Status status;\n    // By the existing\
+    \ API, we support decoding PNG with `DecodeGif` op.\n    // We need to make sure\
+    \ to return 4-D shapes when using `DecodeGif`.\n    if (op_type_ == \"DecodeGif\"\
+    ) {\n      status = context->allocate_output(\n          0, TensorShape({1, height,\
+    \ width, decode.channels}), &output);\n    } else {\n      status = context->allocate_output(\n\
+    \          0, TensorShape({height, width, decode.channels}), &output);\n    }\n\
+    \n    if (op_type_ == \"DecodeBmp\") {\n      // TODO(b/171060723): Only DecodeBmp\
+    \ as op_type_ is not acceptable here\n      // because currently `decode_(jpeg|png|gif)`\
+    \ ops can decode any one of\n      // jpeg, png or gif but not bmp. Similarly,\
+    \ `decode_bmp` cannot decode\n      // anything but bmp formats. This behavior\
+    \ needs to be revisited. For more\n      // details, please refer to the bug.\n\
+    \      OP_REQUIRES(context, false,\n                  errors::InvalidArgument(\n\
+    \                      \"Trying to decode PNG format using DecodeBmp op. Use \"\
+    \n                      \"`decode_png` or `decode_image` instead.\"));\n    }\
+    \ else if (op_type_ == \"DecodeAndCropJpeg\") {\n      OP_REQUIRES(context, false,\n\
+    \                  errors::InvalidArgument(\n                      \"DecodeAndCropJpeg\
+    \ operation can run on JPEG only, but \"\n                      \"detected PNG.\"\
+    ));\n    }\n\n    if (!status.ok()) png::CommonFreeDecode(&decode);\n    OP_REQUIRES_OK(context,\
+    \ status);\n\n    if (data_type_ == DataType::DT_UINT8) {\n      OP_REQUIRES(\n\
+    \          context,\n          png::CommonFinishDecode(\n              reinterpret_cast<png_bytep>(output->flat<uint8>().data()),\n\
+    \              decode.channels * width * sizeof(uint8), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_UINT16)\
+    \ {\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(\n\
+    \              reinterpret_cast<png_bytep>(output->flat<uint16>().data()),\n \
+    \             decode.channels * width * sizeof(uint16), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_FLOAT)\
+    \ {\n      // `png::CommonFinishDecode` does not support `float`. First allocate\n\
+    \      // uint16 buffer for the image and decode in uint16 (lossless). Wrap the\n\
+    \      // buffer in `unique_ptr` so that we don't forget to delete the buffer.\n\
+    \      std::unique_ptr<uint16[]> buffer(\n          new uint16[height * width\
+    \ * decode.channels]);\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(reinterpret_cast<png_bytep>(buffer.get()),\n\
+    \                                  decode.channels * width * sizeof(uint16),\n\
+    \                                  &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n\n      // Convert uint16 image data\
+    \ to desired data type.\n      // Use eigen threadpooling to speed up the copy\
+    \ operation.\n      const auto& device = context->eigen_device<Eigen::ThreadPoolDevice>();\n\
+    \      TTypes<uint16, 3>::UnalignedConstTensor buf(buffer.get(), height, width,\n\
+    \                                                  decode.channels);\n      float\
+    \ scale = 1. / std::numeric_limits<uint16>::max();\n      // Fill output tensor\
+    \ with desired dtype.\n      output->tensor<float, 3>().device(device) = buf.cast<float>()\
+    \ * scale;\n    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\n  void DecodePngV2(OpKernelContext*\
+    \ context, StringPiece input) {\n    int channel_bits = (data_type_ == DataType::DT_UINT8)\
+    \ ? 8 : 16;\n    png::DecodeContext decode;\n    OP_REQUIRES(\n        context,\
+    \ png::CommonInitDecode(input, channels_, channel_bits, &decode),\n        errors::InvalidArgument(\"\
+    Invalid PNG. Failed to initialize decoder.\"));\n\n    // Verify that width and\
+    \ height are not too large:\n    // - verify width and height don't overflow int.\n\
+    \    // - width can later be multiplied by channels_ and sizeof(uint16), so\n\
+    \    //   verify single dimension is not too large.\n    // - verify when width\
+    \ and height are multiplied together, there are a few\n    //   bits to spare\
+    \ as well.\n    const int width = static_cast<int>(decode.width);\n    const int\
+    \ height = static_cast<int>(decode.height);\n    const int64_t total_size =\n\
+    \        static_cast<int64_t>(width) * static_cast<int64_t>(height);\n    if (width\
+    \ != static_cast<int64_t>(decode.width) || width <= 0 ||\n        width >= (1LL\
+    \ << 27) || height != static_cast<int64_t>(decode.height) ||\n        height <=\
+    \ 0 || height >= (1LL << 27) || total_size >= (1LL << 29)) {\n      png::CommonFreeDecode(&decode);\n\
+    \      OP_REQUIRES(context, false,\n                  errors::InvalidArgument(\"\
+    PNG size too large for int: \",\n                                          decode.width,\
+    \ \" by \", decode.height));\n    }\n\n    Tensor* output = nullptr;\n    Status\
+    \ status;\n    // By the existing API, we support decoding PNG with `DecodeGif`\
+    \ op.\n    // We need to make sure to return 4-D shapes when using `DecodeGif`.\n\
+    \    if (op_type_ == \"DecodeGif\") {\n      status = context->allocate_output(\n\
+    \          0, TensorShape({1, height, width, decode.channels}), &output);\n  \
+    \  } else {\n      status = context->allocate_output(\n          0, TensorShape({height,\
+    \ width, decode.channels}), &output);\n    }\n\n    if (op_type_ == \"DecodeBmp\"\
+    ) {\n      // TODO(b/171060723): Only DecodeBmp as op_type_ is not acceptable\
+    \ here\n      // because currently `decode_(jpeg|png|gif)` ops can decode any\
+    \ one of\n      // jpeg, png or gif but not bmp. Similarly, `decode_bmp` cannot\
+    \ decode\n      // anything but bmp formats. This behavior needs to be revisited.\
+    \ For more\n      // details, please refer to the bug.\n      OP_REQUIRES(context,\
+    \ false,\n                  errors::InvalidArgument(\n                      \"\
+    Trying to decode PNG format using DecodeBmp op. Use \"\n                     \
+    \ \"`decode_png` or `decode_image` instead.\"));\n    } else if (op_type_ == \"\
+    DecodeAndCropJpeg\") {\n      OP_REQUIRES(context, false,\n                  errors::InvalidArgument(\n\
+    \                      \"DecodeAndCropJpeg operation can run on JPEG only, but\
+    \ \"\n                      \"detected PNG.\"));\n    }\n\n    if (!status.ok())\
+    \ png::CommonFreeDecode(&decode);\n    OP_REQUIRES_OK(context, status);\n\n  \
+    \  if (data_type_ == DataType::DT_UINT8) {\n      OP_REQUIRES(\n          context,\n\
+    \          png::CommonFinishDecode(\n              reinterpret_cast<png_bytep>(output->flat<uint8>().data()),\n\
+    \              decode.channels * width * sizeof(uint8), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_UINT16)\
+    \ {\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(\n\
+    \              reinterpret_cast<png_bytep>(output->flat<uint16>().data()),\n \
+    \             decode.channels * width * sizeof(uint16), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_FLOAT)\
+    \ {\n      // `png::CommonFinishDecode` does not support `float`. First allocate\n\
+    \      // uint16 buffer for the image and decode in uint16 (lossless). Wrap the\n\
+    \      // buffer in `unique_ptr` so that we don't forget to delete the buffer.\n\
+    \      std::unique_ptr<uint16[]> buffer(\n          new uint16[height * width\
+    \ * decode.channels]);\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(reinterpret_cast<png_bytep>(buffer.get()),\n\
+    \                                  decode.channels * width * sizeof(uint16),\n\
+    \                                  &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n\n      // Convert uint16 image data\
+    \ to desired data type.\n      // Use eigen threadpooling to speed up the copy\
+    \ operation.\n      const auto& device = context->eigen_device<Eigen::ThreadPoolDevice>();\n\
+    \      TTypes<uint16, 3>::UnalignedConstTensor buf(buffer.get(), height, width,\n\
+    \                                                  decode.channels);\n      float\
+    \ scale = 1. / std::numeric_limits<uint16>::max();\n      // Fill output tensor\
+    \ with desired dtype.\n      output->tensor<float, 3>().device(device) = buf.cast<float>()\
+    \ * scale;\n    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\n  void DecodePngV2(OpKernelContext* context,\
+    \ StringPiece input) {\n    int channel_bits = (data_type_ == DataType::DT_UINT8)\
+    \ ? 8 : 16;\n    png::DecodeContext decode;\n    OP_REQUIRES(\n        context,\
+    \ png::CommonInitDecode(input, channels_, channel_bits, &decode),\n        errors::InvalidArgument(\"\
+    Invalid PNG. Failed to initialize decoder.\"));\n\n    // Verify that width and\
+    \ height are not too large:\n    // - verify width and height don't overflow int.\n\
+    \    // - width can later be multiplied by channels_ and sizeof(uint16), so\n\
+    \    //   verify single dimension is not too large.\n    // - verify when width\
+    \ and height are multiplied together, there are a few\n    //   bits to spare\
+    \ as well.\n    const int width = static_cast<int>(decode.width);\n    const int\
+    \ height = static_cast<int>(decode.height);\n    const int64_t total_size =\n\
+    \        static_cast<int64_t>(width) * static_cast<int64_t>(height);\n    if (width\
+    \ != static_cast<int64_t>(decode.width) || width <= 0 ||\n        width >= (1LL\
+    \ << 27) || height != static_cast<int64_t>(decode.height) ||\n        height <=\
+    \ 0 || height >= (1LL << 27) || total_size >= (1LL << 29)) {\n      png::CommonFreeDecode(&decode);\n\
+    \      OP_REQUIRES(context, false,\n                  errors::InvalidArgument(\"\
+    PNG size too large for int: \",\n                                          decode.width,\
+    \ \" by \", decode.height));\n    }\n\n    Tensor* output = nullptr;\n    Status\
+    \ status;\n    // By the existing API, we support decoding PNG with `DecodeGif`\
+    \ op.\n    // We need to make sure to return 4-D shapes when using `DecodeGif`.\n\
+    \    if (op_type_ == \"DecodeGif\") {\n      status = context->allocate_output(\n\
+    \          0, TensorShape({1, height, width, decode.channels}), &output);\n  \
+    \  } else {\n      status = context->allocate_output(\n          0, TensorShape({height,\
+    \ width, decode.channels}), &output);\n    }\n\n    if (op_type_ == \"DecodeBmp\"\
+    ) {\n      // TODO(b/171060723): Only DecodeBmp as op_type_ is not acceptable\
+    \ here\n      // because currently `decode_(jpeg|png|gif)` ops can decode any\
+    \ one of\n      // jpeg, png or gif but not bmp. Similarly, `decode_bmp` cannot\
+    \ decode\n      // anything but bmp formats. This behavior needs to be revisited.\
+    \ For more\n      // details, please refer to the bug.\n      OP_REQUIRES(context,\
+    \ false,\n                  errors::InvalidArgument(\n                      \"\
+    Trying to decode PNG format using DecodeBmp op. Use \"\n                     \
+    \ \"`decode_png` or `decode_image` instead.\"));\n    } else if (op_type_ == \"\
+    DecodeAndCropJpeg\") {\n      OP_REQUIRES(context, false,\n                  errors::InvalidArgument(\n\
+    \                      \"DecodeAndCropJpeg operation can run on JPEG only, but\
+    \ \"\n                      \"detected PNG.\"));\n    }\n\n    if (!status.ok())\
+    \ png::CommonFreeDecode(&decode);\n    OP_REQUIRES_OK(context, status);\n\n  \
+    \  if (data_type_ == DataType::DT_UINT8) {\n      OP_REQUIRES(\n          context,\n\
+    \          png::CommonFinishDecode(\n              reinterpret_cast<png_bytep>(output->flat<uint8>().data()),\n\
+    \              decode.channels * width * sizeof(uint8), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_UINT16)\
+    \ {\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(\n\
+    \              reinterpret_cast<png_bytep>(output->flat<uint16>().data()),\n \
+    \             decode.channels * width * sizeof(uint16), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_FLOAT)\
+    \ {\n      // `png::CommonFinishDecode` does not support `float`. First allocate\n\
+    \      // uint16 buffer for the image and decode in uint16 (lossless). Wrap the\n\
+    \      // buffer in `unique_ptr` so that we don't forget to delete the buffer.\n\
+    \      std::unique_ptr<uint16[]> buffer(\n          new uint16[height * width\
+    \ * decode.channels]);\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(reinterpret_cast<png_bytep>(buffer.get()),\n\
+    \                                  decode.channels * width * sizeof(uint16),\n\
+    \                                  &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n\n      // Convert uint16 image data\
+    \ to desired data type.\n      // Use eigen threadpooling to speed up the copy\
+    \ operation.\n      const auto& device = context->eigen_device<Eigen::ThreadPoolDevice>();\n\
+    \      TTypes<uint16, 3>::UnalignedConstTensor buf(buffer.get(), height, width,\n\
+    \                                                  decode.channels);\n      float\
+    \ scale = 1. / std::numeric_limits<uint16>::max();\n      // Fill output tensor\
+    \ with desired dtype.\n      output->tensor<float, 3>().device(device) = buf.cast<float>()\
+    \ * scale;\n    }\n  }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\n  void DecodePngV2(OpKernelContext*\
+    \ context, StringPiece input) {\n    int channel_bits = (data_type_ == DataType::DT_UINT8)\
+    \ ? 8 : 16;\n    png::DecodeContext decode;\n    OP_REQUIRES(\n        context,\
+    \ png::CommonInitDecode(input, channels_, channel_bits, &decode),\n        errors::InvalidArgument(\"\
+    Invalid PNG. Failed to initialize decoder.\"));\n\n    // Verify that width and\
+    \ height are not too large:\n    // - verify width and height don't overflow int.\n\
+    \    // - width can later be multiplied by channels_ and sizeof(uint16), so\n\
+    \    //   verify single dimension is not too large.\n    // - verify when width\
+    \ and height are multiplied together, there are a few\n    //   bits to spare\
+    \ as well.\n    const int width = static_cast<int>(decode.width);\n    const int\
+    \ height = static_cast<int>(decode.height);\n    const int64_t total_size =\n\
+    \        static_cast<int64_t>(width) * static_cast<int64_t>(height);\n    if (width\
+    \ != static_cast<int64_t>(decode.width) || width <= 0 ||\n        width >= (1LL\
+    \ << 27) || height != static_cast<int64_t>(decode.height) ||\n        height <=\
+    \ 0 || height >= (1LL << 27) || total_size >= (1LL << 29)) {\n      png::CommonFreeDecode(&decode);\n\
+    \      OP_REQUIRES(context, false,\n                  errors::InvalidArgument(\"\
+    PNG size too large for int: \",\n                                          decode.width,\
+    \ \" by \", decode.height));\n    }\n\n    Tensor* output = nullptr;\n    Status\
+    \ status;\n    // By the existing API, we support decoding PNG with `DecodeGif`\
+    \ op.\n    // We need to make sure to return 4-D shapes when using `DecodeGif`.\n\
+    \    if (op_type_ == \"DecodeGif\") {\n      status = context->allocate_output(\n\
+    \          0, TensorShape({1, height, width, decode.channels}), &output);\n  \
+    \  } else {\n      status = context->allocate_output(\n          0, TensorShape({height,\
+    \ width, decode.channels}), &output);\n    }\n\n    if (op_type_ == \"DecodeBmp\"\
+    ) {\n      // TODO(b/171060723): Only DecodeBmp as op_type_ is not acceptable\
+    \ here\n      // because currently `decode_(jpeg|png|gif)` ops can decode any\
+    \ one of\n      // jpeg, png or gif but not bmp. Similarly, `decode_bmp` cannot\
+    \ decode\n      // anything but bmp formats. This behavior needs to be revisited.\
+    \ For more\n      // details, please refer to the bug.\n      OP_REQUIRES(context,\
+    \ false,\n                  errors::InvalidArgument(\n                      \"\
+    Trying to decode PNG format using DecodeBmp op. Use \"\n                     \
+    \ \"`decode_png` or `decode_image` instead.\"));\n    } else if (op_type_ == \"\
+    DecodeAndCropJpeg\") {\n      OP_REQUIRES(context, false,\n                  errors::InvalidArgument(\n\
+    \                      \"DecodeAndCropJpeg operation can run on JPEG only, but\
+    \ \"\n                      \"detected PNG.\"));\n    }\n\n    if (!status.ok())\
+    \ png::CommonFreeDecode(&decode);\n    OP_REQUIRES_OK(context, status);\n\n  \
+    \  if (data_type_ == DataType::DT_UINT8) {\n      OP_REQUIRES(\n          context,\n\
+    \          png::CommonFinishDecode(\n              reinterpret_cast<png_bytep>(output->flat<uint8>().data()),\n\
+    \              decode.channels * width * sizeof(uint8), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_UINT16)\
+    \ {\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(\n\
+    \              reinterpret_cast<png_bytep>(output->flat<uint16>().data()),\n \
+    \             decode.channels * width * sizeof(uint16), &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n    } else if (data_type_ == DataType::DT_FLOAT)\
+    \ {\n      // `png::CommonFinishDecode` does not support `float`. First allocate\n\
+    \      // uint16 buffer for the image and decode in uint16 (lossless). Wrap the\n\
+    \      // buffer in `unique_ptr` so that we don't forget to delete the buffer.\n\
+    \      std::unique_ptr<uint16[]> buffer(\n          new uint16[height * width\
+    \ * decode.channels]);\n      OP_REQUIRES(\n          context,\n          png::CommonFinishDecode(reinterpret_cast<png_bytep>(buffer.get()),\n\
+    \                                  decode.channels * width * sizeof(uint16),\n\
+    \                                  &decode),\n          errors::InvalidArgument(\"\
+    Invalid PNG data, size \", input.size()));\n\n      // Convert uint16 image data\
+    \ to desired data type.\n      // Use eigen threadpooling to speed up the copy\
+    \ operation.\n      const auto& device = context->eigen_device<Eigen::ThreadPoolDevice>();\n\
+    \      TTypes<uint16, 3>::UnalignedConstTensor buf(buffer.get(), height, width,\n\
+    \                                                  decode.channels);\n      float\
+    \ scale = 1. / std::numeric_limits<uint16>::max();\n      // Fill output tensor\
+    \ with desired dtype.\n      output->tensor<float, 3>().device(device) = buf.cast<float>()\
+    \ * scale;\n    }\n  }"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 195073
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

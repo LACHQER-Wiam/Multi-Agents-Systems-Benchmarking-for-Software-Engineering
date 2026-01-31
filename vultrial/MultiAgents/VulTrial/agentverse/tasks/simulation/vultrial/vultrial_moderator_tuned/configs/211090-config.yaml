@@ -1,0 +1,336 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nadd_mtab(char\
+    \ *devname, char *mountpoint, unsigned long flags, const char *fstype)\n{\n\t\
+    int rc = 0;\n\tuid_t uid;\n\tchar *mount_user = NULL;\n\tstruct mntent mountent;\n\
+    \tFILE *pmntfile;\n\tsigset_t mask, oldmask;\n\n\tuid = getuid();\n\tif (uid !=\
+    \ 0)\n\t\tmount_user = getusername(uid);\n\n\t/*\n\t * Set the real uid to the\
+    \ effective uid. This prevents unprivileged\n\t * users from sending signals to\
+    \ this process, though ^c on controlling\n\t * terminal should still work.\n\t\
+    \ */\n\trc = setreuid(geteuid(), -1);\n\tif (rc != 0) {\n\t\tfprintf(stderr, \"\
+    Unable to set real uid to effective uid: %s\\n\",\n\t\t\t\tstrerror(errno));\n\
+    \t\treturn EX_FILEIO;\n\t}\n\n\trc = sigfillset(&mask);\n\tif (rc) {\n\t\tfprintf(stderr,\
+    \ \"Unable to set filled signal mask\\n\");\n\t\treturn EX_FILEIO;\n\t}\n\n\t\
+    rc = sigprocmask(SIG_SETMASK, &mask, &oldmask);\n\tif (rc) {\n\t\tfprintf(stderr,\
+    \ \"Unable to make process ignore signals\\n\");\n\t\treturn EX_FILEIO;\n\t}\n\
+    \n\trc = toggle_dac_capability(1, 1);\n\tif (rc)\n\t\treturn EX_FILEIO;\n\n\t\
+    atexit(unlock_mtab);\n\trc = lock_mtab();\n\tif (rc) {\n\t\tfprintf(stderr, \"\
+    cannot lock mtab\");\n\t\trc = EX_FILEIO;\n\t\tgoto add_mtab_exit;\n\t}\n\n\t\
+    pmntfile = setmntent(MOUNTED, \"a+\");\n\tif (!pmntfile) {\n\t\tfprintf(stderr,\
+    \ \"could not update mount table\\n\");\n\t\tunlock_mtab();\n\t\trc = EX_FILEIO;\n\
+    \t\tgoto add_mtab_exit;\n\t}\n\n\tmountent.mnt_fsname = devname;\n\tmountent.mnt_dir\
+    \ = mountpoint;\n\tmountent.mnt_type = (char *)(void *)fstype;\n\tmountent.mnt_opts\
+    \ = (char *)calloc(MTAB_OPTIONS_LEN, 1);\n\tif (mountent.mnt_opts) {\n\t\tif (flags\
+    \ & MS_RDONLY)\n\t\t\tstrlcat(mountent.mnt_opts, \"ro\", MTAB_OPTIONS_LEN);\n\t\
+    \telse\n\t\t\tstrlcat(mountent.mnt_opts, \"rw\", MTAB_OPTIONS_LEN);\n\n\t\tif\
+    \ (flags & MS_MANDLOCK)\n\t\t\tstrlcat(mountent.mnt_opts, \",mand\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_NOEXEC)\n\t\t\tstrlcat(mountent.mnt_opts, \",noexec\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_NOSUID)\n\t\t\tstrlcat(mountent.mnt_opts, \",nosuid\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_NODEV)\n\t\t\tstrlcat(mountent.mnt_opts, \",nodev\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_SYNCHRONOUS)\n\t\t\tstrlcat(mountent.mnt_opts, \",sync\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (mount_user) {\n\t\t\tstrlcat(mountent.mnt_opts, \",user=\", MTAB_OPTIONS_LEN);\n\
+    \t\t\tstrlcat(mountent.mnt_opts, mount_user,\n\t\t\t\tMTAB_OPTIONS_LEN);\n\t\t\
+    }\n\t}\n\tmountent.mnt_freq = 0;\n\tmountent.mnt_passno = 0;\n\trc = addmntent(pmntfile,\
+    \ &mountent);\n\tif (rc) {\n\t\tfprintf(stderr, \"unable to add mount entry to\
+    \ mtab\\n\");\n\t\trc = EX_FILEIO;\n\t}\n\tendmntent(pmntfile);\n\tunlock_mtab();\n\
+    \tSAFE_FREE(mountent.mnt_opts);\nadd_mtab_exit:\n\ttoggle_dac_capability(1, 0);\n\
+    \tsigprocmask(SIG_SETMASK, &oldmask, NULL);\n\n\treturn rc;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nadd_mtab(char *devname,\
+    \ char *mountpoint, unsigned long flags, const char *fstype)\n{\n\tint rc = 0;\n\
+    \tuid_t uid;\n\tchar *mount_user = NULL;\n\tstruct mntent mountent;\n\tFILE *pmntfile;\n\
+    \tsigset_t mask, oldmask;\n\n\tuid = getuid();\n\tif (uid != 0)\n\t\tmount_user\
+    \ = getusername(uid);\n\n\t/*\n\t * Set the real uid to the effective uid. This\
+    \ prevents unprivileged\n\t * users from sending signals to this process, though\
+    \ ^c on controlling\n\t * terminal should still work.\n\t */\n\trc = setreuid(geteuid(),\
+    \ -1);\n\tif (rc != 0) {\n\t\tfprintf(stderr, \"Unable to set real uid to effective\
+    \ uid: %s\\n\",\n\t\t\t\tstrerror(errno));\n\t\treturn EX_FILEIO;\n\t}\n\n\trc\
+    \ = sigfillset(&mask);\n\tif (rc) {\n\t\tfprintf(stderr, \"Unable to set filled\
+    \ signal mask\\n\");\n\t\treturn EX_FILEIO;\n\t}\n\n\trc = sigprocmask(SIG_SETMASK,\
+    \ &mask, &oldmask);\n\tif (rc) {\n\t\tfprintf(stderr, \"Unable to make process\
+    \ ignore signals\\n\");\n\t\treturn EX_FILEIO;\n\t}\n\n\trc = toggle_dac_capability(1,\
+    \ 1);\n\tif (rc)\n\t\treturn EX_FILEIO;\n\n\tatexit(unlock_mtab);\n\trc = lock_mtab();\n\
+    \tif (rc) {\n\t\tfprintf(stderr, \"cannot lock mtab\");\n\t\trc = EX_FILEIO;\n\
+    \t\tgoto add_mtab_exit;\n\t}\n\n\tpmntfile = setmntent(MOUNTED, \"a+\");\n\tif\
+    \ (!pmntfile) {\n\t\tfprintf(stderr, \"could not update mount table\\n\");\n\t\
+    \tunlock_mtab();\n\t\trc = EX_FILEIO;\n\t\tgoto add_mtab_exit;\n\t}\n\n\tmountent.mnt_fsname\
+    \ = devname;\n\tmountent.mnt_dir = mountpoint;\n\tmountent.mnt_type = (char *)(void\
+    \ *)fstype;\n\tmountent.mnt_opts = (char *)calloc(MTAB_OPTIONS_LEN, 1);\n\tif\
+    \ (mountent.mnt_opts) {\n\t\tif (flags & MS_RDONLY)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \"ro\", MTAB_OPTIONS_LEN);\n\t\telse\n\t\t\tstrlcat(mountent.mnt_opts, \"rw\"\
+    , MTAB_OPTIONS_LEN);\n\n\t\tif (flags & MS_MANDLOCK)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",mand\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_NOEXEC)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",noexec\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_NOSUID)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",nosuid\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_NODEV)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",nodev\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_SYNCHRONOUS)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",sync\", MTAB_OPTIONS_LEN);\n\t\tif (mount_user) {\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",user=\", MTAB_OPTIONS_LEN);\n\t\t\tstrlcat(mountent.mnt_opts, mount_user,\n\
+    \t\t\t\tMTAB_OPTIONS_LEN);\n\t\t}\n\t}\n\tmountent.mnt_freq = 0;\n\tmountent.mnt_passno\
+    \ = 0;\n\trc = addmntent(pmntfile, &mountent);\n\tif (rc) {\n\t\tfprintf(stderr,\
+    \ \"unable to add mount entry to mtab\\n\");\n\t\trc = EX_FILEIO;\n\t}\n\tendmntent(pmntfile);\n\
+    \tunlock_mtab();\n\tSAFE_FREE(mountent.mnt_opts);\nadd_mtab_exit:\n\ttoggle_dac_capability(1,\
+    \ 0);\n\tsigprocmask(SIG_SETMASK, &oldmask, NULL);\n\n\treturn rc;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nadd_mtab(char *devname, char *mountpoint,\
+    \ unsigned long flags, const char *fstype)\n{\n\tint rc = 0;\n\tuid_t uid;\n\t\
+    char *mount_user = NULL;\n\tstruct mntent mountent;\n\tFILE *pmntfile;\n\tsigset_t\
+    \ mask, oldmask;\n\n\tuid = getuid();\n\tif (uid != 0)\n\t\tmount_user = getusername(uid);\n\
+    \n\t/*\n\t * Set the real uid to the effective uid. This prevents unprivileged\n\
+    \t * users from sending signals to this process, though ^c on controlling\n\t\
+    \ * terminal should still work.\n\t */\n\trc = setreuid(geteuid(), -1);\n\tif\
+    \ (rc != 0) {\n\t\tfprintf(stderr, \"Unable to set real uid to effective uid:\
+    \ %s\\n\",\n\t\t\t\tstrerror(errno));\n\t\treturn EX_FILEIO;\n\t}\n\n\trc = sigfillset(&mask);\n\
+    \tif (rc) {\n\t\tfprintf(stderr, \"Unable to set filled signal mask\\n\");\n\t\
+    \treturn EX_FILEIO;\n\t}\n\n\trc = sigprocmask(SIG_SETMASK, &mask, &oldmask);\n\
+    \tif (rc) {\n\t\tfprintf(stderr, \"Unable to make process ignore signals\\n\"\
+    );\n\t\treturn EX_FILEIO;\n\t}\n\n\trc = toggle_dac_capability(1, 1);\n\tif (rc)\n\
+    \t\treturn EX_FILEIO;\n\n\tatexit(unlock_mtab);\n\trc = lock_mtab();\n\tif (rc)\
+    \ {\n\t\tfprintf(stderr, \"cannot lock mtab\");\n\t\trc = EX_FILEIO;\n\t\tgoto\
+    \ add_mtab_exit;\n\t}\n\n\tpmntfile = setmntent(MOUNTED, \"a+\");\n\tif (!pmntfile)\
+    \ {\n\t\tfprintf(stderr, \"could not update mount table\\n\");\n\t\tunlock_mtab();\n\
+    \t\trc = EX_FILEIO;\n\t\tgoto add_mtab_exit;\n\t}\n\n\tmountent.mnt_fsname = devname;\n\
+    \tmountent.mnt_dir = mountpoint;\n\tmountent.mnt_type = (char *)(void *)fstype;\n\
+    \tmountent.mnt_opts = (char *)calloc(MTAB_OPTIONS_LEN, 1);\n\tif (mountent.mnt_opts)\
+    \ {\n\t\tif (flags & MS_RDONLY)\n\t\t\tstrlcat(mountent.mnt_opts, \"ro\", MTAB_OPTIONS_LEN);\n\
+    \t\telse\n\t\t\tstrlcat(mountent.mnt_opts, \"rw\", MTAB_OPTIONS_LEN);\n\n\t\t\
+    if (flags & MS_MANDLOCK)\n\t\t\tstrlcat(mountent.mnt_opts, \",mand\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_NOEXEC)\n\t\t\tstrlcat(mountent.mnt_opts, \",noexec\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_NOSUID)\n\t\t\tstrlcat(mountent.mnt_opts, \",nosuid\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_NODEV)\n\t\t\tstrlcat(mountent.mnt_opts, \",nodev\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (flags & MS_SYNCHRONOUS)\n\t\t\tstrlcat(mountent.mnt_opts, \",sync\", MTAB_OPTIONS_LEN);\n\
+    \t\tif (mount_user) {\n\t\t\tstrlcat(mountent.mnt_opts, \",user=\", MTAB_OPTIONS_LEN);\n\
+    \t\t\tstrlcat(mountent.mnt_opts, mount_user,\n\t\t\t\tMTAB_OPTIONS_LEN);\n\t\t\
+    }\n\t}\n\tmountent.mnt_freq = 0;\n\tmountent.mnt_passno = 0;\n\trc = addmntent(pmntfile,\
+    \ &mountent);\n\tif (rc) {\n\t\tfprintf(stderr, \"unable to add mount entry to\
+    \ mtab\\n\");\n\t\trc = EX_FILEIO;\n\t}\n\tendmntent(pmntfile);\n\tunlock_mtab();\n\
+    \tSAFE_FREE(mountent.mnt_opts);\nadd_mtab_exit:\n\ttoggle_dac_capability(1, 0);\n\
+    \tsigprocmask(SIG_SETMASK, &oldmask, NULL);\n\n\treturn rc;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nadd_mtab(char *devname, char\
+    \ *mountpoint, unsigned long flags, const char *fstype)\n{\n\tint rc = 0;\n\t\
+    uid_t uid;\n\tchar *mount_user = NULL;\n\tstruct mntent mountent;\n\tFILE *pmntfile;\n\
+    \tsigset_t mask, oldmask;\n\n\tuid = getuid();\n\tif (uid != 0)\n\t\tmount_user\
+    \ = getusername(uid);\n\n\t/*\n\t * Set the real uid to the effective uid. This\
+    \ prevents unprivileged\n\t * users from sending signals to this process, though\
+    \ ^c on controlling\n\t * terminal should still work.\n\t */\n\trc = setreuid(geteuid(),\
+    \ -1);\n\tif (rc != 0) {\n\t\tfprintf(stderr, \"Unable to set real uid to effective\
+    \ uid: %s\\n\",\n\t\t\t\tstrerror(errno));\n\t\treturn EX_FILEIO;\n\t}\n\n\trc\
+    \ = sigfillset(&mask);\n\tif (rc) {\n\t\tfprintf(stderr, \"Unable to set filled\
+    \ signal mask\\n\");\n\t\treturn EX_FILEIO;\n\t}\n\n\trc = sigprocmask(SIG_SETMASK,\
+    \ &mask, &oldmask);\n\tif (rc) {\n\t\tfprintf(stderr, \"Unable to make process\
+    \ ignore signals\\n\");\n\t\treturn EX_FILEIO;\n\t}\n\n\trc = toggle_dac_capability(1,\
+    \ 1);\n\tif (rc)\n\t\treturn EX_FILEIO;\n\n\tatexit(unlock_mtab);\n\trc = lock_mtab();\n\
+    \tif (rc) {\n\t\tfprintf(stderr, \"cannot lock mtab\");\n\t\trc = EX_FILEIO;\n\
+    \t\tgoto add_mtab_exit;\n\t}\n\n\tpmntfile = setmntent(MOUNTED, \"a+\");\n\tif\
+    \ (!pmntfile) {\n\t\tfprintf(stderr, \"could not update mount table\\n\");\n\t\
+    \tunlock_mtab();\n\t\trc = EX_FILEIO;\n\t\tgoto add_mtab_exit;\n\t}\n\n\tmountent.mnt_fsname\
+    \ = devname;\n\tmountent.mnt_dir = mountpoint;\n\tmountent.mnt_type = (char *)(void\
+    \ *)fstype;\n\tmountent.mnt_opts = (char *)calloc(MTAB_OPTIONS_LEN, 1);\n\tif\
+    \ (mountent.mnt_opts) {\n\t\tif (flags & MS_RDONLY)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \"ro\", MTAB_OPTIONS_LEN);\n\t\telse\n\t\t\tstrlcat(mountent.mnt_opts, \"rw\"\
+    , MTAB_OPTIONS_LEN);\n\n\t\tif (flags & MS_MANDLOCK)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",mand\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_NOEXEC)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",noexec\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_NOSUID)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",nosuid\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_NODEV)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",nodev\", MTAB_OPTIONS_LEN);\n\t\tif (flags & MS_SYNCHRONOUS)\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",sync\", MTAB_OPTIONS_LEN);\n\t\tif (mount_user) {\n\t\t\tstrlcat(mountent.mnt_opts,\
+    \ \",user=\", MTAB_OPTIONS_LEN);\n\t\t\tstrlcat(mountent.mnt_opts, mount_user,\n\
+    \t\t\t\tMTAB_OPTIONS_LEN);\n\t\t}\n\t}\n\tmountent.mnt_freq = 0;\n\tmountent.mnt_passno\
+    \ = 0;\n\trc = addmntent(pmntfile, &mountent);\n\tif (rc) {\n\t\tfprintf(stderr,\
+    \ \"unable to add mount entry to mtab\\n\");\n\t\trc = EX_FILEIO;\n\t}\n\tendmntent(pmntfile);\n\
+    \tunlock_mtab();\n\tSAFE_FREE(mountent.mnt_opts);\nadd_mtab_exit:\n\ttoggle_dac_capability(1,\
+    \ 0);\n\tsigprocmask(SIG_SETMASK, &oldmask, NULL);\n\n\treturn rc;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 211090
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

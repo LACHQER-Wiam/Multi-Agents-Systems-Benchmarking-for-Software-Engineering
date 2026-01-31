@@ -1,0 +1,344 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nstatic\
+    \ RCoreSymCacheElement *parseDragons(RBinFile *bf, RBuffer *buf, int off, int\
+    \ bits, R_OWN char *file_name) {\n\tD eprintf (\"Dragons at 0x%x\\n\", off);\n\
+    \tut64 size = r_buf_size (buf);\n\tif (off >= size) {\n\t\treturn NULL;\n\t}\n\
+    \tsize -= off;\n\tif (!size) {\n\t\treturn NULL;\n\t}\n\tut8 *b = malloc (size);\n\
+    \tif (!b) {\n\t\treturn NULL;\n\t}\n\tint available = r_buf_read_at (buf, off,\
+    \ b, size);\n\tif (available != size) {\n\t\teprintf (\"Warning: r_buf_read_at\
+    \ failed\\n\");\n\t\treturn NULL;\n\t}\n#if 0\n\t// after the list of sections,\
+    \ there's a bunch of unknown\n\t// data, brobably dwords, and then the same section\
+    \ list again\n\t// this function aims to parse it.\n\t0x00000138 |1a2b b2a1 0300\
+    \ 0000 1a2b b2a1 e055 0000| .+.......+...U..\n                         n_segments\
+    \ ----.          .--- how many sections ?\n\t0x00000148 |0100 0000 ca55 0000 0400\
+    \ 0000 1800 0000| .....U..........\n\t             .---- how many symbols? 0xc7\n\
+    \t0x00000158 |c700 0000 0000 0000 0000 0000 0104 0000| ................\n\t0x00000168\
+    \ |250b e803 0000 0100 0000 0000 bd55 0000| %............U..\n\t0x00000178 |91bb\
+    \ e903 e35a b42c 93a4 340a 8746 9489| .....Z.,..4..F..\n\t0x00000188 |0cea 4c40\
+    \ 0c00 0000 0900 0000 0000 0000| ..L@............\n\t0x00000198 |0000 0000 0000\
+    \ 0000 0000 0000 0000 0000| ................\n\t0x000001a8 |0080 0000 0000 0000\
+    \ 5f5f 5445 5854 0000| ........__TEXT..\n\t0x000001b8 |0000 0000 0000 0000 0080\
+    \ 0000 0000 0000| ................\n\t0x000001c8 |0040 0000 0000 0000 5f5f 4441\
+    \ 5441 0000| .@......__DATA..\n\t0x000001d8 |0000 0000 0000 0000 00c0 0000 0000\
+    \ 0000| ................\n\t0x000001e8 |0000 0100 0000 0000 5f5f 4c4c 564d 0000|\
+    \ ........__LLVM..\n\t0x000001f8 |0000 0000 0000 0000 00c0 0100 0000 0000| ................\n\
+    \t0x00000208 |00c0 0000 0000 0000 5f5f 4c49 4e4b 4544| ........__LINKED\n\t0x00000218\
+    \ |4954 0000 0000 0000 0000 0000 d069 0000| IT...........i..\n#endif\n\t// eprintf\
+    \ (\"Dragon's magic:\\n\");\n\tint magicCombo = 0;\n\tif (!memcmp (\"\\x1a\\x2b\\\
+    xb2\\xa1\", b, 4)) { // 0x130  ?\n\t\tmagicCombo++;\n\t}\n\tif (!memcmp (\"\\\
+    x1a\\x2b\\xb2\\xa1\", b + 8, 4)) {\n\t\tmagicCombo++;\n\t}\n\tif (magicCombo !=\
+    \ 2) {\n\t\t// hack for C22F7494\n\t\tavailable = r_buf_read_at (buf, off - 8,\
+    \ b, size);\n\t\tif (available != size) {\n\t\t\teprintf (\"Warning: r_buf_read_at\
+    \ failed\\n\");\n\t\t\treturn NULL;\n\t\t}\n\t\tif (!memcmp (\"\\x1a\\x2b\\xb2\\\
+    xa1\", b, 4)) { // 0x130  ?\n\t\t\toff -= 8;\n\t\t} else {\n\t\t\teprintf (\"\
+    0x%08x  parsing error: invalid magic retry\\n\", off);\n\t\t}\n\t}\n\tD eprintf\
+    \ (\"0x%08x  magic  OK\\n\", off);\n\tD {\n\t\tconst int e0ss = r_read_le32 (b\
+    \ + 12);\n\t\teprintf (\"0x%08x  eoss   0x%x\\n\", off + 12, e0ss);\n\t}\n\tfree\
+    \ (b);\n\treturn r_coresym_cache_element_new (bf, buf, off + 16, bits, file_name);\n\
+    }"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nstatic RCoreSymCacheElement\
+    \ *parseDragons(RBinFile *bf, RBuffer *buf, int off, int bits, R_OWN char *file_name)\
+    \ {\n\tD eprintf (\"Dragons at 0x%x\\n\", off);\n\tut64 size = r_buf_size (buf);\n\
+    \tif (off >= size) {\n\t\treturn NULL;\n\t}\n\tsize -= off;\n\tif (!size) {\n\t\
+    \treturn NULL;\n\t}\n\tut8 *b = malloc (size);\n\tif (!b) {\n\t\treturn NULL;\n\
+    \t}\n\tint available = r_buf_read_at (buf, off, b, size);\n\tif (available !=\
+    \ size) {\n\t\teprintf (\"Warning: r_buf_read_at failed\\n\");\n\t\treturn NULL;\n\
+    \t}\n#if 0\n\t// after the list of sections, there's a bunch of unknown\n\t//\
+    \ data, brobably dwords, and then the same section list again\n\t// this function\
+    \ aims to parse it.\n\t0x00000138 |1a2b b2a1 0300 0000 1a2b b2a1 e055 0000| .+.......+...U..\n\
+    \                         n_segments ----.          .--- how many sections ?\n\
+    \t0x00000148 |0100 0000 ca55 0000 0400 0000 1800 0000| .....U..........\n\t  \
+    \           .---- how many symbols? 0xc7\n\t0x00000158 |c700 0000 0000 0000 0000\
+    \ 0000 0104 0000| ................\n\t0x00000168 |250b e803 0000 0100 0000 0000\
+    \ bd55 0000| %............U..\n\t0x00000178 |91bb e903 e35a b42c 93a4 340a 8746\
+    \ 9489| .....Z.,..4..F..\n\t0x00000188 |0cea 4c40 0c00 0000 0900 0000 0000 0000|\
+    \ ..L@............\n\t0x00000198 |0000 0000 0000 0000 0000 0000 0000 0000| ................\n\
+    \t0x000001a8 |0080 0000 0000 0000 5f5f 5445 5854 0000| ........__TEXT..\n\t0x000001b8\
+    \ |0000 0000 0000 0000 0080 0000 0000 0000| ................\n\t0x000001c8 |0040\
+    \ 0000 0000 0000 5f5f 4441 5441 0000| .@......__DATA..\n\t0x000001d8 |0000 0000\
+    \ 0000 0000 00c0 0000 0000 0000| ................\n\t0x000001e8 |0000 0100 0000\
+    \ 0000 5f5f 4c4c 564d 0000| ........__LLVM..\n\t0x000001f8 |0000 0000 0000 0000\
+    \ 00c0 0100 0000 0000| ................\n\t0x00000208 |00c0 0000 0000 0000 5f5f\
+    \ 4c49 4e4b 4544| ........__LINKED\n\t0x00000218 |4954 0000 0000 0000 0000 0000\
+    \ d069 0000| IT...........i..\n#endif\n\t// eprintf (\"Dragon's magic:\\n\");\n\
+    \tint magicCombo = 0;\n\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b, 4)) { // 0x130\
+    \  ?\n\t\tmagicCombo++;\n\t}\n\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b + 8,\
+    \ 4)) {\n\t\tmagicCombo++;\n\t}\n\tif (magicCombo != 2) {\n\t\t// hack for C22F7494\n\
+    \t\tavailable = r_buf_read_at (buf, off - 8, b, size);\n\t\tif (available != size)\
+    \ {\n\t\t\teprintf (\"Warning: r_buf_read_at failed\\n\");\n\t\t\treturn NULL;\n\
+    \t\t}\n\t\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b, 4)) { // 0x130  ?\n\t\t\t\
+    off -= 8;\n\t\t} else {\n\t\t\teprintf (\"0x%08x  parsing error: invalid magic\
+    \ retry\\n\", off);\n\t\t}\n\t}\n\tD eprintf (\"0x%08x  magic  OK\\n\", off);\n\
+    \tD {\n\t\tconst int e0ss = r_read_le32 (b + 12);\n\t\teprintf (\"0x%08x  eoss\
+    \   0x%x\\n\", off + 12, e0ss);\n\t}\n\tfree (b);\n\treturn r_coresym_cache_element_new\
+    \ (bf, buf, off + 16, bits, file_name);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nstatic RCoreSymCacheElement *parseDragons(RBinFile\
+    \ *bf, RBuffer *buf, int off, int bits, R_OWN char *file_name) {\n\tD eprintf\
+    \ (\"Dragons at 0x%x\\n\", off);\n\tut64 size = r_buf_size (buf);\n\tif (off >=\
+    \ size) {\n\t\treturn NULL;\n\t}\n\tsize -= off;\n\tif (!size) {\n\t\treturn NULL;\n\
+    \t}\n\tut8 *b = malloc (size);\n\tif (!b) {\n\t\treturn NULL;\n\t}\n\tint available\
+    \ = r_buf_read_at (buf, off, b, size);\n\tif (available != size) {\n\t\teprintf\
+    \ (\"Warning: r_buf_read_at failed\\n\");\n\t\treturn NULL;\n\t}\n#if 0\n\t//\
+    \ after the list of sections, there's a bunch of unknown\n\t// data, brobably\
+    \ dwords, and then the same section list again\n\t// this function aims to parse\
+    \ it.\n\t0x00000138 |1a2b b2a1 0300 0000 1a2b b2a1 e055 0000| .+.......+...U..\n\
+    \                         n_segments ----.          .--- how many sections ?\n\
+    \t0x00000148 |0100 0000 ca55 0000 0400 0000 1800 0000| .....U..........\n\t  \
+    \           .---- how many symbols? 0xc7\n\t0x00000158 |c700 0000 0000 0000 0000\
+    \ 0000 0104 0000| ................\n\t0x00000168 |250b e803 0000 0100 0000 0000\
+    \ bd55 0000| %............U..\n\t0x00000178 |91bb e903 e35a b42c 93a4 340a 8746\
+    \ 9489| .....Z.,..4..F..\n\t0x00000188 |0cea 4c40 0c00 0000 0900 0000 0000 0000|\
+    \ ..L@............\n\t0x00000198 |0000 0000 0000 0000 0000 0000 0000 0000| ................\n\
+    \t0x000001a8 |0080 0000 0000 0000 5f5f 5445 5854 0000| ........__TEXT..\n\t0x000001b8\
+    \ |0000 0000 0000 0000 0080 0000 0000 0000| ................\n\t0x000001c8 |0040\
+    \ 0000 0000 0000 5f5f 4441 5441 0000| .@......__DATA..\n\t0x000001d8 |0000 0000\
+    \ 0000 0000 00c0 0000 0000 0000| ................\n\t0x000001e8 |0000 0100 0000\
+    \ 0000 5f5f 4c4c 564d 0000| ........__LLVM..\n\t0x000001f8 |0000 0000 0000 0000\
+    \ 00c0 0100 0000 0000| ................\n\t0x00000208 |00c0 0000 0000 0000 5f5f\
+    \ 4c49 4e4b 4544| ........__LINKED\n\t0x00000218 |4954 0000 0000 0000 0000 0000\
+    \ d069 0000| IT...........i..\n#endif\n\t// eprintf (\"Dragon's magic:\\n\");\n\
+    \tint magicCombo = 0;\n\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b, 4)) { // 0x130\
+    \  ?\n\t\tmagicCombo++;\n\t}\n\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b + 8,\
+    \ 4)) {\n\t\tmagicCombo++;\n\t}\n\tif (magicCombo != 2) {\n\t\t// hack for C22F7494\n\
+    \t\tavailable = r_buf_read_at (buf, off - 8, b, size);\n\t\tif (available != size)\
+    \ {\n\t\t\teprintf (\"Warning: r_buf_read_at failed\\n\");\n\t\t\treturn NULL;\n\
+    \t\t}\n\t\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b, 4)) { // 0x130  ?\n\t\t\t\
+    off -= 8;\n\t\t} else {\n\t\t\teprintf (\"0x%08x  parsing error: invalid magic\
+    \ retry\\n\", off);\n\t\t}\n\t}\n\tD eprintf (\"0x%08x  magic  OK\\n\", off);\n\
+    \tD {\n\t\tconst int e0ss = r_read_le32 (b + 12);\n\t\teprintf (\"0x%08x  eoss\
+    \   0x%x\\n\", off + 12, e0ss);\n\t}\n\tfree (b);\n\treturn r_coresym_cache_element_new\
+    \ (bf, buf, off + 16, bits, file_name);\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nstatic RCoreSymCacheElement\
+    \ *parseDragons(RBinFile *bf, RBuffer *buf, int off, int bits, R_OWN char *file_name)\
+    \ {\n\tD eprintf (\"Dragons at 0x%x\\n\", off);\n\tut64 size = r_buf_size (buf);\n\
+    \tif (off >= size) {\n\t\treturn NULL;\n\t}\n\tsize -= off;\n\tif (!size) {\n\t\
+    \treturn NULL;\n\t}\n\tut8 *b = malloc (size);\n\tif (!b) {\n\t\treturn NULL;\n\
+    \t}\n\tint available = r_buf_read_at (buf, off, b, size);\n\tif (available !=\
+    \ size) {\n\t\teprintf (\"Warning: r_buf_read_at failed\\n\");\n\t\treturn NULL;\n\
+    \t}\n#if 0\n\t// after the list of sections, there's a bunch of unknown\n\t//\
+    \ data, brobably dwords, and then the same section list again\n\t// this function\
+    \ aims to parse it.\n\t0x00000138 |1a2b b2a1 0300 0000 1a2b b2a1 e055 0000| .+.......+...U..\n\
+    \                         n_segments ----.          .--- how many sections ?\n\
+    \t0x00000148 |0100 0000 ca55 0000 0400 0000 1800 0000| .....U..........\n\t  \
+    \           .---- how many symbols? 0xc7\n\t0x00000158 |c700 0000 0000 0000 0000\
+    \ 0000 0104 0000| ................\n\t0x00000168 |250b e803 0000 0100 0000 0000\
+    \ bd55 0000| %............U..\n\t0x00000178 |91bb e903 e35a b42c 93a4 340a 8746\
+    \ 9489| .....Z.,..4..F..\n\t0x00000188 |0cea 4c40 0c00 0000 0900 0000 0000 0000|\
+    \ ..L@............\n\t0x00000198 |0000 0000 0000 0000 0000 0000 0000 0000| ................\n\
+    \t0x000001a8 |0080 0000 0000 0000 5f5f 5445 5854 0000| ........__TEXT..\n\t0x000001b8\
+    \ |0000 0000 0000 0000 0080 0000 0000 0000| ................\n\t0x000001c8 |0040\
+    \ 0000 0000 0000 5f5f 4441 5441 0000| .@......__DATA..\n\t0x000001d8 |0000 0000\
+    \ 0000 0000 00c0 0000 0000 0000| ................\n\t0x000001e8 |0000 0100 0000\
+    \ 0000 5f5f 4c4c 564d 0000| ........__LLVM..\n\t0x000001f8 |0000 0000 0000 0000\
+    \ 00c0 0100 0000 0000| ................\n\t0x00000208 |00c0 0000 0000 0000 5f5f\
+    \ 4c49 4e4b 4544| ........__LINKED\n\t0x00000218 |4954 0000 0000 0000 0000 0000\
+    \ d069 0000| IT...........i..\n#endif\n\t// eprintf (\"Dragon's magic:\\n\");\n\
+    \tint magicCombo = 0;\n\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b, 4)) { // 0x130\
+    \  ?\n\t\tmagicCombo++;\n\t}\n\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b + 8,\
+    \ 4)) {\n\t\tmagicCombo++;\n\t}\n\tif (magicCombo != 2) {\n\t\t// hack for C22F7494\n\
+    \t\tavailable = r_buf_read_at (buf, off - 8, b, size);\n\t\tif (available != size)\
+    \ {\n\t\t\teprintf (\"Warning: r_buf_read_at failed\\n\");\n\t\t\treturn NULL;\n\
+    \t\t}\n\t\tif (!memcmp (\"\\x1a\\x2b\\xb2\\xa1\", b, 4)) { // 0x130  ?\n\t\t\t\
+    off -= 8;\n\t\t} else {\n\t\t\teprintf (\"0x%08x  parsing error: invalid magic\
+    \ retry\\n\", off);\n\t\t}\n\t}\n\tD eprintf (\"0x%08x  magic  OK\\n\", off);\n\
+    \tD {\n\t\tconst int e0ss = r_read_le32 (b + 12);\n\t\teprintf (\"0x%08x  eoss\
+    \   0x%x\\n\", off + 12, e0ss);\n\t}\n\tfree (b);\n\treturn r_coresym_cache_element_new\
+    \ (bf, buf, off + 16, bits, file_name);\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 210570
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

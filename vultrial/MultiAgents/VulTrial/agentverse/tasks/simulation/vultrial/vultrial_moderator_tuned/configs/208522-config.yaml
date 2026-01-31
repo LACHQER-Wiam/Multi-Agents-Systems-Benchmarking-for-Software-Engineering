@@ -1,0 +1,335 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\ndnsc_load_local_data(struct\
+    \ dnsc_env* dnscenv, struct config_file *cfg)\n{\n    size_t i, j;\n\t// Insert\
+    \ 'local-zone: \"2.dnscrypt-cert.example.com\" deny'\n    if(!cfg_str2list_insert(&cfg->local_zones,\n\
+    \                            strdup(dnscenv->provider_name),\n               \
+    \             strdup(\"deny\"))) {\n        log_err(\"Could not load dnscrypt\
+    \ local-zone: %s deny\",\n                dnscenv->provider_name);\n        return\
+    \ -1;\n    }\n\n    // Add local data entry of type:\n    // 2.dnscrypt-cert.example.com\
+    \ 86400 IN TXT \"DNSC......\"\n    for(i=0; i<dnscenv->signed_certs_count; i++)\
+    \ {\n        const char *ttl_class_type = \" 86400 IN TXT \\\"\";\n        int\
+    \ rotated_cert = 0;\n\tuint32_t serial;\n\tuint16_t rrlen;\n\tchar* rr;\n    \
+    \    struct SignedCert *cert = dnscenv->signed_certs + i;\n\t\t// Check if the\
+    \ certificate is being rotated and should not be published\n        for(j=0; j<dnscenv->rotated_certs_count;\
+    \ j++){\n            if(cert == dnscenv->rotated_certs[j]) {\n               \
+    \ rotated_cert = 1;\n                break;\n            }\n        }\n\t\tmemcpy(&serial,\
+    \ cert->serial, sizeof serial);\n\t\tserial = htonl(serial);\n        if(rotated_cert)\
+    \ {\n            verbose(VERB_OPS,\n                \"DNSCrypt: not adding cert\
+    \ with serial #%\"\n                PRIu32\n                \" to local-data as\
+    \ it is rotated\",\n                serial\n            );\n            continue;\n\
+    \        }\n        rrlen = strlen(dnscenv->provider_name) +\n               \
+    \          strlen(ttl_class_type) +\n                         4 * sizeof(struct\
+    \ SignedCert) + // worst case scenario\n                         1 + // trailing\
+    \ double quote\n                         1;\n        rr = malloc(rrlen);\n   \
+    \     if(!rr) {\n            log_err(\"Could not allocate memory\");\n       \
+    \     return -2;\n        }\n        snprintf(rr, rrlen - 1, \"%s 86400 IN TXT\
+    \ \\\"\", dnscenv->provider_name);\n        for(j=0; j<sizeof(struct SignedCert);\
+    \ j++) {\n\t\t\tint c = (int)*((const uint8_t *) cert + j);\n            if (isprint(c)\
+    \ && c != '\"' && c != '\\\\') {\n                snprintf(rr + strlen(rr), rrlen\
+    \ - 1 - strlen(rr), \"%c\", c);\n            } else {\n                snprintf(rr\
+    \ + strlen(rr), rrlen - 1 - strlen(rr), \"\\\\%03d\", c);\n            }\n   \
+    \     }\n        verbose(VERB_OPS,\n\t\t\t\"DNSCrypt: adding cert with serial\
+    \ #%\"\n\t\t\tPRIu32\n\t\t\t\" to local-data to config: %s\",\n\t\t\tserial, rr\n\
+    \t\t);\n        snprintf(rr + strlen(rr), rrlen - 1 - strlen(rr), \"\\\"\");\n\
+    \        cfg_strlist_insert(&cfg->local_data, strdup(rr));\n        free(rr);\n\
+    \    }\n    return dnscenv->signed_certs_count;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\ndnsc_load_local_data(struct\
+    \ dnsc_env* dnscenv, struct config_file *cfg)\n{\n    size_t i, j;\n\t// Insert\
+    \ 'local-zone: \"2.dnscrypt-cert.example.com\" deny'\n    if(!cfg_str2list_insert(&cfg->local_zones,\n\
+    \                            strdup(dnscenv->provider_name),\n               \
+    \             strdup(\"deny\"))) {\n        log_err(\"Could not load dnscrypt\
+    \ local-zone: %s deny\",\n                dnscenv->provider_name);\n        return\
+    \ -1;\n    }\n\n    // Add local data entry of type:\n    // 2.dnscrypt-cert.example.com\
+    \ 86400 IN TXT \"DNSC......\"\n    for(i=0; i<dnscenv->signed_certs_count; i++)\
+    \ {\n        const char *ttl_class_type = \" 86400 IN TXT \\\"\";\n        int\
+    \ rotated_cert = 0;\n\tuint32_t serial;\n\tuint16_t rrlen;\n\tchar* rr;\n    \
+    \    struct SignedCert *cert = dnscenv->signed_certs + i;\n\t\t// Check if the\
+    \ certificate is being rotated and should not be published\n        for(j=0; j<dnscenv->rotated_certs_count;\
+    \ j++){\n            if(cert == dnscenv->rotated_certs[j]) {\n               \
+    \ rotated_cert = 1;\n                break;\n            }\n        }\n\t\tmemcpy(&serial,\
+    \ cert->serial, sizeof serial);\n\t\tserial = htonl(serial);\n        if(rotated_cert)\
+    \ {\n            verbose(VERB_OPS,\n                \"DNSCrypt: not adding cert\
+    \ with serial #%\"\n                PRIu32\n                \" to local-data as\
+    \ it is rotated\",\n                serial\n            );\n            continue;\n\
+    \        }\n        rrlen = strlen(dnscenv->provider_name) +\n               \
+    \          strlen(ttl_class_type) +\n                         4 * sizeof(struct\
+    \ SignedCert) + // worst case scenario\n                         1 + // trailing\
+    \ double quote\n                         1;\n        rr = malloc(rrlen);\n   \
+    \     if(!rr) {\n            log_err(\"Could not allocate memory\");\n       \
+    \     return -2;\n        }\n        snprintf(rr, rrlen - 1, \"%s 86400 IN TXT\
+    \ \\\"\", dnscenv->provider_name);\n        for(j=0; j<sizeof(struct SignedCert);\
+    \ j++) {\n\t\t\tint c = (int)*((const uint8_t *) cert + j);\n            if (isprint(c)\
+    \ && c != '\"' && c != '\\\\') {\n                snprintf(rr + strlen(rr), rrlen\
+    \ - 1 - strlen(rr), \"%c\", c);\n            } else {\n                snprintf(rr\
+    \ + strlen(rr), rrlen - 1 - strlen(rr), \"\\\\%03d\", c);\n            }\n   \
+    \     }\n        verbose(VERB_OPS,\n\t\t\t\"DNSCrypt: adding cert with serial\
+    \ #%\"\n\t\t\tPRIu32\n\t\t\t\" to local-data to config: %s\",\n\t\t\tserial, rr\n\
+    \t\t);\n        snprintf(rr + strlen(rr), rrlen - 1 - strlen(rr), \"\\\"\");\n\
+    \        cfg_strlist_insert(&cfg->local_data, strdup(rr));\n        free(rr);\n\
+    \    }\n    return dnscenv->signed_certs_count;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\ndnsc_load_local_data(struct dnsc_env*\
+    \ dnscenv, struct config_file *cfg)\n{\n    size_t i, j;\n\t// Insert 'local-zone:\
+    \ \"2.dnscrypt-cert.example.com\" deny'\n    if(!cfg_str2list_insert(&cfg->local_zones,\n\
+    \                            strdup(dnscenv->provider_name),\n               \
+    \             strdup(\"deny\"))) {\n        log_err(\"Could not load dnscrypt\
+    \ local-zone: %s deny\",\n                dnscenv->provider_name);\n        return\
+    \ -1;\n    }\n\n    // Add local data entry of type:\n    // 2.dnscrypt-cert.example.com\
+    \ 86400 IN TXT \"DNSC......\"\n    for(i=0; i<dnscenv->signed_certs_count; i++)\
+    \ {\n        const char *ttl_class_type = \" 86400 IN TXT \\\"\";\n        int\
+    \ rotated_cert = 0;\n\tuint32_t serial;\n\tuint16_t rrlen;\n\tchar* rr;\n    \
+    \    struct SignedCert *cert = dnscenv->signed_certs + i;\n\t\t// Check if the\
+    \ certificate is being rotated and should not be published\n        for(j=0; j<dnscenv->rotated_certs_count;\
+    \ j++){\n            if(cert == dnscenv->rotated_certs[j]) {\n               \
+    \ rotated_cert = 1;\n                break;\n            }\n        }\n\t\tmemcpy(&serial,\
+    \ cert->serial, sizeof serial);\n\t\tserial = htonl(serial);\n        if(rotated_cert)\
+    \ {\n            verbose(VERB_OPS,\n                \"DNSCrypt: not adding cert\
+    \ with serial #%\"\n                PRIu32\n                \" to local-data as\
+    \ it is rotated\",\n                serial\n            );\n            continue;\n\
+    \        }\n        rrlen = strlen(dnscenv->provider_name) +\n               \
+    \          strlen(ttl_class_type) +\n                         4 * sizeof(struct\
+    \ SignedCert) + // worst case scenario\n                         1 + // trailing\
+    \ double quote\n                         1;\n        rr = malloc(rrlen);\n   \
+    \     if(!rr) {\n            log_err(\"Could not allocate memory\");\n       \
+    \     return -2;\n        }\n        snprintf(rr, rrlen - 1, \"%s 86400 IN TXT\
+    \ \\\"\", dnscenv->provider_name);\n        for(j=0; j<sizeof(struct SignedCert);\
+    \ j++) {\n\t\t\tint c = (int)*((const uint8_t *) cert + j);\n            if (isprint(c)\
+    \ && c != '\"' && c != '\\\\') {\n                snprintf(rr + strlen(rr), rrlen\
+    \ - 1 - strlen(rr), \"%c\", c);\n            } else {\n                snprintf(rr\
+    \ + strlen(rr), rrlen - 1 - strlen(rr), \"\\\\%03d\", c);\n            }\n   \
+    \     }\n        verbose(VERB_OPS,\n\t\t\t\"DNSCrypt: adding cert with serial\
+    \ #%\"\n\t\t\tPRIu32\n\t\t\t\" to local-data to config: %s\",\n\t\t\tserial, rr\n\
+    \t\t);\n        snprintf(rr + strlen(rr), rrlen - 1 - strlen(rr), \"\\\"\");\n\
+    \        cfg_strlist_insert(&cfg->local_data, strdup(rr));\n        free(rr);\n\
+    \    }\n    return dnscenv->signed_certs_count;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\ndnsc_load_local_data(struct\
+    \ dnsc_env* dnscenv, struct config_file *cfg)\n{\n    size_t i, j;\n\t// Insert\
+    \ 'local-zone: \"2.dnscrypt-cert.example.com\" deny'\n    if(!cfg_str2list_insert(&cfg->local_zones,\n\
+    \                            strdup(dnscenv->provider_name),\n               \
+    \             strdup(\"deny\"))) {\n        log_err(\"Could not load dnscrypt\
+    \ local-zone: %s deny\",\n                dnscenv->provider_name);\n        return\
+    \ -1;\n    }\n\n    // Add local data entry of type:\n    // 2.dnscrypt-cert.example.com\
+    \ 86400 IN TXT \"DNSC......\"\n    for(i=0; i<dnscenv->signed_certs_count; i++)\
+    \ {\n        const char *ttl_class_type = \" 86400 IN TXT \\\"\";\n        int\
+    \ rotated_cert = 0;\n\tuint32_t serial;\n\tuint16_t rrlen;\n\tchar* rr;\n    \
+    \    struct SignedCert *cert = dnscenv->signed_certs + i;\n\t\t// Check if the\
+    \ certificate is being rotated and should not be published\n        for(j=0; j<dnscenv->rotated_certs_count;\
+    \ j++){\n            if(cert == dnscenv->rotated_certs[j]) {\n               \
+    \ rotated_cert = 1;\n                break;\n            }\n        }\n\t\tmemcpy(&serial,\
+    \ cert->serial, sizeof serial);\n\t\tserial = htonl(serial);\n        if(rotated_cert)\
+    \ {\n            verbose(VERB_OPS,\n                \"DNSCrypt: not adding cert\
+    \ with serial #%\"\n                PRIu32\n                \" to local-data as\
+    \ it is rotated\",\n                serial\n            );\n            continue;\n\
+    \        }\n        rrlen = strlen(dnscenv->provider_name) +\n               \
+    \          strlen(ttl_class_type) +\n                         4 * sizeof(struct\
+    \ SignedCert) + // worst case scenario\n                         1 + // trailing\
+    \ double quote\n                         1;\n        rr = malloc(rrlen);\n   \
+    \     if(!rr) {\n            log_err(\"Could not allocate memory\");\n       \
+    \     return -2;\n        }\n        snprintf(rr, rrlen - 1, \"%s 86400 IN TXT\
+    \ \\\"\", dnscenv->provider_name);\n        for(j=0; j<sizeof(struct SignedCert);\
+    \ j++) {\n\t\t\tint c = (int)*((const uint8_t *) cert + j);\n            if (isprint(c)\
+    \ && c != '\"' && c != '\\\\') {\n                snprintf(rr + strlen(rr), rrlen\
+    \ - 1 - strlen(rr), \"%c\", c);\n            } else {\n                snprintf(rr\
+    \ + strlen(rr), rrlen - 1 - strlen(rr), \"\\\\%03d\", c);\n            }\n   \
+    \     }\n        verbose(VERB_OPS,\n\t\t\t\"DNSCrypt: adding cert with serial\
+    \ #%\"\n\t\t\tPRIu32\n\t\t\t\" to local-data to config: %s\",\n\t\t\tserial, rr\n\
+    \t\t);\n        snprintf(rr + strlen(rr), rrlen - 1 - strlen(rr), \"\\\"\");\n\
+    \        cfg_strlist_insert(&cfg->local_data, strdup(rr));\n        free(rr);\n\
+    \    }\n    return dnscenv->signed_certs_count;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 208522
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 1
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."

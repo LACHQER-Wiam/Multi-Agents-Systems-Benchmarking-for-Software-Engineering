@@ -1,0 +1,327 @@
+agents:
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: security_researcher
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - code_author
+  - moderator
+  - review_board
+  role_description: "You are the Security Researcher. Identify all potential security\
+    \ vulnerabilities in the given <code> snippet. \nProvide your output as a JSON\
+    \ array. Each element in the array represents one identified vulnerability and\
+    \ should include:\n- `vulnerability`: A short name or description of the vulnerability.\n\
+    - `reason`: A detailed explanation of why this is a vulnerability and how it could\
+    \ be exploited.\n- `impact`: The potential consequences if this vulnerability\
+    \ were exploited.\n\nNow please analyze the following code.\n\n<code>:\nbool IsConstantFoldable(\n\
+    \    const Node* n,\n    const std::unordered_map<string, std::vector<PartialTensorShape>>*\n\
+    \        shape_map,\n    const std::function<bool(const Node*)>& consider,\n \
+    \   int64_t max_constant_size_in_bytes,\n    std::unordered_map<const Node*, std::vector<Tensor>>*\n\
+    \        shape_replacement_map) {\n  if (n->IsConstant()) {\n    // Skip constant\
+    \ folding resources as they cannot be deep copied.\n    return n->output_type(0)\
+    \ != DT_RESOURCE;\n  }\n  if (MaybeReplaceShapeOp(n, shape_map, shape_replacement_map))\
+    \ {\n    return true;\n  }\n  if (n->op_def().is_stateful()) {\n    return false;\n\
+    \  }\n  if (consider && !consider(n)) {\n    return false;\n  }\n  if (shape_map\
+    \ != nullptr) {\n    // We can skip the node if an output is known to be oversized.\n\
+    \    auto shape_it = shape_map->find(n->name());\n    if (shape_it != shape_map->end())\
+    \ {\n      for (int64_t i = 0; i < shape_it->second.size(); ++i) {\n        const\
+    \ auto& out_shape = shape_it->second[i];\n        if (out_shape.IsFullyDefined()\
+    \ &&\n            out_shape.num_elements() * DataTypeSize(n->output_type(i)) >\n\
+    \                max_constant_size_in_bytes) {\n          return false;\n    \
+    \    }\n      }\n    }\n  }\n  if (n->IsControlFlow() || n->IsSend() || n->IsRecv())\
+    \ {\n    return false;\n  }\n  // TODO(yuanbyu): For now disable these session\
+    \ handle operations.\n  if (n->IsGetSessionHandle() || n->IsGetSessionTensor()\
+    \ ||\n      n->IsDeleteSessionTensor()) {\n    return false;\n  }\n  if (n->IsSource())\
+    \ {\n    return false;\n  }\n  if (n->IsSink()) {\n    return false;\n  }\n  if\
+    \ (n->IsFakeParam()) {\n    return false;\n  }\n  // Since constant-folding runs\
+    \ on the CPU, do not attempt to constant-fold\n  // operators that have no CPU\
+    \ kernel. Also implies that we will not\n  // constant-fold functions.\n  // TODO(phawkins):\
+    \ allow constant-folding for functions; functions may\n  // be arbitrarily expensive\
+    \ to execute.\n  if (!KernelDefAvailable(DeviceType(DEVICE_CPU), n->def())) {\n\
+    \    return false;\n  }\n  // Do not constant fold nodes which will be allocated\
+    \ by ScopedAllocator.\n  // This is because the constant-folding graph will not\
+    \ contain the\n  // `_ScopedAllocator` node, and that is necessary to be able\
+    \ to run a node\n  // that will use this allocator.\n  if (n->attrs().Find(kScopedAllocatorAttrName)\
+    \ != nullptr) {\n    VLOG(2) << \"Skip node [\" << n->DebugString()\n        \
+    \    << \"] for constant folding due to scoped allocator\";\n    return false;\n\
+    \  }\n  return true;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: code_author
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - security_researcher
+  - moderator
+  - review_board
+  role_description: "You are the Code Author of <code>. The Security Researcher has\
+    \ presented a JSON array of alleged vulnerabilities. \nYou must respond as if\
+    \ you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it.\n\n<code>:\nbool IsConstantFoldable(\n\
+    \    const Node* n,\n    const std::unordered_map<string, std::vector<PartialTensorShape>>*\n\
+    \        shape_map,\n    const std::function<bool(const Node*)>& consider,\n \
+    \   int64_t max_constant_size_in_bytes,\n    std::unordered_map<const Node*, std::vector<Tensor>>*\n\
+    \        shape_replacement_map) {\n  if (n->IsConstant()) {\n    // Skip constant\
+    \ folding resources as they cannot be deep copied.\n    return n->output_type(0)\
+    \ != DT_RESOURCE;\n  }\n  if (MaybeReplaceShapeOp(n, shape_map, shape_replacement_map))\
+    \ {\n    return true;\n  }\n  if (n->op_def().is_stateful()) {\n    return false;\n\
+    \  }\n  if (consider && !consider(n)) {\n    return false;\n  }\n  if (shape_map\
+    \ != nullptr) {\n    // We can skip the node if an output is known to be oversized.\n\
+    \    auto shape_it = shape_map->find(n->name());\n    if (shape_it != shape_map->end())\
+    \ {\n      for (int64_t i = 0; i < shape_it->second.size(); ++i) {\n        const\
+    \ auto& out_shape = shape_it->second[i];\n        if (out_shape.IsFullyDefined()\
+    \ &&\n            out_shape.num_elements() * DataTypeSize(n->output_type(i)) >\n\
+    \                max_constant_size_in_bytes) {\n          return false;\n    \
+    \    }\n      }\n    }\n  }\n  if (n->IsControlFlow() || n->IsSend() || n->IsRecv())\
+    \ {\n    return false;\n  }\n  // TODO(yuanbyu): For now disable these session\
+    \ handle operations.\n  if (n->IsGetSessionHandle() || n->IsGetSessionTensor()\
+    \ ||\n      n->IsDeleteSessionTensor()) {\n    return false;\n  }\n  if (n->IsSource())\
+    \ {\n    return false;\n  }\n  if (n->IsSink()) {\n    return false;\n  }\n  if\
+    \ (n->IsFakeParam()) {\n    return false;\n  }\n  // Since constant-folding runs\
+    \ on the CPU, do not attempt to constant-fold\n  // operators that have no CPU\
+    \ kernel. Also implies that we will not\n  // constant-fold functions.\n  // TODO(phawkins):\
+    \ allow constant-folding for functions; functions may\n  // be arbitrarily expensive\
+    \ to execute.\n  if (!KernelDefAvailable(DeviceType(DEVICE_CPU), n->def())) {\n\
+    \    return false;\n  }\n  // Do not constant fold nodes which will be allocated\
+    \ by ScopedAllocator.\n  // This is because the constant-folding graph will not\
+    \ contain the\n  // `_ScopedAllocator` node, and that is necessary to be able\
+    \ to run a node\n  // that will use this allocator.\n  if (n->attrs().Find(kScopedAllocatorAttrName)\
+    \ != nullptr) {\n    VLOG(2) << \"Skip node [\" << n->DebugString()\n        \
+    \    << \"] for constant folding due to scoped allocator\";\n    return false;\n\
+    \  }\n  return true;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    model_type: ft:gpt-4o-2024-08-06:personal:moderator:BAWoJsPO
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: moderator
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver:
+  - review_board
+  - security_researcher
+  - code_author
+  role_description: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies.\n\n<code>:\nbool IsConstantFoldable(\n    const Node*\
+    \ n,\n    const std::unordered_map<string, std::vector<PartialTensorShape>>*\n\
+    \        shape_map,\n    const std::function<bool(const Node*)>& consider,\n \
+    \   int64_t max_constant_size_in_bytes,\n    std::unordered_map<const Node*, std::vector<Tensor>>*\n\
+    \        shape_replacement_map) {\n  if (n->IsConstant()) {\n    // Skip constant\
+    \ folding resources as they cannot be deep copied.\n    return n->output_type(0)\
+    \ != DT_RESOURCE;\n  }\n  if (MaybeReplaceShapeOp(n, shape_map, shape_replacement_map))\
+    \ {\n    return true;\n  }\n  if (n->op_def().is_stateful()) {\n    return false;\n\
+    \  }\n  if (consider && !consider(n)) {\n    return false;\n  }\n  if (shape_map\
+    \ != nullptr) {\n    // We can skip the node if an output is known to be oversized.\n\
+    \    auto shape_it = shape_map->find(n->name());\n    if (shape_it != shape_map->end())\
+    \ {\n      for (int64_t i = 0; i < shape_it->second.size(); ++i) {\n        const\
+    \ auto& out_shape = shape_it->second[i];\n        if (out_shape.IsFullyDefined()\
+    \ &&\n            out_shape.num_elements() * DataTypeSize(n->output_type(i)) >\n\
+    \                max_constant_size_in_bytes) {\n          return false;\n    \
+    \    }\n      }\n    }\n  }\n  if (n->IsControlFlow() || n->IsSend() || n->IsRecv())\
+    \ {\n    return false;\n  }\n  // TODO(yuanbyu): For now disable these session\
+    \ handle operations.\n  if (n->IsGetSessionHandle() || n->IsGetSessionTensor()\
+    \ ||\n      n->IsDeleteSessionTensor()) {\n    return false;\n  }\n  if (n->IsSource())\
+    \ {\n    return false;\n  }\n  if (n->IsSink()) {\n    return false;\n  }\n  if\
+    \ (n->IsFakeParam()) {\n    return false;\n  }\n  // Since constant-folding runs\
+    \ on the CPU, do not attempt to constant-fold\n  // operators that have no CPU\
+    \ kernel. Also implies that we will not\n  // constant-fold functions.\n  // TODO(phawkins):\
+    \ allow constant-folding for functions; functions may\n  // be arbitrarily expensive\
+    \ to execute.\n  if (!KernelDefAvailable(DeviceType(DEVICE_CPU), n->def())) {\n\
+    \    return false;\n  }\n  // Do not constant fold nodes which will be allocated\
+    \ by ScopedAllocator.\n  // This is because the constant-folding graph will not\
+    \ contain the\n  // `_ScopedAllocator` node, and that is necessary to be able\
+    \ to run a node\n  // that will use this allocator.\n  if (n->attrs().Find(kScopedAllocatorAttrName)\
+    \ != nullptr) {\n    VLOG(2) << \"Skip node [\" << n->DebugString()\n        \
+    \    << \"] for constant folding due to scoped allocator\";\n    return false;\n\
+    \  }\n  return true;\n}"
+  verbose: true
+- agent_type: conversation
+  llm:
+    llm_type: gpt-4o
+    model: gpt-4o
+    model_type: gpt-4o
+    temperature: 0.0
+  memory:
+    memory_type: judge
+  name: review_board
+  output_parser:
+    type: vultrial
+  prompt_template: 'You are working in a programming team to check whether a code
+    have a potential vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  receiver: []
+  role_description: "You are the Review Board. After reviewing the Moderator\xE2\u20AC\
+    \u2122s summary and <code> (if needed, the original arguments), \nproduce a JSON\
+    \ array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality.\n\n<code>:\nbool IsConstantFoldable(\n \
+    \   const Node* n,\n    const std::unordered_map<string, std::vector<PartialTensorShape>>*\n\
+    \        shape_map,\n    const std::function<bool(const Node*)>& consider,\n \
+    \   int64_t max_constant_size_in_bytes,\n    std::unordered_map<const Node*, std::vector<Tensor>>*\n\
+    \        shape_replacement_map) {\n  if (n->IsConstant()) {\n    // Skip constant\
+    \ folding resources as they cannot be deep copied.\n    return n->output_type(0)\
+    \ != DT_RESOURCE;\n  }\n  if (MaybeReplaceShapeOp(n, shape_map, shape_replacement_map))\
+    \ {\n    return true;\n  }\n  if (n->op_def().is_stateful()) {\n    return false;\n\
+    \  }\n  if (consider && !consider(n)) {\n    return false;\n  }\n  if (shape_map\
+    \ != nullptr) {\n    // We can skip the node if an output is known to be oversized.\n\
+    \    auto shape_it = shape_map->find(n->name());\n    if (shape_it != shape_map->end())\
+    \ {\n      for (int64_t i = 0; i < shape_it->second.size(); ++i) {\n        const\
+    \ auto& out_shape = shape_it->second[i];\n        if (out_shape.IsFullyDefined()\
+    \ &&\n            out_shape.num_elements() * DataTypeSize(n->output_type(i)) >\n\
+    \                max_constant_size_in_bytes) {\n          return false;\n    \
+    \    }\n      }\n    }\n  }\n  if (n->IsControlFlow() || n->IsSend() || n->IsRecv())\
+    \ {\n    return false;\n  }\n  // TODO(yuanbyu): For now disable these session\
+    \ handle operations.\n  if (n->IsGetSessionHandle() || n->IsGetSessionTensor()\
+    \ ||\n      n->IsDeleteSessionTensor()) {\n    return false;\n  }\n  if (n->IsSource())\
+    \ {\n    return false;\n  }\n  if (n->IsSink()) {\n    return false;\n  }\n  if\
+    \ (n->IsFakeParam()) {\n    return false;\n  }\n  // Since constant-folding runs\
+    \ on the CPU, do not attempt to constant-fold\n  // operators that have no CPU\
+    \ kernel. Also implies that we will not\n  // constant-fold functions.\n  // TODO(phawkins):\
+    \ allow constant-folding for functions; functions may\n  // be arbitrarily expensive\
+    \ to execute.\n  if (!KernelDefAvailable(DeviceType(DEVICE_CPU), n->def())) {\n\
+    \    return false;\n  }\n  // Do not constant fold nodes which will be allocated\
+    \ by ScopedAllocator.\n  // This is because the constant-folding graph will not\
+    \ contain the\n  // `_ScopedAllocator` node, and that is necessary to be able\
+    \ to run a node\n  // that will use this allocator.\n  if (n->attrs().Find(kScopedAllocatorAttrName)\
+    \ != nullptr) {\n    VLOG(2) << \"Skip node [\" << n->DebugString()\n        \
+    \    << \"] for constant folding due to scoped allocator\";\n    return false;\n\
+    \  }\n  return true;\n}"
+  verbose: true
+environment:
+  env_type: judge
+  id_save: 264715
+  max_turns: 4
+  rule:
+    describer:
+      type: basic
+    order:
+      type: judge
+    selector:
+      type: basic
+    updater:
+      type: basic
+    visibility:
+      type: all
+  target: 0
+  task_name: code_vulnerability_review
+  unit_tests: None
+prompts:
+  code_author_role_prompt: "You are the Code Author of <code>. The Security Researcher\
+    \ has presented a JSON array of alleged vulnerabilities. \nYou must respond as\
+    \ if you are presenting your case to a group of decision-makers who will evaluate\
+    \ each claim. \nYour tone should be respectful, authoritative, and confident,\
+    \ as if you are defending the integrity of your work to a panel of experts.\n\n\
+    For each identified vulnerability, produce a corresponding JSON object with the\
+    \ following fields:\n- `vulnerability`: The same name/description from the Security\
+    \ Researcher\xE2\u20AC\u2122s entry.\n- `response_type`: 'refutation' if you believe\
+    \ this concern is unfounded, or 'mitigation' if you acknowledge it and propose\
+    \ a workable solution.\n- `reason`: A concise explanation of why the vulnerability\
+    \ is refuted or how you propose to mitigate it."
+  moderator_role_prompt: "You are the Moderator, and your role is to provide a neutral\
+    \ summary. \nAfter reviewing both the Security Researcher\xE2\u20AC\u2122s identified\
+    \ vulnerabilities and the Code Author\xE2\u20AC\u2122s responses, \nprovide a\
+    \ single JSON object with two fields:\n- `researcher_summary`: A concise summary\
+    \ of the vulnerabilities and reasoning presented by the Security Researcher.\n\
+    - `author_summary`: A concise summary of the Code Author\xE2\u20AC\u2122s counterarguments\
+    \ or mitigation strategies."
+  prompt: 'You are working in a programming team to check whether a code have a potential
+    vulnerability in it.
+
+
+    ${role_description}
+
+
+    ${chat_history}'
+  review_board_role_prompt: "You are the Review Board. After reviewing the Moderator\xE2\
+    \u20AC\u2122s summary and <code> (if needed, the original arguments), \nproduce\
+    \ a JSON array of verdicts for each vulnerability identified by the Security Researcher.\
+    \ Each object in the array should include:\n- `vulnerability`: The same name as\
+    \ given by the Security Researcher.\n- `decision`: One of 'valid', 'invalid',\
+    \ or 'partially valid'.\n- `severity`: If valid or partially valid, assign a severity\
+    \ ('low', 'medium', 'high'); if invalid, use 'none'.\n- `recommended_action`:\
+    \ Suggest what should be done next (e.g., 'fix immediately', 'monitor', 'no action\
+    \ needed').\n- `justification`: A brief explanation of why you reached this conclusion,\
+    \ considering both the Security Researcher\xE2\u20AC\u2122s and Code Author\xE2\
+    \u20AC\u2122s perspectives.\n\nYou need to analyze the code and evaluate the reasoning\
+    \ provided by the Security Researcher, Code Author, and Moderator. Do not automatically\
+    \ mark a decision as 'valid' just because the Code Author refutes it, nor mark\
+    \ it as 'invalid' because the Security Researcher claims a vulnerability exists.\
+    \ Instead, carefully assess whether their reasoning aligns with the actual security\
+    \ implications and technical reality."
+  security_researcher_role_prompt: "You are the Security Researcher. Identify all\
+    \ potential security vulnerabilities in the given <code> snippet. \nProvide your\
+    \ output as a JSON array. Each element in the array represents one identified\
+    \ vulnerability and should include:\n- `vulnerability`: A short name or description\
+    \ of the vulnerability.\n- `reason`: A detailed explanation of why this is a vulnerability\
+    \ and how it could be exploited.\n- `impact`: The potential consequences if this\
+    \ vulnerability were exploited.\n\nNow please analyze the following code."
