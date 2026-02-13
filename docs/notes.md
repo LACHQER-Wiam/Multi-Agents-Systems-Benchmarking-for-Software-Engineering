@@ -8,11 +8,11 @@ Nous avons établi un baseline en testant des modèles locaux sur la **Task 2 (D
 
 | Modèle | Format Success | EMR (Exact Match) | Note |
 | :--- | :--- | :--- | :--- |
-| **Llama 3.2 (3B)** | 0% | 0/100 | Difficulté à suivre le format de liste pure. |
+| **Llama 3.2 (3B)** | 0% | 0/100 | Difficulté à suivre le format de liste pure. |  
 | **DeepSeek-Coder-V2** | 55% | 0/100 | Bon respect du format, mais erreurs de logique topologique. |
 
-> **Constat clé :** L'échec systématique de l'Exact Match Rate (EMR) sur les modèles individuels souligne la nécessité d'une approche **Multi-Agents** pour valider et corriger la logique de dépendance.
-
+> **Constat clé :** l'Exact Match Rate (EMR) sur les modèles individuels souligne la nécessité d'une approche **Multi-Agents** pour valider et corriger la logique de dépendance.
+Note : Language = Python Language
 ---
 
 ## Guide de Reproduction (Google Colab + GPU)
