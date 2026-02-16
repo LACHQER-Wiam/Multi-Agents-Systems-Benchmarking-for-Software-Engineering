@@ -1,0 +1,6 @@
+.env
+DependEval/__pycache__
+DependEval/logs
+DependEval/results
+DependEval/huggingface
+DependEval/utils/__pycache__
