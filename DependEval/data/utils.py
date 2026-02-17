@@ -5,15 +5,17 @@ task1_prompt_template_length2="""
 Based on the above code snippets, complete the following instructions and output according to the format specified in Step 3:
 	1.	Identify the segment in one file (#file 1) that is invoked by another file (#file 2) (excluding the import parts) and specify the relevant code segment in the called file.
 	2.	Modify the given code to implement {function}. This requires modifying the part being called in #file 1 and the way #file 2 calls #file 1. If new code snippets are needed, add them to the end of each respective file.
-	3.	Output format:
+    3. Ensure the JSON is complete and properly closed.
+        Do not truncate.
+        If the output is too long, summarize the modified code instead.
+	4.	Output format:
     """
-
+#    "detailed_feature_description": "General explanation of the modification approach",
 task1_json = """
 {
    "called_code_segment": "#file 1 segment being invoked (excluding `import`)",
    "invoking_code_segment": "#file 2 segment invoking #file 1 (excluding `import`)",
    "feature_description": "Description of the new feature",
-   "detailed_feature_description": "General explanation of the modification approach",
    "modified_complete_code": "Provide the complete code with the required modifications. Output the modified code snippets. Use comments like #Modify for modified parts and #New for newly added parts to indicate whether the change is an addition or modification."
 }"""
 
