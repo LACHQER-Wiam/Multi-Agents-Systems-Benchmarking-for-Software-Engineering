@@ -2,10 +2,10 @@
 
 # script for running evaluations via Anthropic API; mirrors run.sh logic
 # models list here are the anthropic model identifiers (claude-2.1, claude-3, etc.)
-# "java" "javascript" "php" "python" "typescript" "c" "c++"
+# "java" "javascript" "php" "python" "typescript" "c#" "c++".  ,  "task2" "task4"
 models=("claude-opus-4-6")
-languages=("c#")
-tasks=("task1" "task2" "task4")
+languages=("c")
+tasks=("task1")
 
 log_dir="./logs"
 mkdir -p "$log_dir"
@@ -28,14 +28,14 @@ for task in "${tasks[@]}"; do
                 exit 1
             fi
 
-            result_jsonl="./results/$task/${model//\//-}-$language/${model##*/}.jsonl"
+            result_json="./results/$task/${model//\//-}-$language/${model##*/}.json"
 
             if [ "$task" == "task1" ]; then
-                python3 eval_ME.py --input_dir "$result_jsonl" 2>&1 | tee -a "$log_file"
+                python3 eval_ME_api.py --input "$result_json" 2>&1 | tee -a "$log_file"
             elif [ "$task" == "task2" ]; then
-                python3 eval_DR.py --input_dir "$result_jsonl" 2>&1 | tee -a "$log_file"
+                python3 eval_DR.py --input "$result_json" 2>&1 | tee -a "$log_file"
             elif [ "$task" == "task4" ]; then
-                python3 eval_RC.py --input_dir "$result_jsonl" 2>&1 | tee -a "$log_file"
+                python3 eval_RC.py --input "$result_json" 2>&1 | tee -a "$log_file"
             fi
 
             echo "Completed task: $model with language: $language and task: $task (log: $log_file)" | tee -a "$log_file"

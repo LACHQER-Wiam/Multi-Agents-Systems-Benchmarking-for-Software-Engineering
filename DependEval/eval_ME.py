@@ -179,59 +179,123 @@ weights = {
 
 
 
-def process_jsonl_file(filepath, weights):
+# def process_jsonl_file(filepath, weights):
+#     total_score = 0
+#     updated_lines = []
+
+#     with open(filepath, 'r', encoding='utf-8') as file:
+#         for line_num, line in enumerate(file, 1):
+#             try:
+#                 if not line.strip():  # Skip empty lines
+#                     continue
+
+#                 data = json.loads(line.strip())
+
+#                 # 提取并解析 pred
+#                 match = re.search(r'\{.*\}', data.get("pred", "{}"), re.DOTALL)
+#                 if match:
+#                     pred = match.group(0)
+#                     pred = json.loads(pred)  # 解析为 Python 字典
+#                 else:
+#                     pred = {}
+#                 gt = data.get("gt", {})
+#                 # 调用评分函数
+#                 result = LLM_judge(pred, gt, get_deepseek_response, "deepseek-chat", 0.2, 0.7)
+#                 print(result)
+#                 if result is not None:
+#                     total_weighted_score = sum((result[key] / 5) * weight for key, weight in weights.items())
+#                     scaled_score = total_weighted_score * 100
+#                     total_score += scaled_score
+#                     data["score"] = scaled_score
+#                 else:
+#                     data["score"] = 0
+
+#             except json.JSONDecodeError as e:
+#                 print(f"JSON parsing error at line {line_num}: {e}")
+#                 print(f"  File: {filepath}")
+#                 print(f"  Line content (first 200 chars): {line[:200]}")
+#                 data = {"score": 0}  # Mark as failed
+#             except Exception as e:
+#                 print(f"Error at line {line_num}: {e}")
+#                 print(f"  File: {filepath}")
+#                 data = {"score": 0}  # Ensure data is initialized
+
+#             # 记录更新后的数据
+#             updated_lines.append(json.dumps(data, ensure_ascii=True))
+
+#     # 将更新后的内容写回文件
+#     output_filepath = filepath.replace(".jsonl", "_scored.jsonl")
+#     with open(output_filepath, 'w', encoding='utf-8') as file:
+#         file.write("\n".join(updated_lines) + "\n")
+
+#     return total_score
+
+
+def process_json_file(filepath, weights):
     total_score = 0
-    updated_lines = []
+    updated_data = []
 
+    # Read the JSON file (list of objects)
     with open(filepath, 'r', encoding='utf-8') as file:
-        for line in file:
-            try:
-                if not line.strip():  # 检查是否为空行
-                    continue
+        try:
+            content = json.load(file)  # Load entire JSON list
+        except json.JSONDecodeError as e:
+            print(f"JSON parsing error: {e}")
+            print(f"  File: {filepath}")
+            return 0
 
-                data = json.loads(line.strip())
-
-                # 提取并解析 pred
-                match = re.search(r'\{.*\}', data.get("pred", "{}"), re.DOTALL)
+    for idx, data in enumerate(content, 1):
+        try:
+            # Extract and parse pred. The prediction may already be a dict if
+            # inference_api returned structured JSON; otherwise it's a string
+            # containing JSON that needs regex extraction.
+            raw_pred = data.get("pred", {})
+            if isinstance(raw_pred, dict):
+                pred = raw_pred
+            else:
+                match = re.search(r'\{.*\}', raw_pred, re.DOTALL)
                 if match:
-                    pred = match.group(0)
-                    pred = json.loads(pred)  # 解析为 Python 字典
+                    pred = json.loads(match.group(0))
                 else:
                     pred = {}
-                gt = data.get("gt", {})
-                # 调用评分函数
-                result = LLM_judge(pred, gt, get_deepseek_response, "deepseek-chat", 0.2, 0.7)
-                print(result)
-                if result is not None:
-                    total_weighted_score = sum((result[key] / 5) * weight for key, weight in weights.items())
-                    scaled_score = total_weighted_score * 100
-                    total_score += scaled_score
-                    data["score"] = scaled_score
-                else:
-                    data["score"] = 0
 
-            except json.JSONDecodeError as e:
-                print(f"JSON 解析错误: {e} | 文件: {filepath}")
-                data = {"score": 0.01}  # 标记是否格式遵循
-            except Exception as e:
-                print(f"处理数据时发生错误: {e} | 文件: {filepath}")
-                data = {"score": 0}  # 确保 data 被初始化
+            gt = data.get("gt", {})
 
-            # 记录更新后的数据
-            updated_lines.append(json.dumps(data, ensure_ascii=False))
+            # Call the scoring function
+            result = LLM_judge(pred, gt, get_deepseek_response, "deepseek-chat", 0.2, 0.7)
+            print(result)
 
-    # 将更新后的内容写回文件
-    output_filepath = filepath.replace(".jsonl", "_scored.jsonl")
+            if result is not None:
+                total_weighted_score = sum(
+                    (result[key] / 5) * weight for key, weight in weights.items()
+                )
+                scaled_score = total_weighted_score * 100
+                total_score += scaled_score
+                data["score"] = scaled_score
+            else:
+                data["score"] = 0
+
+        except Exception as e:
+            print(f"Error at item {idx}: {e}")
+            print(f"  File: {filepath}")
+            data["score"] = 0
+
+        updated_data.append(data)
+
+    # Write the updated structured JSON file
+    output_filepath = filepath.replace(".json", "_scored.json")
+
     with open(output_filepath, 'w', encoding='utf-8') as file:
-        file.write("\n".join(updated_lines) + "\n")
+        json.dump(updated_data, file, ensure_ascii=True, indent=4)
 
     return total_score
 
 
+
 # 主程序入口
 def main():
-    parser = argparse.ArgumentParser(description="Process JSONL files and compute scores.")
-    parser.add_argument("--input", required=True, help="Path to a JSONL file to process.")
+    parser = argparse.ArgumentParser(description="Process JSON files and compute scores.")
+    parser.add_argument("--input", required=True, help="Directory containing JSON files.")
     args = parser.parse_args()
 
     # 加载权重
@@ -244,9 +308,9 @@ def main():
     }
 
 
-    # 调用处理函数 (单个文件)
-    total_score = process_jsonl_file(args.input, weights)
-    print(f"处理完成: 文件 {args.input} 的总得分为 {total_score:.2f}")
+    # 调用处理函数
+    total_score = process_json_file(args.input, weights)
+    print(f"Processing completed: The total score for file {args.input} is {total_score:.2f}")
 
 
 if __name__ == "__main__":
