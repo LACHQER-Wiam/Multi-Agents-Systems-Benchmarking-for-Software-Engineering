@@ -5,7 +5,7 @@ task1_prompt_template_length2="""
 Based on the above code snippets, complete the following instructions and output according to the format specified in Step 3:
 	1.	Identify the segment in one file (#file 1) that is invoked by another file (#file 2) (excluding the import parts) and specify the relevant code segment in the called file.
 	2.	Modify the given code to implement {function}. This requires modifying the part being called in #file 1 and the way #file 2 calls #file 1. If new code snippets are needed, add them to the end of each respective file.
-    3. Ensure the JSON is complete and properly closed.
+    3.  Ensure the JSON is complete and properly closed.
         Do not truncate.
         If the output is too long, summarize the modified code instead.
 	4.	Output format:
@@ -25,6 +25,9 @@ Output with the following request.
 1. Don't give analysis process and using the same file title. 
 2. Simply and only output the dependency relationship list using its file names with the format ['a.py','b.py','c.py'] if b depends on a , c depends on b. 
 3. You must strictly output the response with the format:['a.py','b.py','c.py']
+4. Do not generate code, generate only a list of file names.
+5. A list should contain at least two filenames, never output a list with only one filename.
+6. Print the files names as they are provided, including their parent folders if applicable.
 
 Example output:
 ["file1.py", "file2.py", "file3.py"]
@@ -41,6 +44,8 @@ You are an AI assistant tasked with generating a project structure based on the 
 3. Return the structure in the format [[file1, file2, file3], [file4, file5], ...], where each sublist represents a chain of dependencies (file2 calls file1, file3 calls file2, etc.).
 4. Provide only the list structure, without any additional explanation.
 5. You must strictly follow the output format.
+6. A list should contain at least two filenames, never output a list with only one filename.
+7. Print the files names as they are provided, including their parent folders if applicable.
 
 Here's the project information:
 

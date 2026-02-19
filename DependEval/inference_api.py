@@ -12,8 +12,26 @@ import argparse
 import pandas as pd
 from data.utils import construct_prompt
 import anthropic
+from pydantic import BaseModel, Field, ConfigDict
+from typing import List
 
-async def _call_anthropic(model_name: str, prompt: str, temperature: float):
+
+class Task2Schema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    list_dependencies: List[str] = Field(
+        description="Dependency relationship between files ['file1.py', 'file2.py']"
+    )
+
+class Task4Schema(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    dependency_groups: List[List[str]] = Field(
+        description="List of dependency groups such as [['file1.py', 'file2.py'], ['file3.py']]"
+    )
+
+
+async def _call_anthropic(model_name: str, prompt: str, temperature: float, extra_body: dict):
     """Call Claude API and return (parsed_response, usage_dict).
 
     When using the structured outputs beta feature the response text
@@ -33,31 +51,7 @@ async def _call_anthropic(model_name: str, prompt: str, temperature: float):
             extra_headers={
                 "anthropic-beta": "structured-outputs-2025-11-13"
             },
-            # Pass the new parameter here
-            extra_body={
-                "output_format": {
-                    "type": "json_schema",
-                    "schema": {
-                "type": "object",
-                "properties": {
-                    "called_code_segment": {"type": "string", "description": "#file 1 segment being invoked (excluding `import`)"},
-                    "invoking_code_segment": {"type": "string", "description": "#file 2 segment invoking #file 1 (excluding `import`)"},
-                    "feature_description": {"type": "string", "description": "Description of the new feature"},
-                    #"detailed_feature_description": {"type": "string", "description": "General explanation of the modification approach"},
-                    "modified_complete_code": {"type": "string", "description": "Provide the complete code with the required modifications. Output the modified code snippets. Use comments like #Modify for modified parts and #New for newly added parts to indicate whether the change is an addition or modification."}
-                },
-                "required": [
-                    "called_code_segment",
-                    "invoking_code_segment",
-                    "feature_description",
-                    #"detailed_feature_description",
-                    "modified_complete_code"
-                ],
-                "additionalProperties": False
-                }
-                }
-            }
-            )
+            extra_body=extra_body)
 
     resp = await asyncio.to_thread(sync)
     
@@ -66,7 +60,7 @@ async def _call_anthropic(model_name: str, prompt: str, temperature: float):
     if getattr(resp, "content", None):
         try:
             text = resp.content[0].text
-            print(f"text {text}")
+            # print(f"text {text}")
         except Exception:
             pass
 
@@ -75,7 +69,7 @@ async def _call_anthropic(model_name: str, prompt: str, temperature: float):
     if text:
         try:
             parsed = json.loads(text)
-            print(f"parsed {parsed}")
+            # print(f"parsed {parsed}")
         except Exception:
             # Fallback to raw text if parsing fails
             parsed = text
@@ -98,7 +92,7 @@ async def _call_anthropic(model_name: str, prompt: str, temperature: float):
 
 
 
-async def _process_dataset(dataset, model_name, temperature, batch_size, language, task, max_token_nums):
+async def _process_dataset(dataset, model_name, temperature, batch_size, language, task, max_token_nums, extra_body):
     """Run inference over all examples in parallel. Return list of result dicts."""
     
     sem = asyncio.Semaphore(batch_size)
@@ -110,7 +104,7 @@ async def _process_dataset(dataset, model_name, temperature, batch_size, languag
         
         async with sem:
             try:
-                pred, usage = await _call_anthropic(model_name, prompt, temperature)
+                pred, usage = await _call_anthropic(model_name, prompt, temperature, extra_body=extra_body)
             except Exception as e:
                 print(f"Error at idx={idx}: {e}")
                 pred = ""
@@ -147,6 +141,7 @@ async def _process_dataset(dataset, model_name, temperature, batch_size, languag
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
             })
+            print(f"prediction for idx {idx} done")
 
     # Create all workers
     tasks = [asyncio.create_task(worker(i, d)) for i, d in enumerate(dataset)]
@@ -173,10 +168,39 @@ def main(
     # Load dataset
     if task == "task1":
         path = os.path.join(dataset_path, language, f"{task}_{language}.json")
+        extra_body = {"output_format": {
+                    "type": "json_schema",
+                    "schema": {
+                "type": "object",
+                "properties": {
+                    "called_code_segment": {"type": "string", "description": "#file 1 segment being invoked (excluding `import`)"},
+                    "invoking_code_segment": {"type": "string", "description": "#file 2 segment invoking #file 1 (excluding `import`)"},
+                    "feature_description": {"type": "string", "description": "Description of the new feature"},
+                    #"detailed_feature_description": {"type": "string", "description": "General explanation of the modification approach"},
+                    "modified_complete_code": {"type": "string", "description": "Provide the complete code with the required modifications. Output the modified code snippets. Use comments like #Modify for modified parts and #New for newly added parts to indicate whether the change is an addition or modification."}
+                },
+                "required": [
+                    "called_code_segment",
+                    "invoking_code_segment",
+                    "feature_description",
+                    #"detailed_feature_description",
+                    "modified_complete_code"
+                ],
+                "additionalProperties": False
+                }
+                }
+            }
     elif task == "task2":
         path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
+        extra_body = {"output_format": {
+                    "type": "json_schema",
+                    "schema":Task2Schema.model_json_schema()}}
+        
     elif task == "task4":
         path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")
+        extra_body = {"output_format": {
+                    "type": "json_schema",
+                    "schema":Task4Schema.model_json_schema()}}
     else:
         raise ValueError(f"Unknown task: {task}")
 
@@ -186,10 +210,10 @@ def main(
     print(f"Loaded {len(dataset)} examples from {path}")
 
     # Create output directories
-    save_dir = os.path.join(res_dir, task, f"{model_name}-{language}")
+    save_dir = os.path.join(res_dir, task, f"{language}/{model_name}-{language}")
     os.makedirs(save_dir, exist_ok=True)
     name = model_name.split("/")[-1]
-    evalpath = os.path.join(save_dir, f"{name}.json")
+    evalpath = os.path.join(save_dir, f"{name}_predictions.json")
 
     print(f"Results directory: {save_dir}")
 
@@ -203,8 +227,10 @@ def main(
             language,
             task,
             max_token_nums,
+            extra_body
         )
     )
+
 
     # Convert results to DataFrame
     df = pd.DataFrame(results)
@@ -215,7 +241,7 @@ def main(
     # Save cost breakdown to Excel in cost/ subfolder
     # cost_dir = os.path.join(save_dir, "cost")
     # os.makedirs(cost_dir, exist_ok=True)
-    cost_file = os.path.join(save_dir, f"{name}.xlsx")
+    cost_file = os.path.join(save_dir, f"cost_predictions_{name}.xlsx")
     df.to_excel(cost_file, index=False)
     print(f"Saved token costs to: {cost_file}")
 
