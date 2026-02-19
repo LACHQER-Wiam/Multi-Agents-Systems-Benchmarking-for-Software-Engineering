@@ -9,12 +9,92 @@ import os
 import pandas as pd
 from typing import Any, Dict
 import anthropic
+import time
 
 llm_judge_prompt = '''
 Gt: {gt}
 Pred: {pred}
 
-Evaluate Pred against Gt on these 5 criteria. Return JSON with scores only.
+Using Gt as the correct answer, compare the content of Pred with Gt and evaluate Pred based on the following aspects. Each aspect contains tailored evaluation criteria to handle the complexities of multi-file interactions and feature integration. The output must follow the JSON format described in Point 6.
+
+Evaluation Aspects
+
+1. Correctness of Function Calls 
+Objective: Evaluate the accuracy of all function calls between segments and across files.
+	•	Ensure:
+	•	Each invoking_code_segment correctly calls its corresponding called_code_segment as per Gt.
+	•	Calls include appropriate parameter matching, order, and context alignment.
+	•	Evaluation Criteria:
+	•	Does the function signature match, including parameter names, types, and order?
+	•	Are correct arguments passed, meeting expectations in feature_description and detailed_feature_description?
+	•	Is the pre- or post-logic necessary for context included?
+	•	Are cross-file dependencies invoked correctly, as shown in modified_complete_code?
+
+Scoring Rules:
+	•	5 points: All function calls are completely correct and match Gt, including parameters, order, and logical dependencies.
+	•	4 points: Mostly correct with minor parameter or comment issues but no major gaps.
+	•	3 points: Partially correct; missing key parameters, logic, or dependencies.
+	•	2 points: Significant issues in invocation logic, causing likely runtime errors.
+	•	0-1 points: Calls are incorrect, incomplete, or not implemented.
+
+2. Alignment with Feature Requirements
+Objective: Check if the code in Pred aligns with the intended feature and modification goals.
+	•	Ensure:
+	•	Every call reflects requirements in feature_description and detailed_feature_description.
+	•	The new or modified logic directly implements the required functionality.
+	•	Evaluation Criteria:
+	•	Does the logic adhere to the functional goals described?
+	•	Does it integrate with multi-file dependencies correctly (if applicable)?
+	•	Are the new components in new_file_code_segment aligned with expectations?
+
+Scoring Rules:
+	•	5 points: Perfectly aligned with feature requirements; implementation is logically complete.
+	•	4 points: Correctly aligned but with potential optimizations or minor improvements.
+	•	3 points: Partially fulfills requirements with clear gaps in alignment.
+	•	2 points: Loosely aligned with significant logic missing.
+	•	0-1 points: Not aligned or entirely unrelated to the described requirements.
+
+3. Accuracy of Functionality Implementation
+Objective: Verify the correctness of the implementation, focusing on functional outcomes.
+	•	Evaluation Criteria:
+	•	Does the functionality fully satisfy the requirements in feature_description?
+	•	Are components correctly loaded, initialized, or referenced?
+	•	Are all dependencies resolved for seamless multi-file integration?
+
+Scoring Rules:
+	•	5 points: Fully accurate implementation without functional defects.
+	•	4 points: Mostly accurate with minor issues or deviations.
+	•	3 points: Partially correct but lacking essential steps or logic.
+	•	2 points: Basic framework present but largely incomplete.
+	•	0-1 points: Non-functional due to missing or incorrect logic.
+
+4. Completeness of Implementation
+Objective: Ensure that all functional components, including new and modified ones, are fully implemented.
+	•	Evaluation Criteria:
+	•	Are all required segments across files defined and updated per Gt?
+	•	Does the implementation cover all subparts described in detailed_feature_description?
+	•	Are all new dependencies (#New segments) and modifications (#Modify segments) accounted for?
+
+Scoring Rules:
+	•	5 points: Complete implementation with no omissions.
+	•	4 points: Nearly complete, with only minor omissions.
+	•	3 points: Significant missing functionality, but partially meets requirements.
+	•	2 points: Too many missing components, achieving minimal functionality.
+	•	0-1 points: Nearly all components are missing or incorrect.
+
+5. Code Quality
+Objective: Assess the overall quality, maintainability, and readability of the code.
+	•	Evaluation Criteria:
+	•	Readability: Clear naming, concise comments, and consistent style.
+	•	Maintainability: Modular structure, minimal duplication, and extensibility.
+	•	Efficiency: Appropriate algorithms, data structures, and resource use.
+
+Scoring Rules:
+	•	5 points: Excellent quality with clean, efficient, and maintainable code.
+	•	4 points: Good quality, but minor readability or efficiency issues.
+	•	3 points: Average quality; readable but not optimized or modular.
+	•	2 points: Poor quality; lacks structure or suffers from inefficiencies.
+	•	0-1 points: Unreadable, unstructured, or inefficient code.
 
 Return this JSON:
 {{
@@ -36,8 +116,9 @@ def call_claude_judge(pred: Any, gt: Any) -> tuple:
     prompt = llm_judge_prompt.format(pred=pred_str, gt=gt_str)
     
     response = client.messages.create(
-        model="claude-opus-4-6",
-        max_tokens=256,
+        model="claude-haiku-4-5",
+        max_tokens=5000,
+        temperature=0.0,
         messages=[{"role": "user", "content": prompt}],
         extra_headers={"anthropic-beta": "structured-outputs-2025-11-13"},
         extra_body={
@@ -80,69 +161,65 @@ def call_claude_judge(pred: Any, gt: Any) -> tuple:
 
 def process_json_file(filepath: str, weights: Dict[str, float]) -> tuple:
     """Process JSON and evaluate. Returns (total_score, token_costs_data)"""
+
     with open(filepath, 'r') as f:
         content = json.load(f)
-    
+
     total_score = 0
     token_costs_data = []
-    updated_data = []
-    
+    excel_rows = []
+
     for idx, data in enumerate(content, 1):
         raw_pred = data.get("pred", {})
         pred = raw_pred if isinstance(raw_pred, dict) else {}
         gt = data.get("gt", {})
-        
+
+        item_index = data.get("idx", idx)
+
         try:
             result, input_tokens, output_tokens = call_claude_judge(pred, gt)
-            
+
             if result:
-                # Calculate score
                 score = sum(
-                    (result.get(key, 0) / 5) * weight 
+                    (result.get(key, 0) / 5) * weight
                     for key, weight in weights.items()
                 ) * 100
-                
-                data["score"] = score
-                total_score += score
-                
-                token_costs_data.append({
-                    "idx": data.get("idx", idx),
-                    "input_tokens": input_tokens,
-                    "output_tokens": output_tokens,
-                    "total_tokens": input_tokens + output_tokens,
-                    "score": score
-                })
-                print(f"Item {idx}: score={score:.2f}")
             else:
-                data["score"] = 0
-                token_costs_data.append({
-                    "idx": data.get("idx", idx),
-                    "input_tokens": 0,
-                    "output_tokens": 0,
-                    "total_tokens": 0,
-                    "score": 0
-                })
-        
-        except Exception as e:
-            print(f"Item {idx}: Error - {e}")
-            data["score"] = 0
-            token_costs_data.append({
-                "idx": data.get("idx", idx),
-                "input_tokens": 0,
-                "output_tokens": 0,
-                "total_tokens": 0,
-                "score": 0
-            })
-        
-        updated_data.append(data)
-    
-    # Save scored results
-    output_fp = filepath.replace(".json", "_scored.json")
-    with open(output_fp, 'w') as f:
-        json.dump(updated_data, f, ensure_ascii=True, indent=4)
-    
-    return total_score, token_costs_data
+                score = 0
 
+        except Exception as e:
+            print(f"Item {item_index}: Error - {e}")
+            score = 0
+            input_tokens = 0
+            output_tokens = 0
+
+        total_score += score
+
+        token_costs_data.append({
+            "idx": item_index,
+            "input_tokens": input_tokens,
+            "output_tokens": output_tokens,
+            "total_tokens": input_tokens + output_tokens,
+            "score": score
+        })
+
+        excel_rows.append({
+            "index": item_index,
+            **{key: (result.get(key, 0) / 5)*100 for key in weights.keys()},
+            "score": score
+        })
+
+        print(f"Item {item_index}: score={score:.2f}")
+
+    #  Create Excel file
+    df = pd.DataFrame(excel_rows)
+
+    output_fp = filepath.replace("_predictions.json", "_scores.xlsx")
+    df.to_excel(output_fp, index=False)
+
+    print(f"Scores saved to {output_fp}")
+
+    return total_score, token_costs_data
 
 def save_token_costs_to_excel(token_costs_data: list, output_dir: str):
     """Save costs to Excel"""
@@ -160,7 +237,7 @@ def save_token_costs_to_excel(token_costs_data: list, output_dir: str):
     
     df = pd.concat([df, pd.DataFrame([summary])], ignore_index=True)
     
-    excel_path = os.path.join(output_dir, "cost_eval_ME.xlsx")
+    excel_path = os.path.join(output_dir, "cost_eval_task1.xlsx")
     df.to_excel(excel_path, index=False, engine='openpyxl')
     
     print(f"\nToken costs: {excel_path}")
@@ -181,7 +258,7 @@ def main():
         "code_quality_score": 0.10
     }
     
-    output_dir = os.path.dirname(args.input) or "."
+    output_dir = os.path.dirname(f"{args.input}") or "."
     print(f"Processing: {args.input}")
     
     total_score, token_costs_data = process_json_file(args.input, weights)
@@ -192,4 +269,7 @@ def main():
 
 
 if __name__ == "__main__":
+    start = time.perf_counter()
     main()
+    end = time.perf_counter()
+    print(f"[EVALUATION] Execution time: {end - start:.6f} seconds")
