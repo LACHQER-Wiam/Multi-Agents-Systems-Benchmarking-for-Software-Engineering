@@ -3,14 +3,14 @@
 # script for running evaluations via Anthropic API; mirrors run.sh logic
 # models list here are the anthropic model identifiers (claude-2.1, claude-3, etc.)
 # "java" "javascript" "php" "python" "typescript" "c#" "c++" "c"  ,  "task2" "task4"
-models=("claude-haiku-4-5") #haiku-4-5. opus-4-6
+models=("gpt-4.1") #haiku-4-5. opus-4-6
 languages=("python")
-tasks=("task4")
+tasks=("task1")
 
 log_dir="./logs"
 mkdir -p "$log_dir"
 
-if [ -z "$ANTHROPIC_API_KEY" ]; then
+if [ -z "$OPENAI_API_KEY" ]; then
     echo "Warning: ANTHROPIC_API_KEY not set. Export it before running."
 fi
 

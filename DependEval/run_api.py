@@ -5,7 +5,7 @@ import time
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run model evaluation via Anthropic API.")
+    parser = argparse.ArgumentParser(description="Run model evaluation via OpanAI API.")
     parser.add_argument("--model_name", type=str, required=True, help="Anthropic model name (e.g. claude-opus-4-6)")
     parser.add_argument("--language", type=str, required=True)
     parser.add_argument("--task", type=str, default="task1")

@@ -8,8 +8,12 @@ import argparse
 import os
 import pandas as pd
 from typing import Any, Dict
-import anthropic
+from openai import OpenAI
+# import anthropic
 import time
+from dotenv import load_dotenv
+load_dotenv()
+
 
 llm_judge_prompt = '''
 Gt: {gt}
@@ -107,23 +111,26 @@ Return this JSON:
 '''
 
 
-def call_claude_judge(pred: Any, gt: Any) -> tuple:
+def call_openai_judge(pred: Any, gt: Any) -> tuple:
     """Call Claude, parse JSON response. Returns (parsed_json, input_tokens, output_tokens)"""
-    client = anthropic.Anthropic(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
-    
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY", ""))
+
+    # modèle choisi par toi dans .env (fallback possible)
+    model_name = os.environ.get("OPENAI_MODEL", "gpt-4.1")
+
     pred_str = json.dumps(pred) if isinstance(pred, dict) else str(pred)
     gt_str = json.dumps(gt) if isinstance(gt, dict) else str(gt)
     prompt = llm_judge_prompt.format(pred=pred_str, gt=gt_str)
-    
-    response = client.messages.create(
-        model="claude-haiku-4-5",
+
+    response = client.chat.completions.create(
+        model=model_name,
         max_tokens=5000,
         temperature=0.0,
         messages=[{"role": "user", "content": prompt}],
-        extra_headers={"anthropic-beta": "structured-outputs-2025-11-13"},
-        extra_body={
-            "output_format": {
-                "type": "json_schema",
+        response_format={
+            "type": "json_schema",
+            "json_schema": {
+                "name": "judge_schema",
                 "schema": {
                     "type": "object",
                     "properties": {
@@ -131,31 +138,37 @@ def call_claude_judge(pred: Any, gt: Any) -> tuple:
                         "purpose_alignment_score": {"type": "number"},
                         "functionality_accuracy_score": {"type": "number"},
                         "functionality_completeness_score": {"type": "number"},
-                        "code_quality_score": {"type": "number"}
+                        "code_quality_score": {"type": "number"},
                     },
-                    "required": ["correctness_score", "purpose_alignment_score", 
-                                "functionality_accuracy_score", "functionality_completeness_score",
-                                "code_quality_score"],
-                    "additionalProperties": False
-                }
-            }
-        }
+                    "required": [
+                        "correctness_score",
+                        "purpose_alignment_score",
+                        "functionality_accuracy_score",
+                        "functionality_completeness_score",
+                        "code_quality_score",
+                    ],
+                    "additionalProperties": False,
+                },
+                "strict": True,
+            },
+        },
     )
-    
-    # Extract text
-    text = response.content[0].text if response.content else ""
-    
-    # Parse JSON (like inference_api.py)
+
+    # Extract text (OpenAI)
+    text = response.choices[0].message.content if response.choices else ""
+
+    # Parse JSON
     parsed = None
     if text:
         try:
             parsed = json.loads(text)
         except Exception:
-            pass
-    
-    input_tokens = response.usage.input_tokens
-    output_tokens = response.usage.output_tokens
-    
+            parsed = None
+
+    # Tokens (OpenAI)
+    input_tokens = getattr(response.usage, "prompt_tokens", 0) if response.usage else 0
+    output_tokens = getattr(response.usage, "completion_tokens", 0) if response.usage else 0
+
     return parsed, input_tokens, output_tokens
 
 
@@ -177,7 +190,7 @@ def process_json_file(filepath: str, weights: Dict[str, float]) -> tuple:
         item_index = data.get("idx", idx)
 
         try:
-            result, input_tokens, output_tokens = call_claude_judge(pred, gt)
+            result, input_tokens, output_tokens = call_openai_judge(pred, gt)
 
             if result:
                 score = sum(

@@ -11,9 +11,12 @@ import asyncio
 import argparse
 import pandas as pd
 from data.utils import construct_prompt
-import anthropic
+from openai import OpenAI
+# import anthropic
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List
+from dotenv import load_dotenv
+load_dotenv()
 
 
 class Task2Schema(BaseModel):
@@ -31,7 +34,7 @@ class Task4Schema(BaseModel):
     )
 
 
-async def _call_anthropic(model_name: str, prompt: str, temperature: float, extra_body: dict):
+async def _call_openai(model_name: str, prompt: str, temperature: float, extra_body: dict):
     """Call Claude API and return (parsed_response, usage_dict).
 
     When using the structured outputs beta feature the response text
@@ -39,19 +42,24 @@ async def _call_anthropic(model_name: str, prompt: str, temperature: float, extr
     attempts to parse the text with ``json.loads``; if parsing fails the
     raw text is returned instead so callers are robust.
     """
-    client = anthropic.Client(api_key=os.environ.get("ANTHROPIC_API_KEY", ""))
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    response_format = {
+        "type": "json_schema",
+        "json_schema": {
+            "name": "structured_output",
+            "schema": extra_body["output_format"]["schema"],
+            "strict": True,
+        },
+    }
 
     def sync():
-        return client.messages.create(
+        return client.chat.completions.create(
             model=model_name,
             max_tokens=8192,
             temperature=temperature,
             messages=[{"role": "user", "content": prompt}],
-            # Enable the beta feature
-            extra_headers={
-                "anthropic-beta": "structured-outputs-2025-11-13"
-            },
-            extra_body=extra_body)
+            response_format=response_format,
+        )
 
     resp = await asyncio.to_thread(sync)
     
@@ -79,17 +87,13 @@ async def _call_anthropic(model_name: str, prompt: str, temperature: float, extr
     # Extract usage (tokens): response.usage has input_tokens and output_tokens
     usage = {}
     if getattr(resp, "usage", None) is not None:
-        if isinstance(resp.usage, dict):
-            usage = resp.usage
-        else:
-            # Convert object to dict
-            try:
-                usage = resp.usage.__dict__
-            except Exception:
-                usage = {}
+        usage = {
+            "prompt_tokens": getattr(resp.usage, "prompt_tokens", 0),
+            "completion_tokens": getattr(resp.usage, "completion_tokens", 0),
+            "total_tokens": getattr(resp.usage, "total_tokens", 0),
+        }
     
     return parsed, usage
-
 
 
 async def _process_dataset(dataset, model_name, temperature, batch_size, language, task, max_token_nums, extra_body):
@@ -104,7 +108,7 @@ async def _process_dataset(dataset, model_name, temperature, batch_size, languag
         
         async with sem:
             try:
-                pred, usage = await _call_anthropic(model_name, prompt, temperature, extra_body=extra_body)
+                pred, usage = await _call_openai(model_name, prompt, temperature, extra_body=extra_body)
             except Exception as e:
                 print(f"Error at idx={idx}: {e}")
                 pred = ""
