@@ -162,7 +162,6 @@ def run_react_benchmark(language):
             except Exception as e:
                 results["errors"] += 1
                 print(f"⚠️ ERROR: {e}")
-        
 
         total_input_tokens = cb.prompt_tokens
         total_output_tokens = cb.completion_tokens
