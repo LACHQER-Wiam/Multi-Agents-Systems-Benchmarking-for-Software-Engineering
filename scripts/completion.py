@@ -1,4 +1,4 @@
-# Task num2 : Depedency Recognition using Llama3.2
+# Task num2 : Depedency Recognition
 import ast
 import os
 import json 

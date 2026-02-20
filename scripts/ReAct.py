@@ -4,15 +4,13 @@ import ast
 import time
 from typing import Annotated, Sequence, TypedDict
 from dotenv import load_dotenv
-
-
 from langchain_core.messages import BaseMessage, SystemMessage, HumanMessage
 from langchain_anthropic import ChatAnthropic
 from langchain_core.tools import tool
+from langchain_community.callbacks.manager import get_openai_callback
 from langgraph.graph import StateGraph, END
 from langgraph.graph.message import add_messages
 from langgraph.prebuilt import ToolNode
-
 
 load_dotenv()
 
@@ -41,7 +39,7 @@ tool_node = ToolNode(tools)
 # STEP 3: Setup the Model
 llm = ChatAnthropic(
     model="claude-3-haiku-20240307",
-    temperature=0, # Deterministic output for benchmarking
+    temperature=0.2, # Deterministic output for benchmarking
     anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
 ).bind_tools(tools)
 
@@ -121,43 +119,54 @@ def run_react_benchmark(language):
 
     print(f"\n--- Starting ReAct Agentic Benchmark ({language.upper()}) ---")
 
-    for i, example in enumerate(data):
-        print(f"[{i+1}/{len(data)}] Processing example...", end=" ", flush=True)
-        
-        # Prepare the input for the agent
-        inputs = {
-            "messages": [HumanMessage(content=f"Analyze these files:\n{example['content']}")],
-            "language": language
-        }
-        
-        try:
-            # Stream the execution to handle the agentic loop
-            final_state = None
-            for output in app.stream(inputs, stream_mode="values"):
-                final_state = output
+    total_input_tokens = 0
+    total_output_tokens = 0
 
-            # Extract final answer
-            agent_answer = final_state["messages"][-1].content
+
+    with get_openai_callback() as cb:
+
+        for i, example in enumerate(data):
+            print(f"[{i+1}/{len(data)}] Processing example...", end=" ", flush=True)
             
-            # Extract list from text (handle cases where model might add prose)
-            if "[" in agent_answer and "]" in agent_answer:
-                start = agent_answer.index("[")
-                end = agent_answer.rfind("]") + 1
-                clean_output = agent_answer[start:end]
-                parsed_output = ast.literal_eval(clean_output)
-            else:
-                parsed_output = []
+            # Prepare the input for the agent
+            inputs = {
+                "messages": [HumanMessage(content=f"Analyze these files:\n{example['content']}")],
+                "language": language
+            }
+            
+            try:
+                # Stream the execution to handle the agentic loop
+                final_state = None
+                for output in app.stream(inputs, stream_mode="values"):
+                    final_state = output
 
-            # Evaluate EMR
-            if normalize(parsed_output) == normalize(example["gt"]):
-                results["emr_count"] += 1
-                print("✅ MATCH")
-            else:
-                print("❌ MISMATCH")
+                # Extract final answer
+                agent_answer = final_state["messages"][-1].content
                 
-        except Exception as e:
-            results["errors"] += 1
-            print(f"⚠️ ERROR: {e}")
+                # Extract list from text (handle cases where model might add prose)
+                if "[" in agent_answer and "]" in agent_answer:
+                    start = agent_answer.index("[")
+                    end = agent_answer.rfind("]") + 1
+                    clean_output = agent_answer[start:end]
+                    parsed_output = ast.literal_eval(clean_output)
+                else:
+                    parsed_output = []
+
+                # Evaluate EMR
+                if normalize(parsed_output) == normalize(example["gt"]):
+                    results["emr_count"] += 1
+                    print("✅ MATCH")
+                else:
+                    print("❌ MISMATCH")
+                    
+            except Exception as e:
+                results["errors"] += 1
+                print(f"⚠️ ERROR: {e}")
+        
+
+        total_input_tokens = cb.prompt_tokens
+        total_output_tokens = cb.completion_tokens
+        total_cost = cb.total_cost
 
     total_time = time.time() - start_time
     print(f"\n--- FINAL BATCH RESULTS ({language}) ---")
@@ -165,6 +174,10 @@ def run_react_benchmark(language):
     print(f"EMR (Exact Match): {results['emr_count']}")
     print(f"Accuracy: {(results['emr_count']/results['total'])*100:.2f}%")
     print(f"Failed to Parse: {results['errors']}")
+    print(f"Input Tokens:  {total_input_tokens}")
+    print(f"Output Tokens: {total_output_tokens}")
+    print(f"Total Cost:    ${total_cost:.4f}")
+    print(f"Avg Tokens/Ex: {(total_input_tokens + total_output_tokens) / len(data):.1f}")
     print(f"Time Taken: {total_time:.2f}s")
 
 if __name__ == "__main__":
