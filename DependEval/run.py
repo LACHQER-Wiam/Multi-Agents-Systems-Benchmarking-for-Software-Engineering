@@ -1,6 +1,7 @@
 import argparse
 import os
 import inference_api 
+import inference_ReAct
 import time
 
 
@@ -22,6 +23,17 @@ if __name__ == "__main__":
 
     if args.type_agent == "api":
         eval_path = inference_api.main(
+            model_name=args.model_name,
+            language=args.language,
+            task=args.task,
+            dataset_path=args.dataset_path,
+            res_dir=args.res_dir,
+            batch_size=args.batch_size,
+            temperature=args.temperature,
+            max_token_nums=args.max_token_nums,
+        )
+    elif args.type_agent == "react":
+        eval_path = inference_ReAct.main(
             model_name=args.model_name,
             language=args.language,
             task=args.task,

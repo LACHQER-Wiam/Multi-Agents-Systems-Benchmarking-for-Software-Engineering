@@ -17,7 +17,7 @@ from datetime import datetime
 from typing import List, Tuple
 from pydantic import BaseModel, Field, ConfigDict
 import anthropic
-from DependEval.data.utils_api import construct_prompt
+from DependEval.data.utils import construct_prompt
 import time
 
 

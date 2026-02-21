@@ -10,10 +10,12 @@ import json
 import asyncio
 import argparse
 import pandas as pd
-from data.utils_api import construct_prompt
+from data.utils import construct_prompt
 import anthropic
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List
+
+type_agent = "api"  # react or api
 
 
 class Task2Schema(BaseModel):
@@ -160,7 +162,6 @@ def main(
     res_dir: str = "./results",
     batch_size: int = 1,
     temperature: float = 0.0,
-    top_p: float = 0.95,
     max_token_nums: int = 40000,
 ):
     """Main entry point. Runs async inference and saves results."""
@@ -210,7 +211,7 @@ def main(
     print(f"Loaded {len(dataset)} examples from {path}")
 
     # Create output directories
-    save_dir = os.path.join(res_dir, task, f"{language}/{model_name}-{language}")
+    save_dir = os.path.join(res_dir, task, type_agent, f"{language}/{model_name}-{language}")
     os.makedirs(save_dir, exist_ok=True)
     name = model_name.split("/")[-1]
     evalpath = os.path.join(save_dir, f"{name}_predictions.json")
