@@ -79,10 +79,11 @@ def process_all_files_in_directory(filepath):
 
         rows.append({
             "idx": idx,
-            "dependency_groups": data.get("pred", {}).get("list_dependencies", []),
+            "dependency_groups": data.get("pred", {}).get("list_dependencies", []),  #.
             "gt": data.get("gt", []),
             "score": score
         })
+        print(data.get("list_dependencies", []))
 
         print(f"idx {idx}: score={score:.2f}")
 
