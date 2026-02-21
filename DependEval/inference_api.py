@@ -10,7 +10,7 @@ import json
 import asyncio
 import argparse
 import pandas as pd
-from data.utils import construct_prompt
+from data.utils_api import construct_prompt
 import anthropic
 from pydantic import BaseModel, Field, ConfigDict
 from typing import List

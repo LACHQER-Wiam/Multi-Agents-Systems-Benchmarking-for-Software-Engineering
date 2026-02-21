@@ -13,7 +13,7 @@ import asyncio
 import pandas as pd
 from typing import Callable
 from transformers import AutoTokenizer
-from data.utils import construct_prompt
+from DependEval.data.utils_api import construct_prompt
 
 
 def count_tokens(tokenizer, text: str) -> int:
