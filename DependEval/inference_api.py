@@ -62,37 +62,19 @@ async def _call_openai(model_name: str, prompt: str, temperature: float, extra_b
         )
 
     resp = await asyncio.to_thread(sync)
-    
-    # Extract text from response
-    text = ""
-    if getattr(resp, "content", None):
-        try:
-            text = resp.content[0].text
-            # print(f"text {text}")
-        except Exception:
-            pass
 
-    # Try to parse the text as JSON so callers get a structured object
-    parsed = None
-    if text:
-        try:
-            parsed = json.loads(text)
-            # print(f"parsed {parsed}")
-        except Exception:
-            # Fallback to raw text if parsing fails
-            parsed = text
-    else:
-        parsed = text
+    text = resp.choices[0].message.content or ""
 
-    # Extract usage (tokens): response.usage has input_tokens and output_tokens
+    parsed = json.loads(text) if text else None
+
     usage = {}
-    if getattr(resp, "usage", None) is not None:
+    if resp.usage is not None:
         usage = {
-            "prompt_tokens": getattr(resp.usage, "prompt_tokens", 0),
-            "completion_tokens": getattr(resp.usage, "completion_tokens", 0),
-            "total_tokens": getattr(resp.usage, "total_tokens", 0),
+            "prompt_tokens": resp.usage.prompt_tokens or 0,
+            "completion_tokens": resp.usage.completion_tokens or 0,
+            "total_tokens": resp.usage.total_tokens or 0,
         }
-    
+
     return parsed, usage
 
 
@@ -208,10 +190,12 @@ def main(
     else:
         raise ValueError(f"Unknown task: {task}")
 
-    with open(path, "r") as f:
+    with open(path, "r", encoding="utf-8") as f:
         dataset = json.load(f)
 
     print(f"Loaded {len(dataset)} examples from {path}")
+    # dataset = dataset[:3]
+    # print(f"DEBUG: limiting to {len(dataset)} examples")
 
     # Create output directories
     save_dir = os.path.join(res_dir, task, f"{language}/{model_name}-{language}")

@@ -5,7 +5,7 @@
 # "java" "javascript" "php" "python" "typescript" "c#" "c++" "c"  ,  "task2" "task4"
 models=("gpt-4.1") #haiku-4-5. opus-4-6
 languages=("python")
-tasks=("task1")
+tasks=("task2")
 
 log_dir="./logs"
 mkdir -p "$log_dir"
@@ -31,11 +31,11 @@ for task in "${tasks[@]}"; do
             result_json="./results/$task/$language/${model//\//-}-$language/${model##*/}_predictions.json"
 
             if [ "$task" == "task1" ]; then
-                python3 eval_ME_api.py --input "$result_json" 2>&1 | tee -a "$log_file"
+                python eval_ME_api.py --input "$result_json" 2>&1 | tee -a "$log_file"
             elif [ "$task" == "task2" ]; then
-                python3 eval_DR_api.py --input "$result_json" 2>&1 | tee -a "$log_file"
+                python eval_DR_api.py --input "$result_json" 2>&1 | tee -a "$log_file"
             elif [ "$task" == "task4" ]; then
-                python3 eval_RC_api.py --input "$result_json" 2>&1 | tee -a "$log_file"
+                python eval_RC_api.py --input "$result_json" 2>&1 | tee -a "$log_file"
             fi
 
             echo "Completed task: $model with language: $language and task: $task (log: $log_file)" | tee -a "$log_file"
