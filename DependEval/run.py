@@ -1,12 +1,13 @@
 import argparse
 import os
-from inference_api import main
+import inference_api 
 import time
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Run model evaluation via Anthropic API.")
-    parser.add_argument("--model_name", type=str, required=True, help="Anthropic model name (e.g. claude-opus-4-6)")
+    parser.add_argument("--type_agent", type=str, required=True, help="Anthropic model name")
+    parser.add_argument("--model_name", type=str, required=True, help="Anthropic model name")
     parser.add_argument("--language", type=str, required=True)
     parser.add_argument("--task", type=str, default="task1")
     parser.add_argument("--dataset_path", type=str, default="./data")
@@ -19,16 +20,17 @@ if __name__ == "__main__":
 
     start = time.perf_counter()
 
-    eval_path = main(
-        model_name=args.model_name,
-        language=args.language,
-        task=args.task,
-        dataset_path=args.dataset_path,
-        res_dir=args.res_dir,
-        batch_size=args.batch_size,
-        temperature=args.temperature,
-        max_token_nums=args.max_token_nums,
-    )
+    if args.type_agent == "api":
+        eval_path = inference_api.main(
+            model_name=args.model_name,
+            language=args.language,
+            task=args.task,
+            dataset_path=args.dataset_path,
+            res_dir=args.res_dir,
+            batch_size=args.batch_size,
+            temperature=args.temperature,
+            max_token_nums=args.max_token_nums,
+        )
 
 
     end = time.perf_counter()
