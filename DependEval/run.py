@@ -17,6 +17,7 @@ if __name__ == "__main__":
     parser.add_argument("--temperature", type=float, default=0.0)
     parser.add_argument("--top_p", type=float, default=0.1)
     parser.add_argument("--max_token_nums", type=int, default=40000)
+    parser.add_argument("--provider", type=str, default="openai", help="LLM provider: openai, anthropic, google")
     args = parser.parse_args()
 
     start = time.perf_counter()
@@ -42,6 +43,7 @@ if __name__ == "__main__":
             batch_size=args.batch_size,
             temperature=args.temperature,
             max_token_nums=args.max_token_nums,
+            provider=args.provider,
         )
 
 

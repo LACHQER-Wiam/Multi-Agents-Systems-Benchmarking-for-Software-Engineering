@@ -11,3 +11,4 @@ transformers==4.46.2
 accelerate>=0.26.0
 anthropic==2023.12.21
 demjson3
+python-dotenv
