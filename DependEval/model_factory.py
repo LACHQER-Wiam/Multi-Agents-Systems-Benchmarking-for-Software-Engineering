@@ -9,15 +9,15 @@ quel modèle conforme à cette interface.
 
 import os
 from typing import Any, Optional
+from pydantic import create_model
+from typing import List, Any, Optional
+from langchain.agents.structured_output import ProviderStrategy
+from dotenv import load_dotenv
+load_dotenv() 
 
 # Type hint pour le modèle (BaseChatModel de LangChain)
 ChatModel = Any
-from dotenv import load_dotenv
-from pathlib import Path
 
-# Charge explicitement DependEval/.env
-env_path = Path(__file__).resolve().parent / ".env"
-load_dotenv(dotenv_path=env_path)
 
 def create_llm(
     provider: str,
@@ -95,3 +95,56 @@ def create_llm(
         f"Unknown provider: '{provider}'. "
         "Supported: openai, anthropic, google."
     )
+
+
+SCHEMAS = {
+    "task1": {
+        "type": "object",
+        "properties": {
+            "called_code_segment": {"type": "string"},
+            "invoking_code_segment": {"type": "string"},
+            "feature_description": {"type": "string"},
+            "modified_complete_code": {"type": "string"}
+        },
+        "required": ["called_code_segment", "invoking_code_segment", "feature_description", "modified_complete_code"],
+        "additionalProperties": False
+    },
+    "task2": {
+        "type": "object",
+        "properties": {
+            "list_dependencies": {"type": "array", "items": {"type": "string"}}
+        },
+        "required": ["list_dependencies"],
+        "additionalProperties": False
+    },
+    "task4": {
+        "type": "object",
+        "properties": {
+            "dependency_groups": {
+                "type": "array",
+                "items": {"type": "array", "items": {"type": "string"}}
+            }
+        },
+        "required": ["dependency_groups"],
+        "additionalProperties": False
+    }
+}
+
+
+def get_response_format(task: str, provider: str):
+    if task == "task2":
+        schema = create_model("Task2Schema", list_dependencies=(List[str], ...))
+    elif task == "task4":
+        schema = create_model("Task4Schema", dependency_groups=(List[List[str]], ...))
+    elif task == "task1":
+        schema = create_model("Task1Schema",
+            called_code_segment=(str, ...),
+            invoking_code_segment=(str, ...),
+            feature_description=(str, ...),
+            modified_complete_code=(str, ...)
+        )
+    else:
+        return None
+        
+    return ProviderStrategy(schema)    
+    

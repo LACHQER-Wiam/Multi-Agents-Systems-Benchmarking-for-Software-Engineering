@@ -1,4 +1,4 @@
-from utils.metric import exact_match_score
+from utils.metric import exact_match_score, normalize_answer
 import json
 import re
 import os
@@ -23,33 +23,27 @@ def evaluate_single_item(data: dict) -> float:
     if pred_raw is None or gt is None:
         return 0.0
 
-    # Extract list-like string
-    matched = task2_match(pred_raw.get("list_dependencies", []))
+    # pred est déjà une liste
+    pred_list = pred_raw.get("list_dependencies", [])
+    if not isinstance(pred_list, list) or len(pred_list) == 0:
+        return 0.0
 
-    if not matched:
+    # gt est une liste avec guillemets simples à retirer
+    if isinstance(gt, list):
+        gt_list = [g.strip("'\"") for g in gt]
+    else:
+        return 0.0
+
+    if len(gt_list) == 0:
         return 0.0
 
     try:
-        pred_list = json.loads(matched.replace("'", '"'))
-    except Exception:
-        return 0.0
-
-    if not isinstance(pred_list, list) or not isinstance(gt, list):
-        return 0.0
-
-    if len(pred_list) == 0:
-        return 0.0
-
-    try:
-        em_total = sum(
-            exact_match_score(p, g)
-            for p, g in zip(pred_list, gt)
-        )
-
-        em_avg = em_total / len(pred_list)
-
-        return 1.0 if em_avg == 1 else 0.0
-
+        pred_set = set(exact_match_score(p, p) and p for p in pred_list)  
+        # Plus simple — utilise normalize_answer directement
+        from utils.metric import normalize_answer
+        pred_set = set(normalize_answer(p) for p in pred_list)
+        gt_set = set(normalize_answer(g) for g in gt_list)
+        return 1.0 if pred_set == gt_set else 0.0
     except Exception:
         return 0.0
 

@@ -14,27 +14,28 @@ from pydantic import BaseModel, Field, ConfigDict
 from typing import List, Any, Optional
 
 from middlewares import TokenCounterMiddleware
-from model_factory import create_llm
+from model_factory import create_llm, get_response_format, SCHEMAS
+os.environ["LANGCHAIN_TRACING_V2"] = "false"
 from tools import BashWorkspaceTool
 
 # Répertoire dans lequel l'outil bash exécute les commandes (éditer fichiers, lancer scripts).
 WORKSPACE_ROOT = os.environ.get("WORKSPACE_ROOT", "/workspace")
 
-type_agent = "react"  # react or api
+type_agent = "react" 
 
-class Task2Schema(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+# class Task2Schema(BaseModel):
+#     model_config = ConfigDict(extra="forbid")
 
-    list_dependencies: List[str] = Field(
-        description="Dependency relationship between files ['file1.py', 'file2.py']"
-    )
+#     list_dependencies: List[str] = Field(
+#         description="Dependency relationship between files ['file1.py', 'file2.py']"
+#     )
 
-class Task4Schema(BaseModel):
-    model_config = ConfigDict(extra="forbid")
+# class Task4Schema(BaseModel):
+#     model_config = ConfigDict(extra="forbid")
 
-    dependency_groups: List[List[str]] = Field(
-        description="List of dependency groups such as [['file1.py', 'file2.py'], ['file3.py']]"
-    )
+#     dependency_groups: List[List[str]] = Field(
+#         description="List of dependency groups such as [['file1.py', 'file2.py'], ['file3.py']]"
+#     )
 
 
 # -----------------------------------------------------------------------------
@@ -42,43 +43,23 @@ class Task4Schema(BaseModel):
 # -----------------------------------------------------------------------------
 
 def _extract_pred_from_agent_result(invoke_result: dict) -> Any:
-    """
-    Extrait la prédiction finale depuis le retour de agent.invoke().
-
-    Le résultat contient une clé "messages". On prend le dernier message (assistant),
-    on en extrait le contenu texte, et on tente un parse JSON pour avoir un dict
-    quand le modèle renvoie du structured output.
-
-    Le dict renvoyé est compatible avec les trois evals :
-    - task1 (ME) : dict avec called_code_segment, invoking_code_segment, etc.
-    - task2 (DR) : dict avec list_dependencies → eval_DR_api
-    - task4 (RC) : dict avec dependency_groups → eval_RC_api
-    Si le JSON est invalide, on renvoie la chaîne brute (eval_ME_api gère les deux).
-    """
+    structured = invoke_result.get("structured_response")
+    if structured is not None:
+        if hasattr(structured, "model_dump"):
+            return structured.model_dump()
+        return structured
+    # fallback messages
     messages = invoke_result.get("messages", [])
     if not messages:
         return ""
-
     last = messages[-1]
     content = getattr(last, "content", None) if not isinstance(last, dict) else last.get("content")
-
-    if content is None:
+    if not content:
         return ""
-
-    # Contenu peut être une liste de blocs (ex. [{"type": "text", "text": "..."}])
-    if isinstance(content, list):
-        parts = [b.get("text", b) if isinstance(b, dict) else str(b) for b in content]
-        text = "".join(p for p in parts if isinstance(p, str))
-    else:
-        text = str(content).strip()
-
-    if not text:
-        return ""
-
     try:
-        return json.loads(text)
-    except json.JSONDecodeError:
-        return text
+        return json.loads(str(content).strip())
+    except Exception:
+        return str(content).strip()
 
 
 def _get_ground_truth(item: dict, task: str) -> Any:
@@ -105,7 +86,7 @@ def define_tools(task: str) -> list:
 
 def define_middleware(task: str, token_counter: Optional[TokenCounterMiddleware] = None) -> list:
     """
-    Liste des middlewares appliqués à l'agent (compatibles OpenAI).
+    Liste des middlewares appliqués à l'agent.
 
     - TokenCounterMiddleware : log des tokens par appel + cumul total.
     token_counter: instance partagée pour lire les totaux (reset_totals, total_input/output_tokens).
@@ -113,6 +94,50 @@ def define_middleware(task: str, token_counter: Optional[TokenCounterMiddleware]
     tc = token_counter if token_counter is not None else TokenCounterMiddleware()
     return [tc]
 
+def get_system_prompt(task: str, schema_str: str) -> str:
+    base = "You are a software engineer expert in analyzing and modifying code.\n"
+    
+    if task == "task1":
+        return base + (
+            "Your job is to implement a requested feature by modifying existing code.\n"
+            "RULES:\n"
+            "- called_code_segment: the EXACT original function/class being modified\n"
+            "- invoking_code_segment: the EXACT code that calls it\n"
+            "- feature_description: one sentence describing the feature\n"
+            "- modified_complete_code: ALL modified files, each prefixed with filename\n"
+            "  Format: '// filename.js\\n<code>\\n// filename2.js\\n<code>'\n"
+            "- Use MINIMAL changes, stay close to existing code style\n"
+            "- Do NOT add features not explicitly requested\n"
+            "- Do NOT over-engineer the solution\n"
+            f"Always respond ONLY with a valid JSON object matching this schema:\n{schema_str}"
+        )
+    
+    elif task == "task2":
+        return base + (
+        "Your job is to identify ALL files that are involved in dependency relationships.\n"
+        "RULES:\n"
+        "- list_dependencies: list of file paths involved in dependencies\n"
+        "- Each item is a single file path string, NOT a pair\n"
+        "- Include every file that imports OR is imported by another file\n"
+        "- Do NOT use 'file_a -> file_b' format\n"
+        "- Do NOT invent files that don't exist in the code\n"
+        f"Always respond ONLY with a valid JSON object matching this schema:\n{schema_str}"
+    )
+    
+    elif task == "task4":
+        return base + (
+            "Your job is to identify dependency CHAIN groups between files.\n"
+            "RULES:\n"
+            "- Each group is a chain: [file_A, file_B, file_C] means A imports B which imports C\n"
+            "- Only include DIRECT dependencies found in the code (imports, requires)\n"
+            "- Do NOT invent dependencies that don't exist\n"
+            "- A file with no dependencies is its own group: ['file.js']\n"
+            "- Do NOT merge separate independent chains into one long chain\n"
+            "- Each unique chain path must be its own group\n"
+            f"Always respond ONLY with a valid JSON object matching this schema:\n{schema_str}"
+        )
+    
+    return base + f"Always respond ONLY with a valid JSON object matching this schema:\n{schema_str}"
 
 def process_dataset(
     dataset: list,
@@ -138,15 +163,13 @@ def process_dataset(
         temperature=temperature,
         max_tokens=max_token_nums,
     )
+    schema_str = json.dumps(SCHEMAS.get(task, {}), indent=2)
     agent = create_agent(
         model=model,
         tools=define_tools(task),
-        system_prompt=(
-            "You are a software engineer who is an expert in understanding "
-            "code dependencies and modifying code based on the dependencies."
-        ),
-        response_format=response_format,
+        system_prompt=get_system_prompt(task, schema_str),
         middleware=define_middleware(task, token_counter),
+        response_format=response_format,
     )
 
     results = []
@@ -169,8 +192,28 @@ def process_dataset(
                 pred = {"list_dependencies": []}
         except Exception as e:
             print(f"Error at idx {idx}: {e}")
-            pred = ""
-
+            pred = {}
+            
+        input_tokens = 0
+        output_tokens = 0
+        calls = []
+        for msg in result.get("messages", []):
+            usage = getattr(msg, "usage_metadata", None)
+            if usage:
+                call_input  = usage.get("input_tokens", 0)
+                call_output  = usage.get("output_tokens", 0)
+                input_tokens += call_input
+                output_tokens += call_output
+                calls.append({
+                    "call_num": len(calls) + 1,
+                    "input_tokens": call_input,
+                    "output_tokens": call_output,
+                    "total_tokens": call_input + call_output,
+                })
+        token_counter.total_input_tokens = input_tokens
+        token_counter.total_output_tokens = output_tokens
+        token_counter.calls = calls
+        
         gt = _get_ground_truth(item, task)
         results.append({
             "idx": idx,
@@ -206,45 +249,18 @@ def main(
 
     provider: "openai", "anthropic", "google" — API LLM utilisée.
     """
-    if task == "task1":
-        path = os.path.join(dataset_path, language, f"{task}_{language}.json")
-        response_format = {"output_format": {
-                    "type": "json_schema",
-                    "schema": {
-                "type": "object",
-                "properties": {
-                    "called_code_segment": {"type": "string", "description": "#file 1 segment being invoked (excluding `import`)"},
-                    "invoking_code_segment": {"type": "string", "description": "#file 2 segment invoking #file 1 (excluding `import`)"},
-                    "feature_description": {"type": "string", "description": "Description of the new feature"},
-                    #"detailed_feature_description": {"type": "string", "description": "General explanation of the modification approach"},
-                    "modified_complete_code": {"type": "string", "description": "Provide the complete code with the required modifications. Output the modified code snippets. Use comments like #Modify for modified parts and #New for newly added parts to indicate whether the change is an addition or modification."}
-                },
-                "required": [
-                    "called_code_segment",
-                    "invoking_code_segment",
-                    "feature_description",
-                    #"detailed_feature_description",
-                    "modified_complete_code"
-                ],
-                "additionalProperties": False
-                }
-                }
-            }
-    elif task == "task2":
-        path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
-        response_format = {"output_format": {
-                    "type": "json_schema",
-                    "schema":Task2Schema.model_json_schema()}}
-        
-    elif task == "task4":
-        path = os.path.join(dataset_path, language, f"{task}_{language}_new_1.json")
-        response_format = {"output_format": {
-                    "type": "json_schema",
-                    "schema":Task4Schema.model_json_schema()}}
-    else:
+    path_map = {
+    "task1": f"{task}_{language}.json",
+    "task2": f"{task}_{language}_final.json",
+    "task4": f"{task}_{language}_new.json",
+    }
+    if task not in path_map:
         raise ValueError(f"Unknown task: {task}")
 
-    with open(path, "r") as f:
+    path = os.path.join(dataset_path, language, path_map[task])
+    response_format = get_response_format(task, provider)
+
+    with open(path, "r", encoding="utf-8") as f:
         dataset = json.load(f)
     dataset = dataset[:5] #for testing
 
