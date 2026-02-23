@@ -1,32 +1,71 @@
-import torch
-from transformers import AutoTokenizer, AutoModelForCausalLM
+import requests
+import json
 
-model_name = "microsoft/Phi-3.5-mini-instruct"#"microsoft/phi-4"
+# URL de ton serveur A2A
+URL = "http://localhost:8000/" #rpc
 
-tokenizer = AutoTokenizer.from_pretrained(model_name)
+# Payload JSON-RPC conforme A2A
+payload = {
+    "jsonrpc": "2.0",
+    "id": 1,
+    "method": "message/stream",  #/stream. send
 
-# CPU -> float32
-model = AutoModelForCausalLM.from_pretrained(
-    model_name,
-    torch_dtype=torch.float32
-).to("cpu")
-model.eval()
+    "params": {
+    "message": {
+      "role": "user",
+      "parts": [
+        {
+          "type": "text",
+          "text":"""Please analyze this Python function: def add(a, b):return a - b"""
+        }
+      ],
+      "messageId": "test"
+    },
+    "metadata": {}
+  }
+}
+#     "params": {
+#         "input": """Please analyze this Python function:
 
-prompt = "Explain overfitting in 3 bullets."
+# def add(a, b):
+#     return a - b
+# """
+#     }
+# }
 
-inputs = tokenizer(prompt, return_tensors="pt")
+try:
+    response = requests.post(URL, json=payload)
 
-with torch.no_grad():
-    out = model.generate(
-        **inputs,
-        max_new_tokens=150,
-        do_sample=True,
-        temperature=0.7,
-        top_p=0.9,
-        # sécurité:
-        eos_token_id=tokenizer.eos_token_id,
-        pad_token_id=tokenizer.eos_token_id,
-    )
+    print("Status Code:", response.status_code)
+    print("Headers:", response.headers) #json.dumps(response.json(), indent=2)
 
-gen = out[0][inputs["input_ids"].shape[1]:]
-print(tokenizer.decode(gen, skip_special_tokens=True))
+    for line in response.iter_lines():
+      print("RAW LINE:", line)
+      if not line:
+          continue
+
+      decoded = line.decode("utf-8")
+
+      # SSE format → chaque message commence par "data: "
+      if decoded.startswith("data: "):
+          content = decoded.replace("data: ", "")
+
+          # Fin du stream
+          if content == "[DONE]":
+              break
+
+          try:
+              data = json.loads(content)
+
+              # A2A final event
+              if data.get("type") == "task.complete":
+                  final_answer = data["data"]["message"]["parts"][0]["text"]
+
+          except json.JSONDecodeError:
+              pass
+
+    # print("\nFINAL ANSWER:\n")
+    # print(final_answer)
+
+except Exception as e:
+    print("Error while calling A2A agent:", e)
