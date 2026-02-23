@@ -6,7 +6,12 @@
 models=("claude-sonnet-4-5") #haiku-4-5. opus-4-6
 languages=("python")
 tasks=("task4")
-type_agent="react"  # react or api
+# type_agent options:
+#   "api"   – direct async Anthropic API calls (structured outputs)
+#   "react" – LangChain ReAct agent with optional Bash tool
+#   "cast"  – generic CAST-style dependency/call-chain agent (input-format agnostic,
+#              designed as a multi-agent plug-in; reads files directly from disk)
+type_agent="react"  # react | api | cast
 
 log_dir="./logs"
 mkdir -p "$log_dir"

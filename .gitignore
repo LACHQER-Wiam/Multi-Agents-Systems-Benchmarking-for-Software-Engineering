@@ -4,3 +4,4 @@ DependEval/logs
 DependEval/results
 DependEval/huggingface
 DependEval/utils/__pycache__
+DependEval/.swebench_repos
