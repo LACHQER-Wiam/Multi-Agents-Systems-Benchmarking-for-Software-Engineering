@@ -3,6 +3,8 @@ import os
 import inference_api 
 import inference_ReAct
 import time
+import sys
+import subprocess
 
 
 if __name__ == "__main__":
@@ -43,8 +45,42 @@ if __name__ == "__main__":
             temperature=args.temperature,
             max_token_nums=args.max_token_nums,
         )
+        
+    elif args.type_agent == "AtoA":
+        task = args.task
+        model_name = args.model_name
+        language = args.language
+        dataset_path = args.dataset_path
+        temperature = args.temperature
+        max_token_nums = args.max_token_nums
+        res_dir = args.res_dir
+        # max_rounds = args.max_rounds
 
+        # Lancer serveur
+        server = subprocess.Popen([
+            "python",
+            "-m",
+            "utils/AtoA_architecture.py",
+            "--task", task,
+            "--language", language,
+            "--model_name", model_name,
+            "--temperature", str(temperature),
+            "--max_token_nums", str(max_token_nums),
+            # "--max_rounds", str(max_rounds),
+        ])
+        # Attendre que le serveur démarre
+        time.sleep(3)
 
+        # Lancer client
+        subprocess.run([
+            "python",
+            "inference_AtoA.py",
+            "--task", task,
+            "--language", language,
+            "--dataset_path", dataset_path,
+            "--res_dir", res_dir
+
+        ])
     end = time.perf_counter()
 
     print(f"[PREDICTION] Execution time: {end - start:.6f} seconds")

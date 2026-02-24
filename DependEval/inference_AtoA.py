@@ -1,630 +1,199 @@
-import warnings
-warnings.filterwarnings("ignore")
-
-from langgraph.graph import StateGraph, START, END
-from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field
-from typing import Dict, Optional, List, TypedDict
-from langgraph.checkpoint.memory import MemorySaver
-import anthropic
-import os
-import json
+import logging
 import asyncio
-import inspect
-import traceback
-
-
-# =========================
-# STATE
-# =========================
-
-class State(TypedDict):
-    messages: List[Dict]
-    analysis: Optional[str]
-    critique: Optional[str]
-    next: Optional[str]
-    rounds: int
-
-# =========================
-# CLAUDE WRAPPER
-# =========================
-
-class ClaudeLLM:
-
-    def __init__(self, model_name="claude-haiku-4-5", temperature=0):
-        self.client = anthropic.Client(
-            api_key=os.environ.get("ANTHROPIC_API_KEY")
-        )
-        self.model_name = model_name
-        self.temperature = temperature
-
-    
-    def _prepare_messages(self, messages):
-        system_prompt = None
-        filtered_messages = []
-
-        for i, msg in enumerate(messages):
-            if not isinstance(msg, dict):
-                continue
-
-            role = (msg.get("role") or "").lower()
-            content = msg.get("content", "")
-
-            if role == "system":
-                system_prompt = content.strip()
-                continue
-
-            # Anthropic accepte seulement user / assistant
-            if role not in {"user", "assistant"}:
-                role = "assistant"
-
-            # 🔥 TRIM TRAILING WHITESPACE
-            content = content.rstrip()
-
-            filtered_messages.append({
-                "role": role,
-                "content": content
-            })
-
-        return system_prompt, filtered_messages
-
-    def invoke(self, messages):
-        system_prompt, filtered_messages = self._prepare_messages(messages)
-
-        try:
-            response = self.client.messages.create(
-                model=self.model_name,
-                max_tokens=2048,
-                temperature=self.temperature,
-                system=system_prompt,
-                messages=filtered_messages,
-            )
-
-            if response.content:
-                for block in response.content:
-                    if block.type == "text" and block.text:
-                        return block.text
-
-            # ✅ pas de raise
-            return '{"messages":[{"role":"assistant","content":"LLM returned empty output."}],"next":"complete"}'
-        except Exception as e:
-            return f'{{"messages":[{{"role":"assistant","content":"LLM error: {type(e).__name__}: {str(e)}"}}],"next":"complete"}}'
-
-    # # STREAM TOKEN PAR TOKEN
-    # def stream(self, messages):
-    #     system_prompt, filtered_messages = self._prepare_messages(messages)
-
-    #     with self.client.messages.stream(
-    #         model=self.model_name,
-    #         max_tokens=2048,
-    #         temperature=self.temperature,
-    #         system=system_prompt,
-    #         messages=filtered_messages,
-    #     ) as stream:
-
-    #         for event in stream:
-    #             if event.type == "content_block_delta":
-    #                 if hasattr(event.delta, "text"):
-    #                     yield event.delta.text
-llm = ClaudeLLM()
-
-# =========================
-# PROMPTS
-# =========================
-
-system_prompt = """
-You are an intelligent supervisor that orchestrates a multi-agent workflow.
-
-Your ONLY job is to decide which worker should act next:
-- code_analyser: Analyzes code and proposes corrections
-- critic: Reviews and critiques proposals
-- complete: Finishes the workflow and returns the final answer
-
-You MUST choose exactly ONE of these workers. Do NOT invent new agents.
-
-If you choose 'complete', return the final answer in JSON format:
-{
-  "correct_version": "string",
-  "justification": "string"
-}
-
-Otherwise return routing JSON with the next node.
-Return ONLY valid JSON, nothing else.
-"""
-
-details = {
-    "code_analyser": "You analyze the code and propose a corrected version with justification.",
-    "critic": "You critique the proposed correction and provide feedback (positive or negative)."
-}
-
-# =========================
-# PYDANTIC MODELS
-# =========================
-
-class Router(BaseModel):
-    messages: list = Field(description="list of assistant messages")
-    next: str = Field(description="next node")
-
-class FinalOutput(BaseModel):
-    correct_version: str
-    justification: str
-
-# =========================
-# ROUTING FUNCTION
-# =========================
-
-def routing(state: State):
-    """Route to the next valid node, with fallback to supervisor if invalid."""
-    next_node = state.get("next", "supervisor")
-
-    # Valid nodes
-    valid_nodes = ["code_analyser", "critic", "complete", "end", "supervisor"]
-
-    # Normalize and validate
-    next_node_lower = str(next_node).lower().strip()
-
-    if next_node_lower in valid_nodes:
-        return next_node_lower
-
-    # Fallback to supervisor for invalid routes
-    print(f"⚠️  Invalid route '{next_node}', falling back to supervisor")
-    return "supervisor"
-
-# =========================
-# NODES
-# =========================
-def supervisor_node(state: State):
-
-    # Stop condition - max 3 rounds
-    if state.get("rounds", 0) >= 3:
-        return {
-            "next": "complete",
-            "rounds": state.get("rounds", 0) + 1,
-            "messages": state["messages"],
-            "analysis": state.get("analysis"),
-            "critique": state.get("critique"),
-        }
-
-    parser = PydanticOutputParser(pydantic_object=Router)
-
-    messages = [
-        {
-            "role": "system",
-            "content": system_prompt + "\n" + parser.get_format_instructions(),
-        }
-    ] + state["messages"]
-
-    response_text = llm.invoke(messages)
-
-    # 🔥 Nettoyage markdown éventuel
-    cleaned = response_text.replace("```json", "").replace("```", "").strip()
-
-    print(f"📝 Supervisor raw response: {response_text[:200]}")
-    print(f"📝 Supervisor cleaned: {cleaned[:200]}")
-
-    try:
-        parsed = parser.parse(cleaned)
-        print(f"✅ Parsed successfully: next={parsed.next}, messages={len(parsed.messages)}")
-
-        # On ajoute SEULEMENT le message conversationnel utile
-        if parsed.messages and len(parsed.messages) > 0 and isinstance(parsed.messages[0], dict):
-            assistant_message = parsed.messages[0].get("content", cleaned)
-        else:
-            assistant_message = cleaned
-
-        # Ensure next is valid
-        next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
-        print(f"🎯 Next value: '{next_value}'")
-
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": assistant_message}
-            ],
-            "next": next_value,
-            "rounds": state.get("rounds", 0) + 1,
-            "analysis": state.get("analysis"),
-            "critique": state.get("critique"),
-        }
-
-    except Exception as e:
-        # Fallback sécurisé
-        print(f"❌ Parsing error in supervisor: {e}")
-        print(f"❌ Trying to parse as JSON manually...")
-
-        # Try to extract next value from JSON manually
-        import json
-        try:
-            json_obj = json.loads(cleaned)
-            next_value = str(json_obj.get("next", "supervisor")).lower().strip()
-            print(f"🎯 Manual extraction next: '{next_value}'")
-        except:
-            next_value = "supervisor"
-            print(f"🎯 Fallback next: '{next_value}'")
-
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": cleaned}
-            ],
-            "next": next_value,
-            "rounds": state.get("rounds", 0) + 1,
-            "analysis": state.get("analysis"),
-            "critique": state.get("critique"),
-        }
-
-def code_analyser_node(state: State):
-
-    parser = PydanticOutputParser(pydantic_object=Router)
-
-    messages = [
-        {
-            "role": "system",
-            "content": details["code_analyser"] + "\n" + parser.get_format_instructions(),
-        }
-    ] + state["messages"]
-
-    response_text = llm.invoke(messages)
-
-    cleaned = response_text.replace("```json", "").replace("```", "").strip()
-
-    try:
-        parsed = parser.parse(cleaned)
-
-        if parsed.messages and len(parsed.messages) > 0 and isinstance(parsed.messages[0], dict):
-            assistant_message = parsed.messages[0].get("content", cleaned)
-        else:
-            assistant_message = cleaned
-
-        # Ensure next is valid
-        next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
-
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": assistant_message}
-            ],
-            "analysis": cleaned,
-            "next": next_value,
-            "critique": state.get("critique"),
-        }
-
-    except Exception as e:
-        print(f"❌ Parsing error in code_analyser: {e}")
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": cleaned}
-            ],
-            "analysis": cleaned,
-            "next": "supervisor",
-            "critique": state.get("critique"),
-        }
-    
-def critic_node(state: State):
-
-    parser = PydanticOutputParser(pydantic_object=Router)
-
-    messages = [
-        {
-            "role": "system",
-            "content": details["critic"] + "\n" + parser.get_format_instructions(),
-        }
-    ] + state["messages"]
-
-    response_text = llm.invoke(messages)
-
-    cleaned = response_text.replace("```json", "").replace("```", "").strip()
-
-    try:
-        parsed = parser.parse(cleaned)
-
-        if parsed.messages and len(parsed.messages) > 0 and isinstance(parsed.messages[0], dict):
-            assistant_message = parsed.messages[0].get("content", cleaned)
-        else:
-            assistant_message = cleaned
-
-        # Ensure next is valid
-        next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
-
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": assistant_message}
-            ],
-            "critique": cleaned,
-            "next": next_value,
-            "analysis": state.get("analysis"),
-        }
-
-    except Exception as e:
-        print(f"❌ Parsing error in critic: {e}")
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": cleaned}
-            ],
-            "critique": cleaned,
-            "next": "supervisor",
-            "analysis": state.get("analysis"),
-        }
-# =========================
-# BUILD GRAPH
-# =========================
-def route_from_supervisor(state: State) -> str:
-    n = (state.get("next") or "").strip().lower()
-    if n in {"end", "finish", "done"}:
-        return "complete"
-    if n not in {"code_analyser", "critic", "complete"}:
-        return "complete"
-    return n
-
-def route_from_code_analyser(state: State) -> str:
-    n = (state.get("next") or "").strip().lower()
-    if n in {"end", "finish", "done"}:
-        return "complete"
-    # code_analyser ne doit pas router vers code_analyser
-    if n not in {"critic", "supervisor", "complete"}:
-        return "supervisor"
-    return n
-
-def route_from_critic(state: State) -> str:
-    n = (state.get("next") or "").strip().lower()
-    if n in {"end", "finish", "done"}:
-        return "complete"
-    # critic ne doit pas router vers code_analyser
-    if n not in {"supervisor", "complete"}:
-        return "supervisor"
-    return n
-
-memory = MemorySaver()
-builder = StateGraph(State)
-
-builder.add_node("supervisor", supervisor_node)
-builder.add_node("code_analyser", code_analyser_node)
-builder.add_node("critic", critic_node)
-
-builder.add_edge(START, "supervisor")
-
-builder.add_conditional_edges(
-    "supervisor",
-    route_from_supervisor,
-    {
-        "code_analyser": "code_analyser",
-        "critic": "critic",
-        "complete": END,
-    }
-)
-
-builder.add_conditional_edges(
-    "code_analyser",
-    route_from_code_analyser,
-    {
-        "supervisor": "supervisor",
-        "critic": "critic",
-        "complete": END,
-    }
-)
-
-builder.add_conditional_edges(
-    "critic",
-    route_from_critic,
-    {
-        "supervisor": "supervisor",
-        "complete": END,
-    }
-)
-
-graph = builder.compile(checkpointer=memory)
-
-# =========================
-# RUN
-# =========================
-
-config = {
-    "configurable": {
-        "thread_id": "test-thread"
-    }
-}
-
-initial_state = {
-    "messages": [
-        {
-            "role": "user",
-            "content": """Please analyze this Python function and review its correctness:
-
-```python
-def add(a, b):
-    return a - b
-```"""
-        }
-    ],
-    "analysis": None,
-    "critique": None,
-    "next": None,
-    "rounds": 0
-}
-
-import uvicorn
-
-# ---------------------------
-# 1) A2A ADK imports
-# ---------------------------
-from a2a.server.agent_execution import AgentExecutor, RequestContext
-from a2a.server.events import EventQueue
-from a2a.server.tasks import TaskUpdater
-from a2a.types import Task, TaskState, TaskStatus, TextPart
-from a2a.utils import new_agent_text_message, new_task
-
-from a2a.server.request_handlers import DefaultRequestHandler
-from a2a.server.tasks import InMemoryTaskStore 
-from a2a.server.apps import A2AStarletteApplication 
-from a2a.types import AgentCard, AgentCapabilities, AgentSkill
-
-# ---------------------------
-# 2) Import your LangGraph graph + agent_card
-# ---------------------------
-# IMPORTANT: graph must be compiled already, e.g. graph = builder.compile(...)
-# from supervisor import graph
-# from agent_card import agent_card
-
-
-# ---------------------------
-# Supervisor Skill
-# ---------------------------
-
-skill_supervisor = AgentSkill(
-    id='supervisor',
-    name='Supervisor Orchestrator',
-    description=(
-        'Supervises the multi-agent workflow. '
-        'Decides which agent (code_analyser or critic) should act next '
-        'and determines when the task is complete. '
-        'Produces the final structured JSON output when finishing.'
-    ),
-    tags=['orchestration', 'routing', 'multi-agent']
-)
-
-# ---------------------------
-# Code Analyzer Skill
-# ---------------------------
-
-skill_code_analyser = AgentSkill(
-    id='code-analyser',
-    name='Code Analyzer',
-    description=(
-        'Analyzes Python functions to detect logical errors, '
-        'semantic inconsistencies, and incorrect implementations. '
-        'Proposes a corrected version of the code and provides justification.'
-    ),
-    tags=['code-analysis', 'python', 'bug-detection']
-)
-
-# ---------------------------
-#  Critic Skill
-# ---------------------------
-
-skill_critic = AgentSkill(
-    id='critic',
-    name='Code Critic',
-    description=(
-        'Reviews the proposed correction from the code analyzer, '
-        'evaluates the reasoning, and provides feedback or improvement suggestions '
-        'before finalization.'
-    ),
-    tags=['code-review', 'critique', 'validation']
-)
-
-agent_card = AgentCard(
-    name='Multi-Agent Code Review Agent',
-    description='Analyzes Python functions, detects logical errors, and returns a corrected version with justification using a multi-agent orchestration pipeline.',
-    url='http://localhost:10008/',
-    version='1.0.0',
-    defaultInputModes=['text'],
-    defaultOutputModes=['text'],
-    capabilities=AgentCapabilities(
-        streaming=False  # Changed: using ainvoke() instead of astream()
-    ),
-    authentication={
-        "schemes": ["basic"]
-    },
-    skills=[skill_code_analyser, skill_critic, skill_supervisor])
-
-# For this snippet, we assume these are available:
-# graph is already compiled from line 311
-# agent_card is already defined from line 428
-
-
-# ---------------------------
-# 4) The A2A Executor wrapping LangGraph
-# ---------------------------
-class LanggraphAgentExecutor(AgentExecutor):
-    def __init__(self):
-        self.agent = graph
-
-    async def _maybe_await(self, x):
-        """Await x if it's awaitable, else return it."""
-        if inspect.isawaitable(x):
-            return await x
-        return x
-
-    async def execute(self, context: RequestContext, event_queue: EventQueue) -> None:
-        try:
-            query = context.get_user_input()
-
-            task = context.current_task
-            if not task:
-                task = new_task(context.message)
-                # ✅ IMPORTANT: publish task creation event immediately
-                await self._maybe_await(event_queue.enqueue_event(task))
-
-            updater = TaskUpdater(event_queue, task.id, task.context_id)
-
-            input_data = {
-                "messages": [{"role": "user", "content": query}],
-                "analysis": None,
-                "critique": None,
-                "next": None,
-                "rounds": 0,
+from typing import Any
+from uuid import uuid4
+import json
+import re
+import os
+import argparse
+
+import httpx
+
+from a2a.client import A2AClient
+from a2a.types import MessageSendParams, SendMessageRequest
+
+from utils.AtoA_architecture import agent_card  # ← IMPORTANT
+
+
+def load_dataset(dataset_path, language, task):
+    if  task == "task1":
+        path = os.path.join(dataset_path, language, f"{task}_{language}_1.json")
+        fields = ["feature_description", "content"]  # [function, code]
+    elif task == "task2":
+        path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
+        fields = ["files", "content"]  # [files description, their content]
+    else: 
+        path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")
+        fields = ["description", "function"] # [repo description, its functions]
+    with open(path, "r") as f:
+        dataset = json.load(f)
+
+    message_payloads = []
+
+    for sample in dataset:
+
+        # Concaténation des champs demandés
+        text_parts = []
+        for field in fields:
+            value = sample.get(field)
+            if value:
+                text_parts.append(str(value))
+
+        combined_text = "\n\n".join(text_parts).strip()
+
+        # Construction du payload A2A
+        payload = {
+            "message": {
+                "role": "user",
+                "messageId": uuid4().hex,
+                "parts": [
+                    {
+                        "kind": "text",
+                        "text": combined_text,
+                    }
+                ],
             }
-            config = {"configurable": {"thread_id": task.context_id}}
+        }
+        message_payloads.append(payload)
 
-            try:
-                # Run graph to completion
-                result = await self.agent.ainvoke(input_data, config=config)
-
-                final_message = "Task completed."
-                if result.get("messages"):
-                    final_message = result["messages"][-1].get("content") or final_message
-
-                # ✅ IMPORTANT: await completion if needed
-                await self._maybe_await(
-                    updater.complete(
-                        message=new_agent_text_message(
-                            final_message,
-                            task.context_id,
-                            task.id,
-                        )
-                    )
-                )
-
-            except Exception as e:
-                traceback.print_exc()
-                await self._maybe_await(
-                    updater.complete(
-                        message=new_agent_text_message(
-                            f"Error occurred: {type(e).__name__}: {e}",
-                            task.context_id,
-                            task.id,
-                        )
-                    )
-                )
-
-        except Exception as e:
-            traceback.print_exc()
-            # Let A2A handle fatal execute errors
-            raise
-
-    async def cancel(self, context: RequestContext, event_queue: EventQueue):
-        task_updater = TaskUpdater(event_queue, context.task_id, context.context_id)
-        task_updater.update_status(TaskState.canceled, message=TextPart(text="Task canceled."))
+    return message_payloads
 
 
-# ---------------------------
-# 5) Build the A2A HTTP handler
-# ---------------------------
-request_handler = DefaultRequestHandler(
-    agent_executor=LanggraphAgentExecutor(),  #graph
-    task_store=InMemoryTaskStore(),     # stores task state in RAM (use persistent store in prod)
-)
+####################
+def format_save_results(responses, dataset_path, res_dir, task, language, model_name, type_agent="AtoA"):
+    # ========================
+    # Load dataset (for GT)
+    # ========================
+    if task == "task1":
+        path = os.path.join(dataset_path, language, f"{task}_{language}.json")
+        gt_field = "modified_complete_code"
+    elif task == "task2":
+        path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
+        gt_field = "gt"
+    else:
+        path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")
+        gt_field = "gt"
 
-# ---------------------------
-# 6) Build the A2A Starlette server app
-# ---------------------------
-server = A2AStarletteApplication(
-    agent_card=agent_card,              # describes capabilities, endpoints, etc.
-    http_handler=request_handler
-)
+    with open(path, "r") as f:
+        dataset = json.load(f)
 
-# ---------------------------
-# 7) Run with Uvicorn
-# ---------------------------
-host = os.environ.get("A2A_HOST", "127.0.0.1")
-port = int(os.environ.get("A2A_PORT", "10008"))
+    # ========================
+    # Create output directory
+    # ========================
+    save_dir = os.path.join(
+        res_dir, task, type_agent, f"{language}/{model_name}-{language}"
+    )
+    os.makedirs(save_dir, exist_ok=True)
+
+    name = model_name.split("/")[-1]
+    evalpath = os.path.join(save_dir, f"{name}_predictions.json")
+
+    print(f"Results directory: {save_dir}")
+
+    # ========================
+    # Build final responses
+    # ========================
+    final_responses = []
+
+    for i, (response, sample) in enumerate(zip(responses, dataset)):
+
+        formatted = response.model_dump(mode="json", exclude_none=True)
+
+        text = formatted["result"]["status"]["message"]["parts"][0]["text"]
+
+        # Extract last JSON block generated by model
+        try:
+            last_json_start = text.rfind("{")
+            pred_json = json.loads(text[last_json_start:])
+        except Exception:
+            pred_json = {}
+
+        # Ground truth extraction
+        gt_value = sample.get(gt_field, {})
+
+        # If gt is not dict, wrap it
+        if not isinstance(gt_value, dict):
+            gt_value = {gt_field: gt_value}
+
+        result_entry = {
+            "idx": sample.get("idx", i),
+            "pred": pred_json,
+            "gt": gt_value,
+        }
+
+        final_responses.append(result_entry)
+
+    # ========================
+    # Save results
+    # ========================
+    with open(evalpath, "w") as f:
+        json.dump(final_responses, f, indent=2, ensure_ascii=False)
+
+    # return final_responses
+
+
+##################@##
+
+async def main(message_payloads, ):
+
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+    timeout = httpx.Timeout(
+        connect=10.0,
+        read=120.0,
+        write=10.0,
+        pool=10.0,
+    )
+
+    limits = httpx.Limits(
+        max_connections=100,
+        max_keepalive_connections=20,
+    )
+
+    async with httpx.AsyncClient(
+        timeout=timeout,
+        limits=limits) as httpx_client:
+
+        # Utiliser directement l'agent_card local
+        client = A2AClient(
+            httpx_client=httpx_client,
+            agent_card=agent_card,
+        )
+
+        logger.info("A2AClient initialized with local agent_card.")
+
+        # Envoie du message adapté à ton agent
+
+        # Use non-streaming request since agent has streaming=False
+        tasks = []
+
+        for payload in message_payloads:
+            message_request = SendMessageRequest(
+                id=str(uuid4()),
+                params=MessageSendParams(**payload),
+            )
+            tasks.append(client.send_message(message_request))
+
+        responses = await asyncio.gather(*tasks)
+
+        return responses
+
+
 
 if __name__ == "__main__":
-    uvicorn.run(server.build(), host=host, port=port)
+    parser = argparse.ArgumentParser(description="Run model evaluation via A2A")
+    parser.add_argument("--model_name", type=str, required=True, help="Anthropic model name")
+    parser.add_argument("--language", type=str, required=True)
+    parser.add_argument("--task", type=str, default="task1")
+    parser.add_argument("--dataset_path", type=str, default="./data")
+    parser.add_argument("--res_dir", type=str, default="./results")
+    args = parser.parse_args()
+
+    message_payloads = load_dataset(args.dataset_path, args.language, args.task)
+    responses = asyncio.run(main(message_payloads=message_payloads))
+    format_save_results(responses, 
+                        args.dataset_path, 
+                        args.res_dir, 
+                        args.task, 
+                        args.language, 
+                        args.model_name)
