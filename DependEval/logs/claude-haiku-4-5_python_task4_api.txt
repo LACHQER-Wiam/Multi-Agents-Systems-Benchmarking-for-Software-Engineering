@@ -1,0 +1,132 @@
+Loaded 58 examples from ./data/python/task4_python_new.json
+Results directory: ./results/task4/python/claude-haiku-4-5-python
+prediction for idx 0 done
+prediction for idx 1 done
+prediction for idx 2 done
+prediction for idx 3 done
+prediction for idx 4 done
+prediction for idx 5 done
+prediction for idx 6 done
+prediction for idx 7 done
+prediction for idx 8 done
+prediction for idx 9 done
+prediction for idx 10 done
+prediction for idx 11 done
+prediction for idx 12 done
+prediction for idx 13 done
+prediction for idx 14 done
+prediction for idx 15 done
+prediction for idx 16 done
+prediction for idx 17 done
+prediction for idx 18 done
+prediction for idx 19 done
+prediction for idx 20 done
+prediction for idx 21 done
+prediction for idx 22 done
+prediction for idx 23 done
+prediction for idx 24 done
+prediction for idx 25 done
+prediction for idx 26 done
+prediction for idx 27 done
+prediction for idx 28 done
+prediction for idx 29 done
+prediction for idx 30 done
+prediction for idx 31 done
+prediction for idx 32 done
+prediction for idx 33 done
+prediction for idx 34 done
+prediction for idx 35 done
+prediction for idx 36 done
+prediction for idx 37 done
+prediction for idx 38 done
+prediction for idx 39 done
+prediction for idx 40 done
+prediction for idx 41 done
+prediction for idx 42 done
+prediction for idx 43 done
+prediction for idx 44 done
+prediction for idx 45 done
+prediction for idx 46 done
+prediction for idx 47 done
+prediction for idx 48 done
+prediction for idx 49 done
+prediction for idx 50 done
+prediction for idx 51 done
+prediction for idx 52 done
+prediction for idx 53 done
+prediction for idx 54 done
+prediction for idx 55 done
+prediction for idx 56 done
+prediction for idx 57 done
+Saved token costs to: ./results/task4/python/claude-haiku-4-5-python/cost_predictions_claude-haiku-4-5.xlsx
+
+--- SUMMARY ---
+Total rows: 58
+Total input tokens: 48438
+Total output tokens: 5400
+Total tokens: 53838
+Saved predictions to: ./results/task4/python/claude-haiku-4-5-python/claude-haiku-4-5_predictions.json
+[PREDICTION] Execution time: 85.176539 seconds
+idx 0: score=0.6867
+idx 1: score=0.5750
+idx 2: score=1.0000
+Error parsing call_chains: malformed node or string: []
+idx 3: score=0.0000
+idx 4: score=1.0000
+idx 5: score=0.8086
+idx 6: score=1.0000
+idx 7: score=1.0000
+idx 8: score=1.0000
+idx 9: score=0.7682
+idx 10: score=1.0000
+idx 11: score=0.8300
+idx 12: score=0.8300
+idx 13: score=0.7167
+idx 14: score=1.0000
+idx 15: score=0.4333
+idx 16: score=1.0000
+idx 17: score=0.6909
+idx 18: score=0.6600
+idx 19: score=1.0000
+idx 20: score=1.0000
+idx 21: score=0.5750
+idx 22: score=1.0000
+idx 23: score=0.6600
+idx 24: score=0.8786
+idx 25: score=1.0000
+idx 26: score=0.5750
+idx 27: score=1.0000
+idx 28: score=0.8919
+idx 29: score=0.7167
+idx 30: score=0.1500
+idx 31: score=0.1500
+idx 32: score=0.5750
+idx 33: score=1.0000
+idx 34: score=0.5750
+idx 35: score=0.4591
+idx 36: score=0.7875
+idx 37: score=0.7471
+idx 38: score=0.6731
+Error parsing call_chains: malformed node or string: []
+idx 39: score=0.0000
+idx 40: score=0.7167
+idx 41: score=0.4333
+idx 42: score=1.0000
+idx 43: score=0.7571
+idx 44: score=0.6136
+idx 45: score=1.0000
+idx 46: score=0.7167
+idx 47: score=1.0000
+idx 48: score=0.3200
+idx 49: score=1.0000
+idx 50: score=1.0000
+idx 51: score=0.4900
+idx 52: score=0.8300
+idx 53: score=1.0000
+idx 54: score=0.5750
+idx 55: score=0.6731
+idx 56: score=1.0000
+idx 57: score=0.1500
+Results saved to ./results/task4/python/claude-haiku-4-5-python/claude-haiku-4-5_predictions_scores.xlsx
+[EVALUATION] Execution time: 0.075491 seconds
+Completed task: claude-haiku-4-5 with language: python and task: task4 (log: ./logs/claude-haiku-4-5_python_task4_api.txt)

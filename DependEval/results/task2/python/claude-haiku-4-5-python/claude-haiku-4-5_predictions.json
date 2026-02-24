@@ -1,0 +1,2979 @@
+[
+    {
+        "idx": 0,
+        "pred": {
+            "list_dependencies": [
+                "bilireq/bilireq/_typing.py",
+                "bilireq/bilireq/login/__init__.py",
+                "bilireq/test/test_login.py"
+            ]
+        },
+        "gt": [
+            "'bilireq/bilireq/_typing.py'",
+            "'bilireq/bilireq/login/__init__.py'",
+            "'bilireq/test/test_login.py'"
+        ]
+    },
+    {
+        "idx": 1,
+        "pred": {
+            "list_dependencies": [
+                "katana-skipper/skipper-lib/skipper_lib/workflow/workflow_helper.py",
+                "katana-skipper/api/api/tasks.py",
+                "katana-skipper/api/api/routers/boston.py",
+                "katana-skipper/api/endpoint.py"
+            ]
+        },
+        "gt": [
+            "'katana-skipper/skipper-lib/skipper_lib/workflow/workflow_helper.py'",
+            "'katana-skipper/api/api/tasks.py'",
+            "'katana-skipper/api/api/routers/boston.py'",
+            "'katana-skipper/api/endpoint.py'"
+        ]
+    },
+    {
+        "idx": 2,
+        "pred": {
+            "list_dependencies": [
+                "ParaGen/paragen/criteria/__init__.py",
+                "ParaGen/paragen/criteria/base_criterion.py",
+                "ParaGen/examples/lightseq/ls/lightseq_label_smoothed_cross_entropy.py",
+                "ParaGen/examples/lightseq/ls/__init__.py"
+            ]
+        },
+        "gt": [
+            "'ParaGen/paragen/criteria/__init__.py'",
+            "'ParaGen/paragen/criteria/base_criterion.py'",
+            "'ParaGen/examples/lightseq/ls/lightseq_label_smoothed_cross_entropy.py'",
+            "'ParaGen/examples/lightseq/ls/__init__.py'"
+        ]
+    },
+    {
+        "idx": 3,
+        "pred": {
+            "list_dependencies": [
+                "TeCH/core/lib/freqencoder/backend.py",
+                "TeCH/core/lib/freqencoder/freq.py",
+                "TeCH/core/lib/freqencoder/__init__.py",
+                "TeCH/core/lib/encoding.py"
+            ]
+        },
+        "gt": [
+            "'TeCH/core/lib/freqencoder/backend.py'",
+            "'TeCH/core/lib/freqencoder/freq.py'",
+            "'TeCH/core/lib/freqencoder/__init__.py'",
+            "'TeCH/core/lib/encoding.py'"
+        ]
+    },
+    {
+        "idx": 4,
+        "pred": {
+            "list_dependencies": [
+                "iq_privacy_get.py",
+                "__init__.py",
+                "test_iq_privacy_get.py"
+            ]
+        },
+        "gt": [
+            "'yowsup/yowsup/layers/protocol_profiles/protocolentities/iq_privacy_get.py'",
+            "'yowsup/yowsup/layers/protocol_profiles/protocolentities/__init__.py'",
+            "'yowsup/yowsup/layers/protocol_profiles/protocolentities/test_iq_privacy_get.py'"
+        ]
+    },
+    {
+        "idx": 5,
+        "pred": {
+            "list_dependencies": [
+                "classify.py",
+                "views.py",
+                "urls.py"
+            ]
+        },
+        "gt": [
+            "'fakenews/website/popnews/classify.py'",
+            "'fakenews/website/popnews/views.py'",
+            "'fakenews/website/popnews/urls.py'"
+        ]
+    },
+    {
+        "idx": 6,
+        "pred": {
+            "list_dependencies": [
+                "douban.fm/doubanfm/views/help_view.py",
+                "douban.fm/doubanfm/views/quit_view.py",
+                "douban.fm/doubanfm/controller/quit_controller.py",
+                "douban.fm/doubanfm/douban.py"
+            ]
+        },
+        "gt": [
+            "'douban.fm/doubanfm/views/help_view.py'",
+            "'douban.fm/doubanfm/views/quit_view.py'",
+            "'douban.fm/doubanfm/controller/quit_controller.py'",
+            "'douban.fm/doubanfm/douban.py'"
+        ]
+    },
+    {
+        "idx": 7,
+        "pred": {
+            "list_dependencies": [
+                "Transformer-Clinic/fairseq/examples/noisychannel/rerank_options.py",
+                "Transformer-Clinic/fairseq/examples/noisychannel/__init__.py",
+                "Transformer-Clinic/fairseq/examples/__init__.py"
+            ]
+        },
+        "gt": [
+            "'Transformer-Clinic/fairseq/examples/noisychannel/rerank_options.py'",
+            "'Transformer-Clinic/fairseq/examples/noisychannel/__init__.py'",
+            "'Transformer-Clinic/fairseq/examples/__init__.py'"
+        ]
+    },
+    {
+        "idx": 8,
+        "pred": {
+            "list_dependencies": [
+                "Geppetto/app/__init__.py",
+                "Geppetto/app/models/user.py",
+                "Geppetto/app/models/__init__.py",
+                "Geppetto/tests/conftest.py"
+            ]
+        },
+        "gt": [
+            "'Geppetto/app/models/user.py'",
+            "'Geppetto/app/models/__init__.py'",
+            "'Geppetto/app/__init__.py'",
+            "'Geppetto/tests/conftest.py'"
+        ]
+    },
+    {
+        "idx": 9,
+        "pred": {
+            "list_dependencies": [
+                "yowsup/yowsup/stacks/__init__.py",
+                "yowsup/yowsup/demos/echoclient/stack.py",
+                "yowsup/yowsup/demos/echoclient/__init__.py"
+            ]
+        },
+        "gt": [
+            "'yowsup/yowsup/layers/protocol_media/__init__.py'",
+            "'yowsup/yowsup/stacks/__init__.py'",
+            "'yowsup/yowsup/demos/echoclient/stack.py'",
+            "'yowsup/yowsup/demos/echoclient/__init__.py'"
+        ]
+    },
+    {
+        "idx": 10,
+        "pred": {
+            "list_dependencies": [
+                "MLOS/mlos_bench/mlos_bench/os_environ.py",
+                "MLOS/mlos_bench/mlos_bench/dict_templater.py",
+                "MLOS/mlos_bench/mlos_bench/tests/dict_templater_test.py"
+            ]
+        },
+        "gt": [
+            "'MLOS/mlos_bench/mlos_bench/os_environ.py'",
+            "'MLOS/mlos_bench/mlos_bench/dict_templater.py'",
+            "'MLOS/mlos_bench/mlos_bench/tests/dict_templater_test.py'"
+        ]
+    },
+    {
+        "idx": 11,
+        "pred": {
+            "list_dependencies": [
+                "LAV/lav/utils/augmenter.py",
+                "LAV/lav/utils/datasets/rgb_dataset.py",
+                "LAV/lav/utils/datasets/__init__.py",
+                "LAV/lav/train_full.py"
+            ]
+        },
+        "gt": [
+            "'LAV/lav/utils/augmenter.py'",
+            "'LAV/lav/utils/datasets/rgb_dataset.py'",
+            "'LAV/lav/utils/datasets/__init__.py'",
+            "'LAV/lav/train_full.py'"
+        ]
+    },
+    {
+        "idx": 12,
+        "pred": {
+            "list_dependencies": [
+                "BuffaLogs/buffalogs/authentication/models.py",
+                "BuffaLogs/buffalogs/authentication/serializers.py",
+                "BuffaLogs/buffalogs/authentication/views.py",
+                "BuffaLogs/buffalogs/authentication/urls.py"
+            ]
+        },
+        "gt": [
+            "'BuffaLogs/buffalogs/authentication/models.py'",
+            "'BuffaLogs/buffalogs/authentication/serializers.py'",
+            "'BuffaLogs/buffalogs/authentication/views.py'",
+            "'BuffaLogs/buffalogs/authentication/urls.py'"
+        ]
+    },
+    {
+        "idx": 13,
+        "pred": {
+            "list_dependencies": [
+                "tech-stack/service-2/src/app_1/internal/helpers/utils.py",
+                "tech-stack/service-2/src/app_1/internal/products/service.py",
+                "tech-stack/service-2/src/app_1/internal/handlers/products.py",
+                "tech-stack/service-2/src/app_1/internal/main.py"
+            ]
+        },
+        "gt": [
+            "'tech-stack/service-2/src/app_1/internal/helpers/utils.py'",
+            "'tech-stack/service-2/src/app_1/internal/products/service.py'",
+            "'tech-stack/service-2/src/app_1/internal/handlers/products.py'",
+            "'tech-stack/service-2/src/app_1/internal/main.py'"
+        ]
+    },
+    {
+        "idx": 14,
+        "pred": {
+            "list_dependencies": [
+                "exception.py",
+                "curriculum.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'Reinforcement-Learning-With-Unity-G.E.A.R/ml-agents/__backup/trainers/exception.py'",
+            "'Reinforcement-Learning-With-Unity-G.E.A.R/ml-agents/__backup/trainers/curriculum.py'",
+            "'Reinforcement-Learning-With-Unity-G.E.A.R/ml-agents/__backup/trainers/__init__.py'"
+        ]
+    },
+    {
+        "idx": 15,
+        "pred": {
+            "list_dependencies": [
+                "fastberry/src/fastberry/spoc_admin.py",
+                "fastberry/src/fastberry/framework.py",
+                "fastberry/src/fastberry/__init__.py",
+                "fastberry/tests/apps/todo/types.py"
+            ]
+        },
+        "gt": [
+            "'fastberry/src/fastberry/spoc_admin.py'",
+            "'fastberry/src/fastberry/framework.py'",
+            "'fastberry/src/fastberry/__init__.py'",
+            "'fastberry/tests/apps/todo/types.py'"
+        ]
+    },
+    {
+        "idx": 16,
+        "pred": {
+            "list_dependencies": [
+                "FGVC-PIM/v0/timm/utils/agc.py",
+                "FGVC-PIM/v0/timm/utils/clip_grad.py",
+                "FGVC-PIM/v0/timm/utils/cuda.py",
+                "FGVC-PIM/v0/timm/utils/__init__.py"
+            ]
+        },
+        "gt": [
+            "'FGVC-PIM/v0/timm/utils/agc.py'",
+            "'FGVC-PIM/v0/timm/utils/clip_grad.py'",
+            "'FGVC-PIM/v0/timm/utils/cuda.py'",
+            "'FGVC-PIM/v0/timm/utils/__init__.py'"
+        ]
+    },
+    {
+        "idx": 17,
+        "pred": {
+            "list_dependencies": [
+                "yowsup/yowsup/stacks/__init__.py",
+                "yowsup/yowsup/demos/echoclient/stack.py",
+                "yowsup/yowsup/demos/echoclient/__init__.py",
+                "yowsup/yowsup/layers/protocol_media/__init__.py"
+            ]
+        },
+        "gt": [
+            "'yowsup/yowsup/layers/protocol_media/__init__.py'",
+            "'yowsup/yowsup/stacks/__init__.py'",
+            "'yowsup/yowsup/demos/echoclient/stack.py'",
+            "'yowsup/yowsup/demos/echoclient/__init__.py'"
+        ]
+    },
+    {
+        "idx": 18,
+        "pred": {
+            "list_dependencies": [
+                "atlas/atlas/foundations_events/src/test/__init__.py",
+                "atlas/atlas/foundations_events/src/test/consumers/__init__.py",
+                "atlas/atlas/foundations_events/src/test/consumers/jobs/__init__.py",
+                "atlas/atlas/foundations_events/src/test/consumers/jobs/running/__init__.py",
+                "atlas/atlas/foundations_events/src/test/consumers/jobs/running/test_start_time.py"
+            ]
+        },
+        "gt": [
+            "'atlas/atlas/foundations_events/src/test/consumers/jobs/running/test_start_time.py'",
+            "'atlas/atlas/foundations_events/src/test/consumers/jobs/running/__init__.py'",
+            "'atlas/atlas/foundations_events/src/test/consumers/jobs/__init__.py'",
+            "'atlas/atlas/foundations_events/src/test/consumers/__init__.py'",
+            "'atlas/atlas/foundations_events/src/test/__init__.py'"
+        ]
+    },
+    {
+        "idx": 19,
+        "pred": {
+            "list_dependencies": [
+                "tornadio/tornadio/session.py",
+                "tornadio/tornadio/router.py",
+                "tornadio/examples/transports/transports.py"
+            ]
+        },
+        "gt": [
+            "'tornadio/tornadio/session.py'",
+            "'tornadio/tornadio/router.py'",
+            "'tornadio/examples/transports/transports.py'"
+        ]
+    },
+    {
+        "idx": 20,
+        "pred": {
+            "list_dependencies": [
+                "serializers.py",
+                "views.py",
+                "urls.py"
+            ]
+        },
+        "gt": [
+            "'DRF-TDD-example/todoapp/todos/serializers.py'",
+            "'DRF-TDD-example/todoapp/todos/views.py'",
+            "'DRF-TDD-example/todoapp/todos/urls.py'"
+        ]
+    },
+    {
+        "idx": 21,
+        "pred": {
+            "list_dependencies": [
+                "caface/demo/face_alignment/mtcnn_pytorch/src/first_stage.py",
+                "caface/demo/face_alignment/mtcnn_pytorch/src/detector.py",
+                "caface/demo/face_alignment/mtcnn_pytorch/src/__init__.py"
+            ]
+        },
+        "gt": [
+            "'caface/demo/face_alignment/mtcnn_pytorch/src/first_stage.py'",
+            "'caface/demo/face_alignment/mtcnn_pytorch/src/detector.py'",
+            "'caface/demo/face_alignment/mtcnn_pytorch/src/__init__.py'"
+        ]
+    },
+    {
+        "idx": 22,
+        "pred": {
+            "list_dependencies": [
+                "Xmodal-Ctx/m2/evaluation/cider/cider_scorer.py",
+                "Xmodal-Ctx/m2/evaluation/cider/cider.py",
+                "Xmodal-Ctx/m2/evaluation/cider/__init__.py"
+            ]
+        },
+        "gt": [
+            "'Xmodal-Ctx/m2/evaluation/cider/cider_scorer.py'",
+            "'Xmodal-Ctx/m2/evaluation/cider/cider.py'",
+            "'Xmodal-Ctx/m2/evaluation/cider/__init__.py'"
+        ]
+    },
+    {
+        "idx": 23,
+        "pred": {
+            "list_dependencies": [
+                "HTTPLang/httplang/tokenize.py",
+                "HTTPLang/httplang/parse.py",
+                "HTTPLang/httplang/__init__.py",
+                "HTTPLang/httplang.py"
+            ]
+        },
+        "gt": [
+            "'HTTPLang/httplang/tokenize.py'",
+            "'HTTPLang/httplang/parse.py'",
+            "'HTTPLang/httplang/__init__.py'",
+            "'HTTPLang/httplang.py'"
+        ]
+    },
+    {
+        "idx": 24,
+        "pred": {
+            "list_dependencies": [
+                "MLOS/mlos_bench/mlos_bench/services/types/host_ops_type.py",
+                "MLOS/mlos_bench/mlos_bench/environments/remote/saas_env.py",
+                "MLOS/mlos_bench/mlos_bench/environments/remote/__init__.py"
+            ]
+        },
+        "gt": [
+            "'MLOS/mlos_bench/mlos_bench/services/types/host_ops_type.py'",
+            "'MLOS/mlos_bench/mlos_bench/environments/remote/saas_env.py'",
+            "'MLOS/mlos_bench/mlos_bench/environments/remote/__init__.py'"
+        ]
+    },
+    {
+        "idx": 25,
+        "pred": {
+            "list_dependencies": [
+                "UmamusumeAutoTrainer/module/umamusume/protocol/preset.py",
+                "UmamusumeAutoTrainer/module/umamusume/manifest.py",
+                "UmamusumeAutoTrainer/main.py"
+            ]
+        },
+        "gt": [
+            "'UmamusumeAutoTrainer/module/umamusume/protocol/preset.py'",
+            "'UmamusumeAutoTrainer/module/umamusume/manifest.py'",
+            "'UmamusumeAutoTrainer/main.py'"
+        ]
+    },
+    {
+        "idx": 26,
+        "pred": {
+            "list_dependencies": [
+                "flaskBlog/modules.py",
+                "flaskBlog/utils/contextProcessor/isRegistration.py",
+                "flaskBlog/utils/errorHandlers/notFoundErrorHandler.py"
+            ]
+        },
+        "gt": [
+            "'flaskBlog/utils/contextProcessor/isRegistration.py'",
+            "'flaskBlog/modules.py'",
+            "'flaskBlog/utils/errorHandlers/notFoundErrorHandler.py'"
+        ]
+    },
+    {
+        "idx": 27,
+        "pred": {
+            "list_dependencies": [
+                "pynet/snmp/snmp_helper.py",
+                "pynet/appliedpy_ecourse/class10/snmp_config_detect/config_detect.py",
+                "pynet/appliedpy_ecourse/class10/snmp_config_detect/__init__.py"
+            ]
+        },
+        "gt": [
+            "'pynet/snmp/snmp_helper.py'",
+            "'pynet/appliedpy_ecourse/class10/snmp_config_detect/config_detect.py'",
+            "'pynet/appliedpy_ecourse/class10/snmp_config_detect/__init__.py'"
+        ]
+    },
+    {
+        "idx": 28,
+        "pred": {
+            "list_dependencies": [
+                "ib.py",
+                "offline_ib.py",
+                "test_offline_iq.py"
+            ]
+        },
+        "gt": [
+            "'yowsup/yowsup/layers/protocol_ib/protocolentities/ib.py'",
+            "'yowsup/yowsup/layers/protocol_ib/protocolentities/offline_ib.py'",
+            "'yowsup/yowsup/layers/protocol_ib/protocolentities/test_offline_iq.py'"
+        ]
+    },
+    {
+        "idx": 29,
+        "pred": {
+            "list_dependencies": [
+                "seo-audits-toolkit/server/internalLinks/tasks.py",
+                "seo-audits-toolkit/server/internalLinks/serializers.py",
+                "seo-audits-toolkit/server/internalLinks/views.py",
+                "seo-audits-toolkit/server/core/urls.py"
+            ]
+        },
+        "gt": [
+            "'seo-audits-toolkit/server/internalLinks/tasks.py'",
+            "'seo-audits-toolkit/server/internalLinks/serializers.py'",
+            "'seo-audits-toolkit/server/internalLinks/views.py'",
+            "'seo-audits-toolkit/server/core/urls.py'"
+        ]
+    },
+    {
+        "idx": 30,
+        "pred": {
+            "list_dependencies": [
+                "shapely/shapely/validation.py",
+                "shapely/shapely/tests/test_validation.py",
+                "shapely/shapely/tests/__init__.py"
+            ]
+        },
+        "gt": [
+            "'shapely/shapely/validation.py'",
+            "'shapely/shapely/tests/test_validation.py'",
+            "'shapely/shapely/tests/__init__.py'"
+        ]
+    },
+    {
+        "idx": 31,
+        "pred": {
+            "list_dependencies": [
+                "expressvpn_leak_testing/xv_leak_tools/__init__.py",
+                "expressvpn_leak_testing/xv_leak_tools/test_components/git/git.py",
+                "expressvpn_leak_testing/xv_leak_tools/test_components/git/git_builder.py",
+                "expressvpn_leak_testing/xv_leak_tools/test_components/git/__init__.py"
+            ]
+        },
+        "gt": [
+            "'expressvpn_leak_testing/xv_leak_tools/__init__.py'",
+            "'expressvpn_leak_testing/xv_leak_tools/test_components/git/git.py'",
+            "'expressvpn_leak_testing/xv_leak_tools/test_components/git/git_builder.py'",
+            "'expressvpn_leak_testing/xv_leak_tools/test_components/git/__init__.py'"
+        ]
+    },
+    {
+        "idx": 32,
+        "pred": {
+            "list_dependencies": [
+                "expiration.py",
+                "start_event_handler_directive.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/custom_interface_controller/expiration.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/custom_interface_controller/start_event_handler_directive.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/custom_interface_controller/__init__.py'"
+        ]
+    },
+    {
+        "idx": 33,
+        "pred": {
+            "list_dependencies": [
+                "spotty/spotty/providers/gcp/config/image_uri.py",
+                "spotty/spotty/providers/gcp/config/validation.py",
+                "spotty/spotty/providers/gcp/config/disk_volume.py"
+            ]
+        },
+        "gt": [
+            "'spotty/spotty/providers/gcp/config/image_uri.py'",
+            "'spotty/spotty/providers/gcp/config/validation.py'",
+            "'spotty/spotty/providers/gcp/config/disk_volume.py'"
+        ]
+    },
+    {
+        "idx": 34,
+        "pred": {
+            "list_dependencies": [
+                "signalbot/signalbot/utils/chat_testing.py",
+                "signalbot/signalbot/utils/__init__.py",
+                "signalbot/tests/test_chat.py"
+            ]
+        },
+        "gt": [
+            "'signalbot/signalbot/utils/chat_testing.py'",
+            "'signalbot/signalbot/utils/__init__.py'",
+            "'signalbot/tests/test_chat.py'"
+        ]
+    },
+    {
+        "idx": 35,
+        "pred": {
+            "list_dependencies": [
+                "nlg-metricverse/nlgmetricverse/metrics/prism/__init__.py",
+                "nlg-metricverse/nlgmetricverse/metrics/__init__.py",
+                "nlg-metricverse/tests/nlgmetricverse/metrics/test_wer.py"
+            ]
+        },
+        "gt": [
+            "'nlg-metricverse/nlgmetricverse/metrics/prism/__init__.py'",
+            "'nlg-metricverse/nlgmetricverse/metrics/__init__.py'",
+            "'nlg-metricverse/tests/nlgmetricverse/metrics/test_wer.py'"
+        ]
+    },
+    {
+        "idx": 36,
+        "pred": {
+            "list_dependencies": [
+                "goodfet/client/util.py",
+                "goodfet/client/USBFtdi.py",
+                "goodfet/client/facedancer-ftdi.py"
+            ]
+        },
+        "gt": [
+            "'goodfet/client/util.py'",
+            "'goodfet/client/USBFtdi.py'",
+            "'goodfet/client/facedancer-ftdi.py'"
+        ]
+    },
+    {
+        "idx": 37,
+        "pred": {
+            "list_dependencies": [
+                "kebechet/kebechet/managers/manager.py",
+                "kebechet/kebechet/managers/info/info.py",
+                "kebechet/kebechet/managers/info/__init__.py"
+            ]
+        },
+        "gt": [
+            "'kebechet/kebechet/managers/manager.py'",
+            "'kebechet/kebechet/managers/info/info.py'",
+            "'kebechet/kebechet/managers/info/__init__.py'"
+        ]
+    },
+    {
+        "idx": 38,
+        "pred": {
+            "list_dependencies": [
+                "JittorLLMs/models/pangualpha/megatron/package_info.py",
+                "JittorLLMs/models/pangualpha/megatron/__init__.py",
+                "JittorLLMs/models/pangualpha/tasks/glue/data.py",
+                "JittorLLMs/models/pangualpha/tasks/glue/mnli.py",
+                "JittorLLMs/models/pangualpha/tasks/glue/finetune.py"
+            ]
+        },
+        "gt": [
+            "'JittorLLMs/models/pangualpha/megatron/package_info.py'",
+            "'JittorLLMs/models/pangualpha/megatron/__init__.py'",
+            "'JittorLLMs/models/pangualpha/tasks/glue/data.py'",
+            "'JittorLLMs/models/pangualpha/tasks/glue/mnli.py'",
+            "'JittorLLMs/models/pangualpha/tasks/glue/finetune.py'"
+        ]
+    },
+    {
+        "idx": 39,
+        "pred": {
+            "list_dependencies": [
+                "UVTR/projects/mmdet3d_plugin/core/bbox/util.py",
+                "UVTR/projects/mmdet3d_plugin/core/bbox/assigners/hungarian_assigner_3d.py",
+                "UVTR/projects/mmdet3d_plugin/core/bbox/assigners/__init__.py"
+            ]
+        },
+        "gt": [
+            "'UVTR/projects/mmdet3d_plugin/core/bbox/util.py'",
+            "'UVTR/projects/mmdet3d_plugin/core/bbox/assigners/hungarian_assigner_3d.py'",
+            "'UVTR/projects/mmdet3d_plugin/core/bbox/assigners/__init__.py'"
+        ]
+    },
+    {
+        "idx": 40,
+        "pred": {
+            "list_dependencies": [
+                "py-llm-core/src/llm_core/parsers.py",
+                "py-llm-core/src/llm_core/assistants/base.py",
+                "py-llm-core/src/llm_core/assistants/__init__.py",
+                "py-llm-core/examples/synthetic-dataset-generation-example.py"
+            ]
+        },
+        "gt": [
+            "'py-llm-core/src/llm_core/parsers.py'",
+            "'py-llm-core/src/llm_core/assistants/base.py'",
+            "'py-llm-core/src/llm_core/assistants/__init__.py'",
+            "'py-llm-core/examples/synthetic-dataset-generation-example.py'"
+        ]
+    },
+    {
+        "idx": 41,
+        "pred": {
+            "list_dependencies": [
+                "mana/mana/templates/auth/_auth_login_css.py",
+                "mana/mana/templates/auth/__init__.py",
+                "mana/mana/mana.py",
+                "mana/test_mana.py"
+            ]
+        },
+        "gt": [
+            "'mana/mana/templates/auth/_auth_login_css.py'",
+            "'mana/mana/templates/auth/__init__.py'",
+            "'mana/mana/mana.py'",
+            "'mana/test_mana.py'"
+        ]
+    },
+    {
+        "idx": 42,
+        "pred": {
+            "list_dependencies": [
+                "state.py",
+                "builder.py",
+                "main.py"
+            ]
+        },
+        "gt": [
+            "'lumen/lumen/ui/state.py'",
+            "'lumen/lumen/ui/launcher.py'",
+            "'lumen/lumen/ui/builder.py'",
+            "'lumen/lumen/ui/main.py'"
+        ]
+    },
+    {
+        "idx": 43,
+        "pred": {
+            "list_dependencies": [
+                "fireREST/fireREST/fmc/device/devicerecord/routing/virtualrouter/ospfinterface/__init__.py",
+                "fireREST/fireREST/fmc/device/devicerecord/routing/virtualrouter/__init__.py",
+                "fireREST/fireREST/fmc/device/devicerecord/routing/__init__.py",
+                "fireREST/test/fmc/devicerecord/test_devicerecord.py"
+            ]
+        },
+        "gt": [
+            "'fireREST/fireREST/fmc/device/devicerecord/routing/virtualrouter/ospfinterface/__init__.py'",
+            "'fireREST/fireREST/fmc/device/devicerecord/routing/virtualrouter/__init__.py'",
+            "'fireREST/fireREST/fmc/device/devicerecord/routing/__init__.py'",
+            "'fireREST/test/fmc/devicerecord/test_devicerecord.py'"
+        ]
+    },
+    {
+        "idx": 44,
+        "pred": {
+            "list_dependencies": [
+                "HTTPLang/httplang/tokenize.py",
+                "HTTPLang/httplang/parse.py",
+                "HTTPLang/httplang/__init__.py",
+                "HTTPLang/httplang.py"
+            ]
+        },
+        "gt": [
+            "'HTTPLang/httplang/tokenize.py'",
+            "'HTTPLang/httplang/parse.py'",
+            "'HTTPLang/httplang/__init__.py'",
+            "'HTTPLang/httplang.py'"
+        ]
+    },
+    {
+        "idx": 45,
+        "pred": {
+            "list_dependencies": [
+                "demoapp/tasks.py",
+                "demoapp/views.py",
+                "proj/urls.py"
+            ]
+        },
+        "gt": [
+            "'django-docker-compose/demoapp/tasks.py'",
+            "'django-docker-compose/demoapp/views.py'",
+            "'django-docker-compose/proj/urls.py'"
+        ]
+    },
+    {
+        "idx": 46,
+        "pred": {
+            "list_dependencies": [
+                "django-shrink/shrink/helpers.py",
+                "django-shrink/shrink/templatetags/shrink.py",
+                "django-shrink/shrink/management/commands/collectstatic.py"
+            ]
+        },
+        "gt": [
+            "'django-shrink/shrink/helpers.py'",
+            "'django-shrink/shrink/templatetags/shrink.py'",
+            "'django-shrink/shrink/management/commands/collectstatic.py'"
+        ]
+    },
+    {
+        "idx": 47,
+        "pred": {
+            "list_dependencies": [
+                "oblique_tree_node.py",
+                "oblique_tree.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'treelearn/treelearn/oblique_tree_node.py'",
+            "'treelearn/treelearn/oblique_tree.py'",
+            "'treelearn/treelearn/__init__.py'"
+        ]
+    },
+    {
+        "idx": 48,
+        "pred": {
+            "list_dependencies": [
+                "pyscroll/pyscroll/animation.py",
+                "pyscroll/pyscroll/data.py",
+                "pyscroll/tests/pyscroll/test_pyscroll.py"
+            ]
+        },
+        "gt": [
+            "'pyscroll/pyscroll/animation.py'",
+            "'pyscroll/pyscroll/data.py'",
+            "'pyscroll/tests/pyscroll/test_pyscroll.py'"
+        ]
+    },
+    {
+        "idx": 49,
+        "pred": {
+            "list_dependencies": [
+                "Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/__init__.py",
+                "Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/senet.py",
+                "Keras-RetinaNet-for-Teknofest-2019/retinanet/detect_all_images.py"
+            ]
+        },
+        "gt": [
+            "'Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/senet.py'",
+            "'Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/__init__.py'",
+            "'Keras-RetinaNet-for-Teknofest-2019/retinanet/detect_all_images.py'"
+        ]
+    },
+    {
+        "idx": 50,
+        "pred": {
+            "list_dependencies": [
+                "shenfun/shenfun/optimization/numba/__init__.py",
+                "shenfun/shenfun/optimization/numba/diagma.py",
+                "shenfun/shenfun/optimization/numba/threedma.py"
+            ]
+        },
+        "gt": [
+            "'shenfun/shenfun/optimization/numba/threedma.py'",
+            "'shenfun/shenfun/optimization/numba/__init__.py'",
+            "'shenfun/shenfun/optimization/numba/diagma.py'"
+        ]
+    },
+    {
+        "idx": 51,
+        "pred": {
+            "list_dependencies": [
+                "ui_nodesList.py",
+                "nodesMayaWidget.py",
+                "assetBrowserWindow.py"
+            ]
+        },
+        "gt": [
+            "'qt-learning/python/qtLearn/widgets/ui_nodesList.py'",
+            "'qt-learning/python/qtLearn/widgets/nodesMayaWidget.py'",
+            "'qt-learning/python/qtLearn/windows/assetBrowser/assetBrowserWindow.py'"
+        ]
+    },
+    {
+        "idx": 52,
+        "pred": {
+            "list_dependencies": [
+                "xos/lib/xos-synchronizer/xossynchronizer/__init__.py",
+                "xos/lib/xos-synchronizer/xossynchronizer/synchronizer.py",
+                "xos/lib/xos-synchronizer/xossynchronizer/backend.py",
+                "xos/lib/xos-synchronizer/xossynchronizer/event_engine.py",
+                "xos/testservice/xos/synchronizer/testservice-synchronizer.py"
+            ]
+        },
+        "gt": [
+            "'xos/lib/xos-synchronizer/xossynchronizer/event_engine.py'",
+            "'xos/lib/xos-synchronizer/xossynchronizer/backend.py'",
+            "'xos/lib/xos-synchronizer/xossynchronizer/synchronizer.py'",
+            "'xos/lib/xos-synchronizer/xossynchronizer/__init__.py'",
+            "'xos/testservice/xos/synchronizer/testservice-synchronizer.py'"
+        ]
+    },
+    {
+        "idx": 53,
+        "pred": {
+            "list_dependencies": [
+                "SketchGraphs/sketchgraphs/data/_plotting.py",
+                "SketchGraphs/sketchgraphs/data/sketch.py",
+                "SketchGraphs/sketchgraphs/pipeline/make_quantization_statistics.py"
+            ]
+        },
+        "gt": [
+            "'SketchGraphs/sketchgraphs/data/_plotting.py'",
+            "'SketchGraphs/sketchgraphs/data/sketch.py'",
+            "'SketchGraphs/sketchgraphs/pipeline/make_quantization_statistics.py'"
+        ]
+    },
+    {
+        "idx": 54,
+        "pred": {
+            "list_dependencies": [
+                "django-forestadmin/django_forest/tests/forest/place.py",
+                "django-forestadmin/django_forest/tests/forest/__init__.py",
+                "django-forestadmin/django_forest/tests/utils/test_schema.py"
+            ]
+        },
+        "gt": [
+            "'django-forestadmin/django_forest/tests/forest/place.py'",
+            "'django-forestadmin/django_forest/tests/forest/__init__.py'",
+            "'django-forestadmin/django_forest/tests/utils/test_schema.py'"
+        ]
+    },
+    {
+        "idx": 55,
+        "pred": {
+            "list_dependencies": [
+                "constants.py",
+                "hebrewprober.py",
+                "sbcsgroupprober.py",
+                "universaldetector.py",
+                "chardetect.py"
+            ]
+        },
+        "gt": [
+            "'TimeSync/GAE/lib/requests/packages/chardet/constants.py'",
+            "'TimeSync/GAE/lib/requests/packages/chardet/hebrewprober.py'",
+            "'TimeSync/GAE/lib/requests/packages/chardet/sbcsgroupprober.py'",
+            "'TimeSync/GAE/lib/requests/packages/chardet/universaldetector.py'",
+            "'TimeSync/GAE/lib/requests/packages/chardet/chardetect.py'"
+        ]
+    },
+    {
+        "idx": 56,
+        "pred": {
+            "list_dependencies": [
+                "Parser-v3/parser/__init__.py",
+                "Parser-v3/parser/elmo_network.py",
+                "Parser-v3/main.py"
+            ]
+        },
+        "gt": [
+            "'Parser-v3/parser/elmo_network.py'",
+            "'Parser-v3/parser/__init__.py'",
+            "'Parser-v3/main.py'"
+        ]
+    },
+    {
+        "idx": 57,
+        "pred": {
+            "list_dependencies": [
+                "yowsup/yowsup/layers/protocol_receipts/layer.py",
+                "yowsup/yowsup/layers/protocol_receipts/__init__.py",
+                "yowsup/yowsup/stacks/yowstack.py",
+                "yowsup/yowsup/stacks/__init__.py",
+                "yowsup/yowsup/demos/sendclient/stack.py",
+                "yowsup/yowsup/demos/sendclient/__init__.py"
+            ]
+        },
+        "gt": [
+            "'yowsup/yowsup/layers/protocol_receipts/layer.py'",
+            "'yowsup/yowsup/layers/protocol_receipts/__init__.py'",
+            "'yowsup/yowsup/stacks/yowstack.py'",
+            "'yowsup/yowsup/stacks/__init__.py'",
+            "'yowsup/yowsup/demos/sendclient/stack.py'",
+            "'yowsup/yowsup/demos/sendclient/__init__.py'"
+        ]
+    },
+    {
+        "idx": 58,
+        "pred": {
+            "list_dependencies": [
+                "stv/stv/models/synchronous/random_model.py",
+                "stv/stv/models/synchronous/__init__.py",
+                "stv/stv/experiments/approximations/strategy_logic/simple_voting_2_model_experiments.py",
+                "stv/stv/experiments/approximations/strategy_logic/__init__.py",
+                "stv/stv/tests/experiments/approximations/strategy_logic/test_simple_voting_2_model_experiments.py"
+            ]
+        },
+        "gt": [
+            "'stv/stv/models/synchronous/random_model.py'",
+            "'stv/stv/models/synchronous/__init__.py'",
+            "'stv/stv/experiments/approximations/strategy_logic/simple_voting_2_model_experiments.py'",
+            "'stv/stv/experiments/approximations/strategy_logic/__init__.py'",
+            "'stv/stv/tests/experiments/approximations/strategy_logic/test_simple_voting_2_model_experiments.py'"
+        ]
+    },
+    {
+        "idx": 59,
+        "pred": {
+            "list_dependencies": [
+                "EfficientDet-bifpn/mmdet/core/bbox/assigners/base_assigner.py",
+                "EfficientDet-bifpn/mmdet/core/bbox/assigners/atss_assigner.py",
+                "EfficientDet-bifpn/mmdet/core/bbox/assigners/__init__.py",
+                "EfficientDet-bifpn/tests/test_assigner.py"
+            ]
+        },
+        "gt": [
+            "'EfficientDet-bifpn/mmdet/core/bbox/assigners/base_assigner.py'",
+            "'EfficientDet-bifpn/mmdet/core/bbox/assigners/atss_assigner.py'",
+            "'EfficientDet-bifpn/mmdet/core/bbox/assigners/__init__.py'",
+            "'EfficientDet-bifpn/tests/test_assigner.py'"
+        ]
+    },
+    {
+        "idx": 60,
+        "pred": {
+            "list_dependencies": [
+                "semiconductor/src/semiconductor/material/bandgap_intrinsic_models.py",
+                "semiconductor/src/semiconductor/material/bandgap_intrinsic.py",
+                "semiconductor/src/semiconductor/material/bandgap.py"
+            ]
+        },
+        "gt": [
+            "'semiconductor/src/semiconductor/material/bandgap_intrinsic_models.py'",
+            "'semiconductor/src/semiconductor/material/bandgap_intrinsic.py'",
+            "'semiconductor/src/semiconductor/material/bandgap.py'",
+            "'semiconductor/src/semiconductor/material/__init__.py'",
+            "'semiconductor/src/semiconductor/recombination/extrinsic.py'",
+            "'semiconductor/src/semiconductor/recombination/__init__.py'"
+        ]
+    },
+    {
+        "idx": 61,
+        "pred": {
+            "list_dependencies": [
+                "person-reid-lib/lib/network/loss_factory/triplet.py",
+                "person-reid-lib/lib/network/loss_factory/__init__.py",
+                "person-reid-lib/tasks/task_video/architecture.py",
+                "person-reid-lib/tasks/task_viper/solver.py"
+            ]
+        },
+        "gt": [
+            "'person-reid-lib/lib/network/loss_factory/triplet.py'",
+            "'person-reid-lib/lib/network/loss_factory/__init__.py'",
+            "'person-reid-lib/tasks/task_video/architecture.py'",
+            "'person-reid-lib/tasks/task_viper/solver.py'"
+        ]
+    },
+    {
+        "idx": 62,
+        "pred": {
+            "list_dependencies": [
+                "intrinsic/bell2014/density.py",
+                "intrinsic/bell2014/energy/prob_abs_r.py",
+                "intrinsic/bell2014/energy/energy.py",
+                "intrinsic/bell2014/energy/__init__.py"
+            ]
+        },
+        "gt": [
+            "'intrinsic/bell2014/density.py'",
+            "'intrinsic/bell2014/energy/prob_abs_r.py'",
+            "'intrinsic/bell2014/energy/energy.py'",
+            "'intrinsic/bell2014/energy/__init__.py'"
+        ]
+    },
+    {
+        "idx": 63,
+        "pred": {
+            "list_dependencies": [
+                "PlugAPI4Py/requests/packages/chardet/constants.py",
+                "PlugAPI4Py/requests/packages/chardet/escsm.py",
+                "PlugAPI4Py/requests/packages/chardet/escprober.py",
+                "PlugAPI4Py/requests/packages/chardet/universaldetector.py",
+                "PlugAPI4Py/requests/packages/chardet/chardetect.py"
+            ]
+        },
+        "gt": [
+            "'PlugAPI4Py/requests/packages/chardet/constants.py'",
+            "'PlugAPI4Py/requests/packages/chardet/escsm.py'",
+            "'PlugAPI4Py/requests/packages/chardet/escprober.py'",
+            "'PlugAPI4Py/requests/packages/chardet/universaldetector.py'",
+            "'PlugAPI4Py/requests/packages/chardet/chardetect.py'"
+        ]
+    },
+    {
+        "idx": 64,
+        "pred": {
+            "list_dependencies": [
+                "serenata-toolbox/serenata_toolbox/chamber_of_deputies/reimbursements_cleaner.py",
+                "serenata-toolbox/serenata_toolbox/chamber_of_deputies/reimbursements.py",
+                "serenata-toolbox/tests/unit/chambers_of_deputies/test_reimbursements.py"
+            ]
+        },
+        "gt": [
+            "'serenata-toolbox/serenata_toolbox/chamber_of_deputies/reimbursements_cleaner.py'",
+            "'serenata-toolbox/serenata_toolbox/chamber_of_deputies/reimbursements.py'",
+            "'serenata-toolbox/tests/unit/chambers_of_deputies/test_reimbursements.py'"
+        ]
+    },
+    {
+        "idx": 65,
+        "pred": {
+            "list_dependencies": [
+                "cloudfoxable/aws/challenges/Variable/data/lambda-src/urllib3/filepost.py",
+                "cloudfoxable/aws/challenges/Variable/data/lambda-src/urllib3/request.py",
+                "cloudfoxable/aws/challenges/Variable/data/lambda-src/urllib3/contrib/appengine.py"
+            ]
+        },
+        "gt": [
+            "'cloudfoxable/aws/challenges/Variable/data/lambda-src/urllib3/filepost.py'",
+            "'cloudfoxable/aws/challenges/Variable/data/lambda-src/urllib3/request.py'",
+            "'cloudfoxable/aws/challenges/Variable/data/lambda-src/urllib3/contrib/appengine.py'"
+        ]
+    },
+    {
+        "idx": 66,
+        "pred": {
+            "list_dependencies": [
+                "serverless-benchmarks/sebs/types.py",
+                "serverless-benchmarks/sebs/experiments/__init__.py",
+                "serverless-benchmarks/sebs/experiments/network_ping_pong.py",
+                "serverless-benchmarks/sebs/sebs.py"
+            ]
+        },
+        "gt": [
+            "'serverless-benchmarks/sebs/types.py'",
+            "'serverless-benchmarks/sebs/sebs.py'",
+            "'serverless-benchmarks/sebs/experiments/network_ping_pong.py'",
+            "'serverless-benchmarks/sebs/experiments/__init__.py'"
+        ]
+    },
+    {
+        "idx": 67,
+        "pred": {
+            "list_dependencies": [
+                "project-black/black/workers/common/task.py",
+                "project-black/black/workers/common/async_task.py",
+                "project-black/black/workers/patator/patator_task.py",
+                "project-black/black/workers/patator/patator_worker.py",
+                "project-black/spawn_worker.py"
+            ]
+        },
+        "gt": [
+            "'project-black/black/workers/common/task.py'",
+            "'project-black/black/workers/common/async_task.py'",
+            "'project-black/black/workers/patator/patator_task.py'",
+            "'project-black/black/workers/patator/patator_worker.py'",
+            "'project-black/spawn_worker.py'"
+        ]
+    },
+    {
+        "idx": 68,
+        "pred": {
+            "list_dependencies": [
+                "billing_agreement_type.py",
+                "billing_agreement_attributes.py",
+                "setup_amazon_pay_request.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/amazonpay/model/request/billing_agreement_type.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/amazonpay/model/request/billing_agreement_attributes.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/amazonpay/request/setup_amazon_pay_request.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/amazonpay/request/__init__.py'"
+        ]
+    },
+    {
+        "idx": 69,
+        "pred": {
+            "list_dependencies": [
+                "whoswho/whoswho/config/suffixes.py",
+                "whoswho/whoswho/config/__init__.py",
+                "whoswho/whoswho/who.py",
+                "whoswho/test/test_who.py"
+            ]
+        },
+        "gt": [
+            "'whoswho/whoswho/config/suffixes.py'",
+            "'whoswho/whoswho/config/__init__.py'",
+            "'whoswho/whoswho/who.py'",
+            "'whoswho/test/test_who.py'"
+        ]
+    },
+    {
+        "idx": 70,
+        "pred": {
+            "list_dependencies": [
+                "reahl/reahl-web/reahl/web/bootstrap/navs.py",
+                "reahl/reahl-doc/reahl/doc/examples/tutorial/bootstrapgrids/bootstrapgrids.py",
+                "reahl/reahl-doc/reahl/doc/examples/tutorial/bootstrapgrids/etc/web.config.py"
+            ]
+        },
+        "gt": [
+            "'reahl/reahl-web/reahl/web/bootstrap/navs.py'",
+            "'reahl/reahl-doc/reahl/doc/examples/tutorial/bootstrapgrids/bootstrapgrids.py'",
+            "'reahl/reahl-doc/reahl/doc/examples/tutorial/bootstrapgrids/etc/web.config.py'"
+        ]
+    },
+    {
+        "idx": 71,
+        "pred": {
+            "list_dependencies": [
+                "beans/api/factory.py",
+                "beans/api/main.py",
+                "beans/api/tests/conftest.py"
+            ]
+        },
+        "gt": [
+            "'beans/api/factory.py'",
+            "'beans/api/tests/conftest.py'",
+            "'beans/api/main.py'"
+        ]
+    },
+    {
+        "idx": 72,
+        "pred": {
+            "list_dependencies": [
+                "InfraBox/src/api/listeners/job.py",
+                "InfraBox/src/api/server.py",
+                "InfraBox/infrabox/test/api/temp_tools.py"
+            ]
+        },
+        "gt": [
+            "'InfraBox/src/api/listeners/job.py'",
+            "'InfraBox/src/api/server.py'",
+            "'InfraBox/infrabox/test/api/temp_tools.py'"
+        ]
+    },
+    {
+        "idx": 73,
+        "pred": {
+            "list_dependencies": [
+                "shadowreader/shadowreader/libs/orchestrator.py",
+                "shadowreader/shadowreader/functions/orchestrator_past.py",
+                "shadowreader/shadowreader/tests/integration/test_orchestrator_lambda.py"
+            ]
+        },
+        "gt": [
+            "'shadowreader/shadowreader/libs/orchestrator.py'",
+            "'shadowreader/shadowreader/functions/orchestrator_past.py'",
+            "'shadowreader/shadowreader/tests/integration/test_orchestrator_lambda.py'"
+        ]
+    },
+    {
+        "idx": 74,
+        "pred": {
+            "list_dependencies": [
+                "gail-tf/gailtf/baselines/common/mpi_running_mean_std.py",
+                "gail-tf/gailtf/baselines/ppo1/mlp_policy.py",
+                "gail-tf/gailtf/baselines/ppo1/run_mujoco.py"
+            ]
+        },
+        "gt": [
+            "'gail-tf/gailtf/baselines/common/mpi_running_mean_std.py'",
+            "'gail-tf/gailtf/baselines/ppo1/mlp_policy.py'",
+            "'gail-tf/gailtf/baselines/ppo1/run_mujoco.py'"
+        ]
+    },
+    {
+        "idx": 75,
+        "pred": {
+            "list_dependencies": [
+                "quantum/tensorflow_quantum/python/optimizers/rotosolve_minimizer.py",
+                "quantum/tensorflow_quantum/python/optimizers/__init__.py",
+                "quantum/tensorflow_quantum/__init__.py",
+                "quantum/scripts/build_docs.py"
+            ]
+        },
+        "gt": [
+            "'quantum/tensorflow_quantum/python/optimizers/rotosolve_minimizer.py'",
+            "'quantum/tensorflow_quantum/python/optimizers/__init__.py'",
+            "'quantum/tensorflow_quantum/__init__.py'",
+            "'quantum/scripts/build_docs.py'"
+        ]
+    },
+    {
+        "idx": 76,
+        "pred": {
+            "list_dependencies": [
+                "controlvideo/annotator/uniformer/mmseg/models/decode_heads/decode_head.py",
+                "controlvideo/annotator/uniformer/mmseg/models/decode_heads/lraspp_head.py",
+                "controlvideo/annotator/uniformer/mmseg/models/decode_heads/__init__.py"
+            ]
+        },
+        "gt": [
+            "'controlvideo/annotator/uniformer/mmseg/models/decode_heads/decode_head.py'",
+            "'controlvideo/annotator/uniformer/mmseg/models/decode_heads/lraspp_head.py'",
+            "'controlvideo/annotator/uniformer/mmseg/models/decode_heads/__init__.py'"
+        ]
+    },
+    {
+        "idx": 77,
+        "pred": {
+            "list_dependencies": [
+                "ckpt_util.py",
+                "diffusion.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'pytorch_diffusion/pytorch_diffusion/ckpt_util.py'",
+            "'pytorch_diffusion/pytorch_diffusion/diffusion.py'",
+            "'pytorch_diffusion/pytorch_diffusion/__init__.py'"
+        ]
+    },
+    {
+        "idx": 78,
+        "pred": {
+            "list_dependencies": [
+                "BEDLAM/train/utils/colorwheel.py",
+                "BEDLAM/train/utils/smpl_uv.py",
+                "BEDLAM/train/utils/diff_renderer.py"
+            ]
+        },
+        "gt": [
+            "'BEDLAM/train/utils/colorwheel.py'",
+            "'BEDLAM/train/utils/smpl_uv.py'",
+            "'BEDLAM/train/utils/diff_renderer.py'"
+        ]
+    },
+    {
+        "idx": 79,
+        "pred": {
+            "list_dependencies": [
+                "vim-ultest/rplugin/python3/ultest/models/types.py",
+                "vim-ultest/rplugin/python3/ultest/models/tree.py",
+                "vim-ultest/rplugin/python3/ultest/models/__init__.py",
+                "vim-ultest/tests/unit/handler/parsers/test_file.py"
+            ]
+        },
+        "gt": [
+            "'vim-ultest/rplugin/python3/ultest/models/types.py'",
+            "'vim-ultest/rplugin/python3/ultest/models/tree.py'",
+            "'vim-ultest/rplugin/python3/ultest/models/__init__.py'",
+            "'vim-ultest/tests/unit/handler/parsers/test_file.py'"
+        ]
+    },
+    {
+        "idx": 80,
+        "pred": {
+            "list_dependencies": [
+                "PyTrinamic/pytrinamic/features/__init__.py",
+                "PyTrinamic/pytrinamic/features/digital_hall_module.py",
+                "PyTrinamic/pytrinamic/evalboards/__init__.py",
+                "PyTrinamic/pytrinamic/evalboards/TMC4671_eval.py",
+                "PyTrinamic/pytrinamic/evalboards/TMC2160_eval.py",
+                "PyTrinamic/examples/evalboards/TMC4671/TMC4671_eval_BLDC_ABN_encoder.py"
+            ]
+        },
+        "gt": [
+            "'PyTrinamic/pytrinamic/features/digital_hall_module.py'",
+            "'PyTrinamic/pytrinamic/features/__init__.py'",
+            "'PyTrinamic/pytrinamic/evalboards/TMC2160_eval.py'",
+            "'PyTrinamic/pytrinamic/evalboards/__init__.py'",
+            "'PyTrinamic/pytrinamic/evalboards/TMC4671_eval.py'",
+            "'PyTrinamic/examples/evalboards/TMC4671/TMC4671_eval_BLDC_ABN_encoder.py'"
+        ]
+    },
+    {
+        "idx": 81,
+        "pred": {
+            "list_dependencies": [
+                "component_visible_on_screen_pager_tag.py",
+                "component_visible_on_screen_tags.py",
+                "component_visible_on_screen.py"
+            ]
+        },
+        "gt": [
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/alexa/presentation/apl/component_visible_on_screen_pager_tag.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/alexa/presentation/apl/component_visible_on_screen_tags.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/interfaces/alexa/presentation/apl/component_visible_on_screen.py'"
+        ]
+    },
+    {
+        "idx": 82,
+        "pred": {
+            "list_dependencies": [
+                "lightdock/lightdock/scoring/ddna/cython/__init__.py",
+                "lightdock/lightdock/scoring/ddna/driver.py",
+                "lightdock/lightdock/test/scoring/test_ddna_function.py"
+            ]
+        },
+        "gt": [
+            "'lightdock/lightdock/scoring/ddna/cython/__init__.py'",
+            "'lightdock/lightdock/scoring/ddna/driver.py'",
+            "'lightdock/lightdock/test/scoring/test_ddna_function.py'"
+        ]
+    },
+    {
+        "idx": 83,
+        "pred": {
+            "list_dependencies": [
+                "DeepVision3D/EQNet/eqnet/models/base.py",
+                "DeepVision3D/EQNet/eqnet/models/support_producer/spconv_backbone.py",
+                "DeepVision3D/EQNet/eqnet/models/support_producer/__init__.py",
+                "DeepVision3D/DVSegmentation/models/__init__.py"
+            ]
+        },
+        "gt": [
+            "'DeepVision3D/EQNet/eqnet/models/base.py'",
+            "'DeepVision3D/EQNet/eqnet/models/support_producer/spconv_backbone.py'",
+            "'DeepVision3D/EQNet/eqnet/models/support_producer/__init__.py'",
+            "'DeepVision3D/DVSegmentation/models/__init__.py'"
+        ]
+    },
+    {
+        "idx": 84,
+        "pred": {
+            "list_dependencies": [
+                "scikit-tensor/sktensor/pyutils.py",
+                "scikit-tensor/sktensor/sptensor.py",
+                "scikit-tensor/sktensor/tests/test_base.py"
+            ]
+        },
+        "gt": [
+            "'scikit-tensor/sktensor/pyutils.py'",
+            "'scikit-tensor/sktensor/sptensor.py'",
+            "'scikit-tensor/sktensor/tests/test_base.py'"
+        ]
+    },
+    {
+        "idx": 85,
+        "pred": {
+            "list_dependencies": [
+                "charsetprober.py",
+                "sbcharsetprober.py",
+                "sbcsgroupprober.py",
+                "universaldetector.py"
+            ]
+        },
+        "gt": [
+            "'pocscan/pocscan/plugins/pocsuite/packages/requests/packages/chardet/charsetprober.py'",
+            "'pocscan/pocscan/plugins/pocsuite/packages/requests/packages/chardet/sbcharsetprober.py'",
+            "'pocscan/pocscan/plugins/pocsuite/packages/requests/packages/chardet/sbcsgroupprober.py'",
+            "'pocscan/pocscan/plugins/pocsuite/packages/requests/packages/chardet/universaldetector.py'"
+        ]
+    },
+    {
+        "idx": 86,
+        "pred": {
+            "list_dependencies": [
+                "latexify_py/src/latexify/codegen/algorithmic_codegen.py",
+                "latexify_py/src/latexify/codegen/__init__.py",
+                "latexify_py/src/latexify/generate_latex.py",
+                "latexify_py/src/latexify/__init__.py"
+            ]
+        },
+        "gt": [
+            "'latexify_py/src/latexify/codegen/algorithmic_codegen.py'",
+            "'latexify_py/src/latexify/codegen/__init__.py'",
+            "'latexify_py/src/latexify/generate_latex.py'",
+            "'latexify_py/src/latexify/__init__.py'"
+        ]
+    },
+    {
+        "idx": 87,
+        "pred": {
+            "list_dependencies": [
+                "blur-kernel-space-exploring/models/backbones/skip/concat.py",
+                "blur-kernel-space-exploring/models/backbones/skip/skip.py",
+                "blur-kernel-space-exploring/models/dips.py",
+                "blur-kernel-space-exploring/models/deblurring/image_deblur.py",
+                "blur-kernel-space-exploring/models/deblurring/joint_deblur.py",
+                "blur-kernel-space-exploring/generic_deblur.py"
+            ]
+        },
+        "gt": [
+            "'blur-kernel-space-exploring/models/backbones/skip/concat.py'",
+            "'blur-kernel-space-exploring/models/backbones/skip/skip.py'",
+            "'blur-kernel-space-exploring/models/dips.py'",
+            "'blur-kernel-space-exploring/models/deblurring/image_deblur.py'",
+            "'blur-kernel-space-exploring/models/deblurring/joint_deblur.py'",
+            "'blur-kernel-space-exploring/generic_deblur.py'"
+        ]
+    },
+    {
+        "idx": 88,
+        "pred": {
+            "list_dependencies": [
+                "data_handlers.py",
+                "comms.py",
+                "api.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'beekeeper/beekeeper/data_handlers.py'",
+            "'beekeeper/beekeeper/comms.py'",
+            "'beekeeper/beekeeper/api.py'",
+            "'beekeeper/beekeeper/__init__.py'"
+        ]
+    },
+    {
+        "idx": 89,
+        "pred": {
+            "list_dependencies": [
+                "MABN/det/maskrcnn_benchmark/layers/misc.py",
+                "MABN/det/maskrcnn_benchmark/modeling/roi_heads/mask_head/inference.py",
+                "MABN/det/maskrcnn_benchmark/modeling/roi_heads/mask_head/mask_head.py"
+            ]
+        },
+        "gt": [
+            "'MABN/det/maskrcnn_benchmark/layers/misc.py'",
+            "'MABN/det/maskrcnn_benchmark/modeling/roi_heads/mask_head/inference.py'",
+            "'MABN/det/maskrcnn_benchmark/modeling/roi_heads/mask_head/mask_head.py'"
+        ]
+    },
+    {
+        "idx": 90,
+        "pred": {
+            "list_dependencies": [
+                "MASTER-mmocr/mmdetection-2.11.0/mmdet/datasets/custom.py",
+                "MASTER-mmocr/mmdetection-2.11.0/mmdet/datasets/__init__.py",
+                "MASTER-mmocr/mmocr/apis/inference.py",
+                "MASTER-mmocr/demo/image_demo.py"
+            ]
+        },
+        "gt": [
+            "'MASTER-mmocr/mmdetection-2.11.0/mmdet/datasets/custom.py'",
+            "'MASTER-mmocr/mmdetection-2.11.0/mmdet/datasets/__init__.py'",
+            "'MASTER-mmocr/mmocr/apis/inference.py'",
+            "'MASTER-mmocr/demo/image_demo.py'"
+        ]
+    },
+    {
+        "idx": 91,
+        "pred": {
+            "list_dependencies": [
+                "neural-structured-learning/research/kg_hyp_emb/models/base.py",
+                "neural-structured-learning/research/kg_hyp_emb/models/hyperbolic.py",
+                "neural-structured-learning/research/kg_hyp_emb/models/__init__.py",
+                "neural-structured-learning/research/kg_hyp_emb/train.py"
+            ]
+        },
+        "gt": [
+            "'neural-structured-learning/research/kg_hyp_emb/models/base.py'",
+            "'neural-structured-learning/research/kg_hyp_emb/models/hyperbolic.py'",
+            "'neural-structured-learning/research/kg_hyp_emb/models/__init__.py'",
+            "'neural-structured-learning/research/kg_hyp_emb/train.py'"
+        ]
+    },
+    {
+        "idx": 92,
+        "pred": {
+            "list_dependencies": [
+                "Watchdog/client/subdomain/oneforall/common/module.py",
+                "Watchdog/client/subdomain/oneforall/common/search.py",
+                "Watchdog/client/subdomain/oneforall/modules/search/gitee.py"
+            ]
+        },
+        "gt": [
+            "'Watchdog/client/subdomain/oneforall/common/module.py'",
+            "'Watchdog/client/subdomain/oneforall/common/search.py'",
+            "'Watchdog/client/subdomain/oneforall/modules/search/gitee.py'"
+        ]
+    },
+    {
+        "idx": 93,
+        "pred": {
+            "list_dependencies": [
+                "Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/__init__.py",
+                "Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/effnet.py",
+                "Keras-RetinaNet-for-Teknofest-2019/retinanet/detect_all_images.py"
+            ]
+        },
+        "gt": [
+            "'Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/effnet.py'",
+            "'Keras-RetinaNet-for-Teknofest-2019/retinanet/keras_retinanet/models/__init__.py'",
+            "'Keras-RetinaNet-for-Teknofest-2019/retinanet/detect_all_images.py'"
+        ]
+    },
+    {
+        "idx": 94,
+        "pred": {
+            "list_dependencies": [
+                "ERD/mmdet/utils/setup_env.py",
+                "ERD/mmdet/utils/__init__.py",
+                "ERD/mmdet/models/seg_heads/panoptic_fpn_head.py",
+                "ERD/mmdet/models/seg_heads/__init__.py",
+                "ERD/tests/test_models/test_seg_heads/test_panoptic_fpn_head.py"
+            ]
+        },
+        "gt": [
+            "'ERD/mmdet/engine/__init__.py'",
+            "'ERD/mmdet/utils/setup_env.py'",
+            "'ERD/mmdet/utils/__init__.py'",
+            "'ERD/mmdet/models/seg_heads/panoptic_fpn_head.py'",
+            "'ERD/mmdet/models/seg_heads/__init__.py'",
+            "'ERD/tests/test_models/test_seg_heads/test_panoptic_fpn_head.py'"
+        ]
+    },
+    {
+        "idx": 95,
+        "pred": {
+            "list_dependencies": [
+                "sitoa/contrib/scons/scons-local-2.2.0/SCons/__init__.py",
+                "sitoa/contrib/scons/scons-local-2.2.0/SCons/compat/__init__.py",
+                "sitoa/contrib/scons/scons-local-2.2.0/SCons/compat/_scons_builtins.py",
+                "sitoa/contrib/scons/scons-local-2.2.0/SCons/Tool/sunc++.py"
+            ]
+        },
+        "gt": [
+            "'sitoa/contrib/scons/scons-local-2.2.0/SCons/compat/_scons_builtins.py'",
+            "'sitoa/contrib/scons/scons-local-2.2.0/SCons/compat/__init__.py'",
+            "'sitoa/contrib/scons/scons-local-2.2.0/SCons/__init__.py'",
+            "'sitoa/contrib/scons/scons-local-2.2.0/SCons/Tool/sunc++.py'"
+        ]
+    },
+    {
+        "idx": 96,
+        "pred": {
+            "list_dependencies": [
+                "MLPEncoder.py",
+                "EncoderGlobalTemp.py",
+                "model_loader.py",
+                "train.py"
+            ]
+        },
+        "gt": [
+            "'AmortizedCausalDiscovery/codebase/model/MLPEncoder.py'",
+            "'AmortizedCausalDiscovery/codebase/model/EncoderGlobalTemp.py'",
+            "'AmortizedCausalDiscovery/codebase/model/model_loader.py'",
+            "'AmortizedCausalDiscovery/codebase/train.py'"
+        ]
+    },
+    {
+        "idx": 97,
+        "pred": {
+            "list_dependencies": [
+                "remote_status.py",
+                "message_loop.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'OctoPrint-Anywhere/octoprint_anywhere/remote_status.py'",
+            "'OctoPrint-Anywhere/octoprint_anywhere/message_loop.py'",
+            "'OctoPrint-Anywhere/octoprint_anywhere/__init__.py'"
+        ]
+    },
+    {
+        "idx": 98,
+        "pred": {
+            "list_dependencies": [
+                "exit_command.py",
+                "interpreter.py",
+                "__main__.py"
+            ]
+        },
+        "gt": [
+            "'Chatette/chatette/cli/interactive_commands/exit_command.py'",
+            "'Chatette/chatette/cli/interpreter.py'",
+            "'Chatette/chatette/__main__.py'"
+        ]
+    },
+    {
+        "idx": 99,
+        "pred": {
+            "list_dependencies": [
+                "OfflineRL-Kit/offlinerlkit/policy/base_policy.py",
+                "OfflineRL-Kit/offlinerlkit/policy/__init__.py",
+                "OfflineRL-Kit/run_example/run_rambo.py"
+            ]
+        },
+        "gt": [
+            "'OfflineRL-Kit/offlinerlkit/policy/base_policy.py'",
+            "'OfflineRL-Kit/offlinerlkit/policy/__init__.py'",
+            "'OfflineRL-Kit/run_example/run_rambo.py'"
+        ]
+    },
+    {
+        "idx": 100,
+        "pred": {
+            "list_dependencies": [
+                "resnet.py",
+                "resnext.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'3D-FUTURE-AI-Challenge-Baseline/segmentation/mmdetection/mmdet/utils/logger.py'",
+            "'3D-FUTURE-AI-Challenge-Baseline/segmentation/mmdetection/mmdet/utils/__init__.py'",
+            "'3D-FUTURE-AI-Challenge-Baseline/segmentation/mmdetection/mmdet/models/backbones/resnet.py'",
+            "'3D-FUTURE-AI-Challenge-Baseline/segmentation/mmdetection/mmdet/models/backbones/resnext.py'",
+            "'3D-FUTURE-AI-Challenge-Baseline/segmentation/mmdetection/mmdet/models/backbones/__init__.py'"
+        ]
+    },
+    {
+        "idx": 101,
+        "pred": {
+            "list_dependencies": [
+                "aws_ir/aws_ir/libs/case.py",
+                "aws_ir/aws_ir/cli.py",
+                "aws_ir/tests/test_cli.py"
+            ]
+        },
+        "gt": [
+            "'aws_ir/aws_ir/libs/case.py'",
+            "'aws_ir/aws_ir/cli.py'",
+            "'aws_ir/tests/test_cli.py'"
+        ]
+    },
+    {
+        "idx": 102,
+        "pred": {
+            "list_dependencies": [
+                "MotionCLIP/src/config.py",
+                "MotionCLIP/src/datasets/amass.py",
+                "MotionCLIP/src/datasets/get_dataset.py"
+            ]
+        },
+        "gt": [
+            "'MotionCLIP/src/config.py'",
+            "'MotionCLIP/src/datasets/amass.py'",
+            "'MotionCLIP/src/datasets/get_dataset.py'"
+        ]
+    },
+    {
+        "idx": 103,
+        "pred": {
+            "list_dependencies": [
+                "rt_gene/rt_gene/src/rt_gene/ThreeDDFA/params.py",
+                "rt_gene/rt_gene/src/rt_gene/ThreeDDFA/inference.py",
+                "rt_gene/rt_gene/src/rt_gene/extract_landmarks_method_base.py",
+                "rt_gene/rt_gene_model_training/pytorch/utils/GenerateEyePatchesRTGENEDataset.py"
+            ]
+        },
+        "gt": [
+            "'rt_gene/rt_gene/src/rt_gene/ThreeDDFA/params.py'",
+            "'rt_gene/rt_gene/src/rt_gene/ThreeDDFA/inference.py'",
+            "'rt_gene/rt_gene/src/rt_gene/extract_landmarks_method_base.py'",
+            "'rt_gene/rt_gene_model_training/pytorch/utils/GenerateEyePatchesRTGENEDataset.py'"
+        ]
+    },
+    {
+        "idx": 104,
+        "pred": {
+            "list_dependencies": [
+                "controlvideo/annotator/util.py",
+                "controlvideo/annotator/uniformer/__init__.py",
+                "controlvideo/annotator/uniformer/mmseg/utils/__init__.py",
+                "controlvideo/annotator/uniformer/mmseg/utils/collect_env.py",
+                "controlvideo/annotator/uniformer/mmseg/models/backbones/__init__.py",
+                "controlvideo/annotator/uniformer/mmseg/models/backbones/resnet.py"
+            ]
+        },
+        "gt": [
+            "'controlvideo/annotator/util.py'",
+            "'controlvideo/annotator/uniformer/__init__.py'",
+            "'controlvideo/annotator/uniformer/mmseg/utils/collect_env.py'",
+            "'controlvideo/annotator/uniformer/mmseg/utils/__init__.py'",
+            "'controlvideo/annotator/uniformer/mmseg/models/backbones/resnet.py'",
+            "'controlvideo/annotator/uniformer/mmseg/models/backbones/__init__.py'"
+        ]
+    },
+    {
+        "idx": 105,
+        "pred": {
+            "list_dependencies": [
+                "fast-krippendorff/krippendorff/krippendorff.py",
+                "fast-krippendorff/krippendorff/__init__.py",
+                "fast-krippendorff/sample.py"
+            ]
+        },
+        "gt": [
+            "'fast-krippendorff/krippendorff/krippendorff.py'",
+            "'fast-krippendorff/krippendorff/__init__.py'",
+            "'fast-krippendorff/sample.py'"
+        ]
+    },
+    {
+        "idx": 106,
+        "pred": {
+            "list_dependencies": [
+                "fuckCoreMail/requests/packages/chardet/sjisprober.py",
+                "fuckCoreMail/requests/packages/chardet/mbcsgroupprober.py",
+                "fuckCoreMail/requests/packages/chardet/universaldetector.py",
+                "fuckCoreMail/requests/packages/chardet/chardetect.py"
+            ]
+        },
+        "gt": [
+            "'fuckCoreMail/requests/packages/chardet/sjisprober.py'",
+            "'fuckCoreMail/requests/packages/chardet/mbcsgroupprober.py'",
+            "'fuckCoreMail/requests/packages/chardet/universaldetector.py'",
+            "'fuckCoreMail/requests/packages/chardet/chardetect.py'"
+        ]
+    },
+    {
+        "idx": 107,
+        "pred": {
+            "list_dependencies": [
+                "Seg-NN/models/seg_nn.py",
+                "Seg-NN/models/seg_learner.py",
+                "Seg-NN/runs/training.py",
+                "Seg-NN/main.py"
+            ]
+        },
+        "gt": [
+            "'Seg-NN/models/seg_nn.py'",
+            "'Seg-NN/models/seg_learner.py'",
+            "'Seg-NN/runs/training.py'",
+            "'Seg-NN/main.py'"
+        ]
+    },
+    {
+        "idx": 108,
+        "pred": {
+            "list_dependencies": [
+                "data_preprocess.py",
+                "model.py",
+                "train.py"
+            ]
+        },
+        "gt": [
+            "'vista-net/data_preprocess.py'",
+            "'vista-net/model.py'",
+            "'vista-net/train.py'"
+        ]
+    },
+    {
+        "idx": 109,
+        "pred": {
+            "list_dependencies": [
+                "blackbox-deep-graph-matching/utils/build_graphs.py",
+                "blackbox-deep-graph-matching/data/data_loader_multigraph.py",
+                "blackbox-deep-graph-matching/train_eval.py"
+            ]
+        },
+        "gt": [
+            "'blackbox-deep-graph-matching/utils/build_graphs.py'",
+            "'blackbox-deep-graph-matching/data/data_loader_multigraph.py'",
+            "'blackbox-deep-graph-matching/train_eval.py'"
+        ]
+    },
+    {
+        "idx": 110,
+        "pred": {
+            "list_dependencies": [
+                "cloudprinting/cloudprinting/sample.py",
+                "cloudprinting/cloudprinting/auth.py",
+                "cloudprinting/cloudprinting/__init__.py",
+                "cloudprinting/tests/__init__.py"
+            ]
+        },
+        "gt": [
+            "'cloudprinting/cloudprinting/sample.py'",
+            "'cloudprinting/cloudprinting/auth.py'",
+            "'cloudprinting/cloudprinting/__init__.py'",
+            "'cloudprinting/tests/__init__.py'"
+        ]
+    },
+    {
+        "idx": 111,
+        "pred": {
+            "list_dependencies": [
+                "Parser-v3/hpo/hps.py",
+                "Parser-v3/hpo/base_hpo.py",
+                "Parser-v3/hpo/ppp_hpo.py",
+                "Parser-v3/hpo/regress_hpo.py",
+                "Parser-v3/hpo/__init__.py",
+                "Parser-v3/hpo/evals/__init__.py",
+                "Parser-v3/main.py"
+            ]
+        },
+        "gt": [
+            "'Parser-v3/hpo/evals/__init__.py'",
+            "'Parser-v3/hpo/base_hpo.py'",
+            "'Parser-v3/hpo/ppp_hpo.py'",
+            "'Parser-v3/hpo/regress_hpo.py'",
+            "'Parser-v3/hpo/__init__.py'",
+            "'Parser-v3/main.py'"
+        ]
+    },
+    {
+        "idx": 112,
+        "pred": {
+            "list_dependencies": [
+                "tridepth/models/networks/drn.py",
+                "tridepth/models/networks/__init__.py",
+                "tridepth/tridepth/tridepth_3d.py",
+                "tridepth/tridepth/__init__.py"
+            ]
+        },
+        "gt": [
+            "'tridepth/models/networks/drn.py'",
+            "'tridepth/models/networks/__init__.py'",
+            "'tridepth/tridepth/tridepth_3d.py'",
+            "'tridepth/tridepth/__init__.py'"
+        ]
+    },
+    {
+        "idx": 113,
+        "pred": {
+            "list_dependencies": [
+                "rnn.py",
+                "siamese_bilstm.py",
+                "run_siamse.py"
+            ]
+        },
+        "gt": [
+            "'kaggle-quora-solution-8th/model_hhy/deep_model/model/util/rnn.py'",
+            "'kaggle-quora-solution-8th/model_hhy/deep_model/model/siamese_bilstm.py'",
+            "'kaggle-quora-solution-8th/model_hhy/deep_model/run_siamse.py'"
+        ]
+    },
+    {
+        "idx": 114,
+        "pred": {
+            "list_dependencies": [
+                "ACmix/Swin-Transformer/data/cached_image_folder.py",
+                "ACmix/Swin-Transformer/data/build.py",
+                "ACmix/Swin-Transformer/data/__init__.py",
+                "ACmix/Swin-Transformer/main.py"
+            ]
+        },
+        "gt": [
+            "'ACmix/Swin-Transformer/data/cached_image_folder.py'",
+            "'ACmix/Swin-Transformer/data/build.py'",
+            "'ACmix/Swin-Transformer/data/__init__.py'",
+            "'ACmix/Swin-Transformer/main.py'"
+        ]
+    },
+    {
+        "idx": 115,
+        "pred": {
+            "list_dependencies": [
+                "gaussian-mesh-splatting/games/multi_mesh_splatting/utils/graphics_utils.py",
+                "gaussian-mesh-splatting/games/multi_mesh_splatting/scene/dataset_readers.py",
+                "gaussian-mesh-splatting/games/scenes/__init__.py",
+                "gaussian-mesh-splatting/scene/__init__.py",
+                "gaussian-mesh-splatting/scripts/render_from_mesh_to_mesh.py"
+            ]
+        },
+        "gt": [
+            "'gaussian-mesh-splatting/games/multi_mesh_splatting/utils/graphics_utils.py'",
+            "'gaussian-mesh-splatting/games/multi_mesh_splatting/scene/dataset_readers.py'",
+            "'gaussian-mesh-splatting/games/flame_splatting/scene/dataset_readers.py'",
+            "'gaussian-mesh-splatting/games/scenes/__init__.py'",
+            "'gaussian-mesh-splatting/scene/__init__.py'",
+            "'gaussian-mesh-splatting/scripts/render_from_mesh_to_mesh.py'"
+        ]
+    },
+    {
+        "idx": 116,
+        "pred": {
+            "list_dependencies": [
+                "PyFlow/pyflow/blocks/block.py",
+                "PyFlow/pyflow/blocks/containerblock.py",
+                "PyFlow/pyflow/blocks/__init__.py",
+                "PyFlow/pyflow/scene/scene.py"
+            ]
+        },
+        "gt": [
+            "'PyFlow/pyflow/blocks/widgets/__init__.py'",
+            "'PyFlow/pyflow/blocks/block.py'",
+            "'PyFlow/pyflow/blocks/containerblock.py'",
+            "'PyFlow/pyflow/blocks/__init__.py'",
+            "'PyFlow/pyflow/scene/scene.py'"
+        ]
+    },
+    {
+        "idx": 117,
+        "pred": {
+            "list_dependencies": [
+                "rex/rex/vulnerability.py",
+                "rex/rex/exploit/techniques/explore_for_exploit.py",
+                "rex/rex/exploit/techniques/__init__.py",
+                "rex/rex/__init__.py"
+            ]
+        },
+        "gt": [
+            "'rex/rex/vulnerability.py'",
+            "'rex/rex/__init__.py'",
+            "'rex/rex/exploit/techniques/explore_for_exploit.py'",
+            "'rex/rex/exploit/techniques/__init__.py'"
+        ]
+    },
+    {
+        "idx": 118,
+        "pred": {
+            "list_dependencies": [
+                "Pypykatz/pypykatz/rdp/packages/creds/decryptor.py",
+                "Pypykatz/pypykatz/rdp/parser.py",
+                "Pypykatz/pypykatz/rdp/cmdhelper.py",
+                "Pypykatz/pypykatz/__main__.py"
+            ]
+        },
+        "gt": [
+            "'Pypykatz/pypykatz/rdp/packages/creds/decryptor.py'",
+            "'Pypykatz/pypykatz/rdp/parser.py'",
+            "'Pypykatz/pypykatz/rdp/cmdhelper.py'",
+            "'Pypykatz/pypykatz/__main__.py'"
+        ]
+    },
+    {
+        "idx": 119,
+        "pred": {
+            "list_dependencies": [
+                "CSSR/model/utils/sync_batchnorm/comm.py",
+                "CSSR/model/utils/sync_batchnorm/batchnorm.py",
+                "CSSR/model/utils/sync_batchnorm/__init__.py",
+                "CSSR/train.py"
+            ]
+        },
+        "gt": [
+            "'CSSR/model/utils/sync_batchnorm/comm.py'",
+            "'CSSR/model/utils/sync_batchnorm/batchnorm.py'",
+            "'CSSR/model/utils/sync_batchnorm/__init__.py'",
+            "'CSSR/train.py'"
+        ]
+    },
+    {
+        "idx": 120,
+        "pred": {
+            "list_dependencies": [
+                "BaseComponents/Buttons.py",
+                "HomeComponents/Logo.py",
+                "helper/helper.py",
+                "main.py"
+            ]
+        },
+        "gt": [
+            "'osr2mp4-app/helper/helper.py'",
+            "'osr2mp4-app/BaseComponents/Buttons.py'",
+            "'osr2mp4-app/HomeComponents/Logo.py'",
+            "'osr2mp4-app/main.py'"
+        ]
+    },
+    {
+        "idx": 121,
+        "pred": {
+            "list_dependencies": [
+                "emnlp2021-sixt/fairseq/models/fairseq_model.py",
+                "emnlp2021-sixt/fairseq/models/composite_encoder.py",
+                "emnlp2021-sixt/fairseq/models/__init__.py"
+            ]
+        },
+        "gt": [
+            "'emnlp2021-sixt/fairseq/models/composite_encoder.py'",
+            "'emnlp2021-sixt/fairseq/models/__init__.py'",
+            "'emnlp2021-sixt/fairseq/models/fairseq_model.py'"
+        ]
+    },
+    {
+        "idx": 122,
+        "pred": {
+            "list_dependencies": [
+                "I2P-MAE/utils/AverageMeter.py",
+                "I2P-MAE/tools/runner_finetune.py",
+                "I2P-MAE/tools/__init__.py",
+                "I2P-MAE/main.py"
+            ]
+        },
+        "gt": [
+            "'I2P-MAE/utils/AverageMeter.py'",
+            "'I2P-MAE/tools/runner_finetune.py'",
+            "'I2P-MAE/tools/__init__.py'",
+            "'I2P-MAE/main.py'"
+        ]
+    },
+    {
+        "idx": 123,
+        "pred": {
+            "list_dependencies": [
+                "Ramen/fs_libs/ftputil/build/lib/ftputil/__init__.py",
+                "Ramen/fs_libs/ftputil/test/test_host.py",
+                "Ramen/fs_libs/ftputil/test/test_with_statement.py"
+            ]
+        },
+        "gt": [
+            "'Ramen/fs_libs/ftputil/build/lib/ftputil/__init__.py'",
+            "'Ramen/fs_libs/ftputil/test/test_host.py'",
+            "'Ramen/fs_libs/ftputil/test/test_with_statement.py'"
+        ]
+    },
+    {
+        "idx": 124,
+        "pred": {
+            "list_dependencies": [
+                "config.py",
+                "build.py",
+                "job.py",
+                "view.py"
+            ]
+        },
+        "gt": [
+            "'jenkinsapi-old/jenkinsapi/config.py'",
+            "'jenkinsapi-old/jenkinsapi/build.py'",
+            "'jenkinsapi-old/jenkinsapi/job.py'",
+            "'jenkinsapi-old/jenkinsapi/view.py'"
+        ]
+    },
+    {
+        "idx": 125,
+        "pred": {
+            "list_dependencies": [
+                "allennlp_server/__init__.py",
+                "allennlp_server/commands/__init__.py",
+                "allennlp_server/commands/server_simple.py"
+            ]
+        },
+        "gt": [
+            "'allennlp-server/allennlp_server/commands/server_simple.py'",
+            "'allennlp-server/allennlp_server/commands/__init__.py'",
+            "'allennlp-server/allennlp_server/__init__.py'"
+        ]
+    },
+    {
+        "idx": 126,
+        "pred": {
+            "list_dependencies": [
+                "hq/hq/hquery/hquery_processor.py",
+                "hq/hq/hquery/computed_constructors/json_array.py",
+                "hq/test/hquery/test_name_tests.py"
+            ]
+        },
+        "gt": [
+            "'hq/hq/hquery/computed_constructors/json_array.py'",
+            "'hq/hq/hquery/hquery_processor.py'",
+            "'hq/test/hquery/test_name_tests.py'"
+        ]
+    },
+    {
+        "idx": 127,
+        "pred": {
+            "list_dependencies": [
+                "moban/moban/core/utils.py",
+                "moban/moban/main.py",
+                "moban/moban/plugins/jinja2/engine.py",
+                "moban/tests/core/test_engine.py",
+                "moban/tests/jinja2/__init__.py"
+            ]
+        },
+        "gt": [
+            "'moban/moban/core/utils.py'",
+            "'moban/moban/main.py'",
+            "'moban/tests/jinja2/__init__.py'",
+            "'moban/moban/plugins/jinja2/engine.py'",
+            "'moban/tests/core/test_engine.py'"
+        ]
+    },
+    {
+        "idx": 128,
+        "pred": {
+            "list_dependencies": [
+                "django-forestadmin/django_forest/resources/utils/queryset/search.py",
+                "django-forestadmin/django_forest/resources/utils/queryset/__init__.py",
+                "django-forestadmin/django_forest/utils/views/base.py",
+                "django-forestadmin/django_forest/tests/forest/question.py",
+                "django-forestadmin/django_forest/tests/forest/__init__.py",
+                "django-forestadmin/django_forest/tests/utils/test_schema.py"
+            ]
+        },
+        "gt": [
+            "'django-forestadmin/django_forest/resources/utils/queryset/search.py'",
+            "'django-forestadmin/django_forest/resources/utils/queryset/__init__.py'",
+            "'django-forestadmin/django_forest/utils/views/base.py'",
+            "'django-forestadmin/django_forest/tests/forest/question.py'",
+            "'django-forestadmin/django_forest/tests/forest/__init__.py'",
+            "'django-forestadmin/django_forest/tests/utils/test_schema.py'"
+        ]
+    },
+    {
+        "idx": 129,
+        "pred": {
+            "list_dependencies": [
+                "pyxl/pyxl/utils.py",
+                "pyxl/pyxl/browser_hacks.py",
+                "pyxl/pyxl/html.py",
+                "pyxl/pyxl/codec/parser.py"
+            ]
+        },
+        "gt": [
+            "'pyxl/pyxl/utils.py'",
+            "'pyxl/pyxl/browser_hacks.py'",
+            "'pyxl/pyxl/html.py'",
+            "'pyxl/pyxl/codec/parser.py'"
+        ]
+    },
+    {
+        "idx": 130,
+        "pred": {
+            "list_dependencies": [
+                "utils.py",
+                "timer_management_service_client.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/services/utils.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/services/timer_management/timer_management_service_client.py'",
+            "'alexa-apis-for-python/ask-sdk-model/ask_sdk_model/services/timer_management/__init__.py'"
+        ]
+    },
+    {
+        "idx": 131,
+        "pred": {
+            "list_dependencies": [
+                "Hearthy/hearthy/tracker/entity.py",
+                "Hearthy/hearthy/ui/tk/entitybrowser.py",
+                "Hearthy/hearthy/ui/tk/streamlist.py",
+                "Hearthy/hearthy/ui/tkmain.py"
+            ]
+        },
+        "gt": [
+            "'Hearthy/hearthy/tracker/entity.py'",
+            "'Hearthy/hearthy/ui/tk/entitybrowser.py'",
+            "'Hearthy/hearthy/ui/tk/streamlist.py'",
+            "'Hearthy/hearthy/ui/tkmain.py'"
+        ]
+    },
+    {
+        "idx": 132,
+        "pred": {
+            "list_dependencies": [
+                "SEE-VCN/see/detector2d/mmdetection/mmdet/models/backbones/efficientnet.py",
+                "SEE-VCN/see/detector2d/mmdetection/mmdet/models/backbones/__init__.py",
+                "SEE-VCN/see/detector2d/mmdetection/mmdet/models/roi_heads/shared_heads/res_layer.py",
+                "SEE-VCN/see/detector2d/mmdetection/mmdet/models/roi_heads/shared_heads/__init__.py"
+            ]
+        },
+        "gt": [
+            "'SEE-VCN/see/detector2d/mmdetection/mmdet/models/backbones/efficientnet.py'",
+            "'SEE-VCN/see/detector2d/mmdetection/mmdet/models/backbones/__init__.py'",
+            "'SEE-VCN/see/detector2d/mmdetection/mmdet/models/roi_heads/shared_heads/res_layer.py'",
+            "'SEE-VCN/see/detector2d/mmdetection/mmdet/models/roi_heads/shared_heads/__init__.py'"
+        ]
+    },
+    {
+        "idx": 133,
+        "pred": {
+            "list_dependencies": [
+                "blog_xtg/service/article_service.py",
+                "blog_xtg/controller/admin_article.py",
+                "blog_xtg/url_mapping.py",
+                "blog_xtg/main.py"
+            ]
+        },
+        "gt": [
+            "'blog_xtg/service/article_service.py'",
+            "'blog_xtg/controller/admin_article.py'",
+            "'blog_xtg/url_mapping.py'",
+            "'blog_xtg/main.py'"
+        ]
+    },
+    {
+        "idx": 134,
+        "pred": {
+            "list_dependencies": [
+                "cmake_parser.py",
+                "package.py",
+                "util.py",
+                "misc.py"
+            ]
+        },
+        "gt": [
+            "'roscompile/ros_introspection/src/ros_introspection/cmake_parser.py'",
+            "'roscompile/ros_introspection/src/ros_introspection/package.py'",
+            "'roscompile/ros_introspection/src/ros_introspection/util.py'",
+            "'roscompile/roscompile/src/roscompile/misc.py'"
+        ]
+    },
+    {
+        "idx": 135,
+        "pred": {
+            "list_dependencies": [
+                "w12scan-client/thirdpart/ansistrm.py",
+                "w12scan-client/lib/log.py",
+                "w12scan-client/lib/data.py",
+                "w12scan-client/lib/engine.py",
+                "w12scan-client/plugins/whatcms.py",
+                "w12scan-client/main.py"
+            ]
+        },
+        "gt": [
+            "'w12scan-client/thirdpart/ansistrm.py'",
+            "'w12scan-client/lib/log.py'",
+            "'w12scan-client/lib/data.py'",
+            "'w12scan-client/plugins/whatcms.py'",
+            "'w12scan-client/lib/engine.py'",
+            "'w12scan-client/main.py'"
+        ]
+    },
+    {
+        "idx": 136,
+        "pred": {
+            "list_dependencies": [
+                "submission.py",
+                "more_comments.py",
+                "listing.py"
+            ]
+        },
+        "gt": [
+            "'aPRAW/apraw/models/reddit/submission.py'",
+            "'aPRAW/apraw/models/reddit/more_comments.py'",
+            "'aPRAW/apraw/models/reddit/listing.py'"
+        ]
+    },
+    {
+        "idx": 137,
+        "pred": {
+            "list_dependencies": [
+                "FlatlandModel.py",
+                "ArenaScenario.py",
+                "generate_world.py"
+            ]
+        },
+        "gt": [
+            "'arena-rosnav-3D/task_generator/task_generator/ped_manager/FlatlandModel.py'",
+            "'arena-rosnav-3D/task_generator/task_generator/ped_manager/ArenaScenario.py'",
+            "'arena-rosnav-3D/task_generator/scripts/generate_world.py'"
+        ]
+    },
+    {
+        "idx": 138,
+        "pred": {
+            "list_dependencies": [
+                "ppo_f1.py",
+                "__init__.py",
+                "inference.py",
+                "brain_f1_follow_line_ddpg.py"
+            ]
+        },
+        "gt": [
+            "'BehaviorMetrics/behavior_metrics/brains/gazebo/f1/rl_utils/algorithms/ppo_f1.py'",
+            "'BehaviorMetrics/behavior_metrics/brains/gazebo/f1/rl_utils/algorithms/__init__.py'",
+            "'BehaviorMetrics/behavior_metrics/brains/gazebo/f1/rl_utils/inference.py'",
+            "'BehaviorMetrics/behavior_metrics/brains/gazebo/f1/brain_f1_follow_line_ddpg.py'"
+        ]
+    },
+    {
+        "idx": 139,
+        "pred": {
+            "list_dependencies": [
+                "the-neural-perspective/image-processing/models/slim/datasets/mnist.py",
+                "the-neural-perspective/image-processing/models/slim/datasets/dataset_factory.py",
+                "the-neural-perspective/image-processing/models/slim/train_image_classifier.py"
+            ]
+        },
+        "gt": [
+            "'the-neural-perspective/image-processing/models/slim/datasets/mnist.py'",
+            "'the-neural-perspective/image-processing/models/slim/datasets/dataset_factory.py'",
+            "'the-neural-perspective/image-processing/models/slim/train_image_classifier.py'"
+        ]
+    },
+    {
+        "idx": 140,
+        "pred": {
+            "list_dependencies": [
+                "voxelpose-pytorch/lib/utils/transforms.py",
+                "voxelpose-pytorch/lib/dataset/panoptic.py",
+                "voxelpose-pytorch/lib/dataset/__init__.py",
+                "voxelpose-pytorch/test/evaluate.py"
+            ]
+        },
+        "gt": [
+            "'voxelpose-pytorch/lib/utils/transforms.py'",
+            "'voxelpose-pytorch/lib/dataset/panoptic.py'",
+            "'voxelpose-pytorch/lib/dataset/__init__.py'",
+            "'voxelpose-pytorch/test/evaluate.py'"
+        ]
+    },
+    {
+        "idx": 141,
+        "pred": {
+            "list_dependencies": [
+                "dwarf/dwarf/compute/servers.py",
+                "dwarf/dwarf/compute/api.py",
+                "dwarf/dwarf/api_server.py",
+                "dwarf/tests/api/test_compute.py"
+            ]
+        },
+        "gt": [
+            "'dwarf/dwarf/compute/servers.py'",
+            "'dwarf/dwarf/compute/api.py'",
+            "'dwarf/dwarf/api_server.py'",
+            "'dwarf/tests/api/test_compute.py'"
+        ]
+    },
+    {
+        "idx": 142,
+        "pred": {
+            "list_dependencies": [
+                "py2specials.py",
+                "main.py",
+                "blocks.py"
+            ]
+        },
+        "gt": [
+            "'Fuzium/core/src/lib/pybitcointools/bitcoin/py2specials.py'",
+            "'Fuzium/core/src/lib/pybitcointools/bitcoin/main.py'",
+            "'Fuzium/core/src/lib/pybitcointools/bitcoin/blocks.py'",
+            "'Fuzium/core/src/lib/pybitcointools/bitcoin/__init__.py'"
+        ]
+    },
+    {
+        "idx": 143,
+        "pred": {
+            "list_dependencies": [
+                "onnx2torch/tests/utils/common.py",
+                "onnx2torch/onnx2torch/converter.py",
+                "onnx2torch/onnx2torch/node_converters/functions.py",
+                "onnx2torch/onnx2torch/node_converters/__init__.py",
+                "onnx2torch/tests/node_converters/min_max_test.py"
+            ]
+        },
+        "gt": [
+            "'onnx2torch/onnx2torch/node_converters/functions.py'",
+            "'onnx2torch/onnx2torch/node_converters/__init__.py'",
+            "'onnx2torch/onnx2torch/converter.py'",
+            "'onnx2torch/tests/utils/common.py'",
+            "'onnx2torch/tests/node_converters/min_max_test.py'"
+        ]
+    },
+    {
+        "idx": 144,
+        "pred": {
+            "list_dependencies": [
+                "chardetect.py",
+                "universaldetector.py",
+                "sbcsgroupprober.py",
+                "langbulgarianmodel.py"
+            ]
+        },
+        "gt": [
+            "'pocscan/pocscan/plugins/tangscan/tangscan/thirdparty/requests/packages/chardet/langbulgarianmodel.py'",
+            "'pocscan/pocscan/plugins/tangscan/tangscan/thirdparty/requests/packages/chardet/sbcsgroupprober.py'",
+            "'pocscan/pocscan/plugins/tangscan/tangscan/thirdparty/requests/packages/chardet/universaldetector.py'",
+            "'pocscan/pocscan/plugins/pocsuite/packages/requests/packages/chardet/chardetect.py'"
+        ]
+    },
+    {
+        "idx": 145,
+        "pred": {
+            "list_dependencies": [
+                "CastAi/research/object_detection/builders/losses_builder.py",
+                "CastAi/research/object_detection/builders/model_builder.py",
+                "CastAi/research/object_detection/eval.py"
+            ]
+        },
+        "gt": [
+            "'CastAi/research/object_detection/builders/losses_builder.py'",
+            "'CastAi/research/object_detection/builders/model_builder.py'",
+            "'CastAi/research/object_detection/eval.py'"
+        ]
+    },
+    {
+        "idx": 146,
+        "pred": {
+            "list_dependencies": [
+                "python-symmetric-jsonrpc/symmetricjsonrpc/json.py",
+                "python-symmetric-jsonrpc/symmetricjsonrpc/__init__.py",
+                "python-symmetric-jsonrpc/examples/ssl_client.py"
+            ]
+        },
+        "gt": [
+            "'python-symmetric-jsonrpc/symmetricjsonrpc/json.py'",
+            "'python-symmetric-jsonrpc/symmetricjsonrpc/__init__.py'",
+            "'python-symmetric-jsonrpc/examples/ssl_client.py'"
+        ]
+    },
+    {
+        "idx": 147,
+        "pred": {
+            "list_dependencies": [
+                "pytorch-toolbelt/pytorch_toolbelt/utils/bboxes_utils.py",
+                "pytorch-toolbelt/pytorch_toolbelt/utils/__init__.py",
+                "pytorch-toolbelt/pytorch_toolbelt/modules/interfaces.py",
+                "pytorch-toolbelt/pytorch_toolbelt/modules/encoders/timm/hrnet.py",
+                "pytorch-toolbelt/pytorch_toolbelt/modules/encoders/timm/__init__.py"
+            ]
+        },
+        "gt": [
+            "'pytorch-toolbelt/pytorch_toolbelt/utils/bboxes_utils.py'",
+            "'pytorch-toolbelt/pytorch_toolbelt/utils/__init__.py'",
+            "'pytorch-toolbelt/pytorch_toolbelt/modules/interfaces.py'",
+            "'pytorch-toolbelt/pytorch_toolbelt/modules/encoders/timm/hrnet.py'",
+            "'pytorch-toolbelt/pytorch_toolbelt/modules/encoders/timm/__init__.py'",
+            "'pytorch-toolbelt/pytorch_toolbelt/modules/encoders/timm/dpn.py'"
+        ]
+    },
+    {
+        "idx": 148,
+        "pred": {
+            "list_dependencies": [
+                "PrettyQt/prettyqt/widgets/__init__.py",
+                "PrettyQt/prettyqt/custom_widgets/__init__.py",
+                "PrettyQt/prettyqt/custom_widgets/standardiconswidget.py",
+                "PrettyQt/prettyqt/qthelp/helpcontentwidget.py",
+                "PrettyQt/prettyqt/qthelp/__init__.py"
+            ]
+        },
+        "gt": [
+            "'PrettyQt/prettyqt/custom_widgets/standardiconswidget.py'",
+            "'PrettyQt/prettyqt/custom_widgets/__init__.py'",
+            "'PrettyQt/prettyqt/widgets/__init__.py'",
+            "'PrettyQt/prettyqt/qthelp/helpcontentwidget.py'",
+            "'PrettyQt/prettyqt/qthelp/__init__.py'",
+            "'PrettyQt/prettyqt/qthelp/helpfilterengine.py'"
+        ]
+    },
+    {
+        "idx": 149,
+        "pred": {
+            "list_dependencies": [
+                "kuberdock-platform/kubedock/rbac/fixtures.py",
+                "kuberdock-platform/kubedock/testutils/fixtures.py",
+                "kuberdock-platform/kubedock/api/tests/test_usage.py"
+            ]
+        },
+        "gt": [
+            "'kuberdock-platform/kubedock/rbac/fixtures.py'",
+            "'kuberdock-platform/kubedock/testutils/fixtures.py'",
+            "'kuberdock-platform/kubedock/api/tests/test_usage.py'"
+        ]
+    },
+    {
+        "idx": 150,
+        "pred": {
+            "list_dependencies": [
+                "MuSc/models/backbone/dinov2/mlp.py",
+                "MuSc/models/backbone/dinov2/__init__.py",
+                "MuSc/models/backbone/dino_vision_transformer.py",
+                "MuSc/models/backbone/_backbones.py"
+            ]
+        },
+        "gt": [
+            "'MuSc/models/backbone/dinov2/mlp.py'",
+            "'MuSc/models/backbone/dinov2/__init__.py'",
+            "'MuSc/models/backbone/dino_vision_transformer.py'",
+            "'MuSc/models/backbone/_backbones.py'"
+        ]
+    },
+    {
+        "idx": 151,
+        "pred": {
+            "list_dependencies": [
+                "offset/offset/net/fd_bsd.py",
+                "offset/offset/net/fd_pollserver.py",
+                "offset/offset/net/fd.py",
+                "offset/offset/net/sock.py",
+                "offset/examples/demo_polling.py"
+            ]
+        },
+        "gt": [
+            "'offset/offset/net/fd_bsd.py'",
+            "'offset/offset/net/fd_pollserver.py'",
+            "'offset/offset/net/fd.py'",
+            "'offset/offset/net/sock.py'",
+            "'offset/examples/demo_polling.py'"
+        ]
+    },
+    {
+        "idx": 152,
+        "pred": {
+            "list_dependencies": [
+                "scikit-fusion/skfusion/fusion/decomposition/_init.py",
+                "scikit-fusion/skfusion/fusion/decomposition/_dfmf.py",
+                "scikit-fusion/skfusion/fusion/decomposition/dfmf.py",
+                "scikit-fusion/skfusion/fusion/decomposition/__init__.py"
+            ]
+        },
+        "gt": [
+            "'scikit-fusion/skfusion/fusion/decomposition/_init.py'",
+            "'scikit-fusion/skfusion/fusion/decomposition/_dfmf.py'",
+            "'scikit-fusion/skfusion/fusion/decomposition/dfmf.py'",
+            "'scikit-fusion/skfusion/fusion/decomposition/__init__.py'"
+        ]
+    },
+    {
+        "idx": 153,
+        "pred": {
+            "list_dependencies": [
+                "EarnMore/pm/net/mask_time_state.py",
+                "EarnMore/pm/net/sac/mask_sac_net.py",
+                "EarnMore/pm/net/sac/__init__.py",
+                "EarnMore/pm/net/__init__.py"
+            ]
+        },
+        "gt": [
+            "'EarnMore/pm/net/mask_time_state.py'",
+            "'EarnMore/pm/net/__init__.py'",
+            "'EarnMore/pm/net/sac/mask_sac_net.py'",
+            "'EarnMore/pm/net/sac/__init__.py'"
+        ]
+    },
+    {
+        "idx": 154,
+        "pred": {
+            "list_dependencies": [
+                "eqgrp-free-file/Firewall/EXPLOITS/EXBA/scapy/arch/__init__.py",
+                "eqgrp-free-file/Firewall/EXPLOITS/EXBA/scapy/arch/windows/__init__.py",
+                "eqgrp-free-file/Firewall/EXPLOITS/EXBA/scapy/all.py"
+            ]
+        },
+        "gt": [
+            "'eqgrp-free-file/Firewall/EXPLOITS/EXBA/scapy/arch/windows/__init__.py'",
+            "'eqgrp-free-file/Firewall/EXPLOITS/EXBA/scapy/arch/__init__.py'",
+            "'eqgrp-free-file/Firewall/EXPLOITS/EXBA/scapy/all.py'"
+        ]
+    },
+    {
+        "idx": 155,
+        "pred": {
+            "list_dependencies": [
+                "docker-custodian/docker_custodian/args.py",
+                "docker-custodian/docker_custodian/docker_gc.py",
+                "docker-custodian/tests/docker_gc_test.py"
+            ]
+        },
+        "gt": [
+            "'docker-custodian/docker_custodian/args.py'",
+            "'docker-custodian/docker_custodian/docker_gc.py'",
+            "'docker-custodian/tests/docker_gc_test.py'"
+        ]
+    },
+    {
+        "idx": 156,
+        "pred": {
+            "list_dependencies": [
+                "OpenMMLab-BoxInst/mmdet/models/necks/fpn.py",
+                "OpenMMLab-BoxInst/mmdet/models/necks/__init__.py",
+                "OpenMMLab-BoxInst/tests/test_models/test_necks.py"
+            ]
+        },
+        "gt": [
+            "'OpenMMLab-BoxInst/mmdet/models/necks/fpn.py'",
+            "'OpenMMLab-BoxInst/mmdet/models/necks/__init__.py'",
+            "'OpenMMLab-BoxInst/tests/test_models/test_necks.py'"
+        ]
+    },
+    {
+        "idx": 157,
+        "pred": {
+            "list_dependencies": [
+                "DSGN2/mmdetection-v2.22.0/mmdet/models/losses/mse_loss.py",
+                "DSGN2/mmdetection-v2.22.0/mmdet/models/losses/__init__.py",
+                "DSGN2/mmdetection-v2.22.0/mmdet/models/roi_heads/dynamic_roi_head.py",
+                "DSGN2/mmdetection-v2.22.0/mmdet/models/roi_heads/__init__.py",
+                "DSGN2/mmdetection-v2.22.0/tests/test_models/test_dense_heads/test_pisa_head.py"
+            ]
+        },
+        "gt": [
+            "'DSGN2/mmdetection-v2.22.0/mmdet/models/losses/mse_loss.py'",
+            "'DSGN2/mmdetection-v2.22.0/mmdet/models/losses/__init__.py'",
+            "'DSGN2/mmdetection-v2.22.0/mmdet/models/roi_heads/dynamic_roi_head.py'",
+            "'DSGN2/mmdetection-v2.22.0/mmdet/models/roi_heads/__init__.py'",
+            "'DSGN2/mmdetection-v2.22.0/tests/test_models/test_dense_heads/test_pisa_head.py'"
+        ]
+    },
+    {
+        "idx": 158,
+        "pred": {
+            "list_dependencies": [
+                "embed_regularize.py",
+                "model.py",
+                "dp.py",
+                "demo.py"
+            ]
+        },
+        "gt": [
+            "'distance-parser/src/embed_regularize.py'",
+            "'distance-parser/src/model.py'",
+            "'distance-parser/src/dp.py'",
+            "'distance-parser/src/demo.py'"
+        ]
+    },
+    {
+        "idx": 159,
+        "pred": {
+            "list_dependencies": [
+                "yowsup/yowsup/demos/cli/layer.py",
+                "yowsup/yowsup/demos/cli/stack.py",
+                "yowsup/yowsup/layers/protocol_contacts/protocolentities/__init__.py"
+            ]
+        },
+        "gt": [
+            "'yowsup/yowsup/layers/protocol_contacts/protocolentities/__init__.py'",
+            "'yowsup/yowsup/demos/cli/layer.py'",
+            "'yowsup/yowsup/demos/cli/stack.py'",
+            "'yowsup/yowsup/demos/cli/__init__.py'"
+        ]
+    },
+    {
+        "idx": 160,
+        "pred": {
+            "list_dependencies": [
+                "PlexTraktSync/plextraktsync/util/Factory.py",
+                "PlexTraktSync/plextraktsync/factory.py",
+                "PlexTraktSync/plextraktsync/trakt/TraktApi.py",
+                "PlexTraktSync/plextraktsync/plan/Walker.py",
+                "PlexTraktSync/plextraktsync/trakt/WatchProgress.py",
+                "PlexTraktSync/plextraktsync/commands/info.py"
+            ]
+        },
+        "gt": [
+            "'PlexTraktSync/plextraktsync/trakt/WatchProgress.py'",
+            "'PlexTraktSync/plextraktsync/trakt/TraktApi.py'",
+            "'PlexTraktSync/plextraktsync/plan/Walker.py'",
+            "'PlexTraktSync/plextraktsync/util/Factory.py'",
+            "'PlexTraktSync/plextraktsync/factory.py'",
+            "'PlexTraktSync/plextraktsync/commands/info.py'"
+        ]
+    },
+    {
+        "idx": 161,
+        "pred": {
+            "list_dependencies": [
+                "TransformerEngine/transformer_engine/jax/praxis/module.py",
+                "TransformerEngine/transformer_engine/jax/praxis/transformer.py",
+                "TransformerEngine/transformer_engine/jax/praxis/__init__.py"
+            ]
+        },
+        "gt": [
+            "'TransformerEngine/transformer_engine/jax/praxis/module.py'",
+            "'TransformerEngine/transformer_engine/jax/praxis/__init__.py'",
+            "'TransformerEngine/transformer_engine/jax/praxis/transformer.py'"
+        ]
+    },
+    {
+        "idx": 162,
+        "pred": {
+            "list_dependencies": [
+                "malkit/listeners/_pline/keysyms/__init__.py",
+                "malkit/listeners/_pline/keysyms/ironpython_keysyms.py",
+                "malkit/listeners/_pline/console/__init__.py",
+                "malkit/listeners/_pline/console/ironpython_console.py"
+            ]
+        },
+        "gt": [
+            "'malkit/listeners/_pline/keysyms/ironpython_keysyms.py'",
+            "'malkit/listeners/_pline/keysyms/__init__.py'",
+            "'malkit/listeners/_pline/console/ironpython_console.py'",
+            "'malkit/listeners/_pline/console/__init__.py'"
+        ]
+    },
+    {
+        "idx": 163,
+        "pred": {
+            "list_dependencies": [
+                "STMTrack/videoanalyst/evaluation/got_benchmark/experiments/otb.py",
+                "STMTrack/videoanalyst/evaluation/got_benchmark/experiments/dtb70.py",
+                "STMTrack/videoanalyst/evaluation/got_benchmark/experiments/__init__.py",
+                "STMTrack/videoanalyst/engine/tester/tester_impl/lasot.py"
+            ]
+        },
+        "gt": [
+            "'STMTrack/videoanalyst/evaluation/got_benchmark/experiments/otb.py'",
+            "'STMTrack/videoanalyst/evaluation/got_benchmark/experiments/dtb70.py'",
+            "'STMTrack/videoanalyst/evaluation/got_benchmark/experiments/__init__.py'",
+            "'STMTrack/videoanalyst/engine/tester/tester_impl/lasot.py'"
+        ]
+    },
+    {
+        "idx": 164,
+        "pred": {
+            "list_dependencies": [
+                "mason/mason/core/gridcrop.py",
+                "mason/mason/core/__init__.py",
+                "mason/tests/test_core_tilestorage.py"
+            ]
+        },
+        "gt": [
+            "'mason/mason/core/gridcrop.py'",
+            "'mason/mason/core/__init__.py'",
+            "'mason/tests/test_core_tilestorage.py'"
+        ]
+    },
+    {
+        "idx": 165,
+        "pred": {
+            "list_dependencies": [
+                "yowsup/yowsup/layers/protocol_chatstate/protocolentities/chatstate_incoming.py",
+                "yowsup/yowsup/layers/protocol_chatstate/protocolentities/__init__.py",
+                "yowsup/yowsup/demos/cli/layer.py",
+                "yowsup/yowsup/demos/cli/stack.py",
+                "yowsup/yowsup/demos/cli/__init__.py"
+            ]
+        },
+        "gt": [
+            "'yowsup/yowsup/layers/protocol_chatstate/protocolentities/chatstate_incoming.py'",
+            "'yowsup/yowsup/layers/protocol_chatstate/protocolentities/__init__.py'",
+            "'yowsup/yowsup/demos/cli/layer.py'",
+            "'yowsup/yowsup/demos/cli/stack.py'",
+            "'yowsup/yowsup/demos/cli/__init__.py'"
+        ]
+    },
+    {
+        "idx": 166,
+        "pred": {
+            "list_dependencies": [
+                "keymaster/custom_components/keymaster/lock.py",
+                "keymaster/custom_components/keymaster/__init__.py",
+                "keymaster/tests/test_services.py"
+            ]
+        },
+        "gt": [
+            "'keymaster/custom_components/keymaster/lock.py'",
+            "'keymaster/custom_components/keymaster/__init__.py'",
+            "'keymaster/tests/test_services.py'"
+        ]
+    },
+    {
+        "idx": 167,
+        "pred": {
+            "list_dependencies": [
+                "generic-pretrained-GEC/mBART-GEC/fairseq/data/__init__.py",
+                "generic-pretrained-GEC/mBART-GEC/fairseq/data/pad_dataset.py",
+                "generic-pretrained-GEC/BART-GEC/fairseq/tasks/semisupervised_translation.py"
+            ]
+        },
+        "gt": [
+            "'generic-pretrained-GEC/mBART-GEC/fairseq/data/pad_dataset.py'",
+            "'generic-pretrained-GEC/mBART-GEC/fairseq/data/__init__.py'",
+            "'generic-pretrained-GEC/BART-GEC/fairseq/tasks/semisupervised_translation.py'"
+        ]
+    },
+    {
+        "idx": 168,
+        "pred": {
+            "list_dependencies": [
+                "const.py",
+                "device_wrapper.py",
+                "fan.py",
+                "test_fan.py"
+            ]
+        },
+        "gt": [
+            "'winix/custom_components/winix/const.py'",
+            "'winix/custom_components/winix/device_wrapper.py'",
+            "'winix/custom_components/winix/fan.py'",
+            "'winix/tests/test_fan.py'"
+        ]
+    },
+    {
+        "idx": 169,
+        "pred": {
+            "list_dependencies": [
+                "ARM-Net/models/layers.py",
+                "ARM-Net/models/dnn.py",
+                "ARM-Net/models/model_utils.py",
+                "ARM-Net/train.py"
+            ]
+        },
+        "gt": [
+            "'ARM-Net/models/layers.py'",
+            "'ARM-Net/models/dnn.py'",
+            "'ARM-Net/models/model_utils.py'",
+            "'ARM-Net/train.py'"
+        ]
+    },
+    {
+        "idx": 170,
+        "pred": {
+            "list_dependencies": [
+                "data_loader.py",
+                "lightning_model.py",
+                "train.py"
+            ]
+        },
+        "gt": [
+            "'semi-supervised-music-tagging-transformer/src/data_loader.py'",
+            "'semi-supervised-music-tagging-transformer/src/lightning_model.py'",
+            "'semi-supervised-music-tagging-transformer/src/train.py'"
+        ]
+    },
+    {
+        "idx": 171,
+        "pred": {
+            "list_dependencies": [
+                "pytorch-deeplab-xception/dataloaders/custom_transforms.py",
+                "pytorch-deeplab-xception/dataloaders/datasets/cityscapes.py",
+                "pytorch-deeplab-xception/dataloaders/__init__.py",
+                "pytorch-deeplab-xception/train.py"
+            ]
+        },
+        "gt": [
+            "'pytorch-deeplab-xception/dataloaders/custom_transforms.py'",
+            "'pytorch-deeplab-xception/dataloaders/datasets/cityscapes.py'",
+            "'pytorch-deeplab-xception/dataloaders/__init__.py'",
+            "'pytorch-deeplab-xception/train.py'"
+        ]
+    },
+    {
+        "idx": 172,
+        "pred": {
+            "list_dependencies": [
+                "taichi-nerfs/datasets/__init__.py",
+                "taichi-nerfs/datasets/nsvf.py",
+                "taichi-nerfs/train.py",
+                "taichi-nerfs/gui.py"
+            ]
+        },
+        "gt": [
+            "'taichi-nerfs/datasets/nsvf.py'",
+            "'taichi-nerfs/datasets/__init__.py'",
+            "'taichi-nerfs/gui.py'",
+            "'taichi-nerfs/train.py'"
+        ]
+    },
+    {
+        "idx": 173,
+        "pred": {
+            "list_dependencies": [
+                "cowait/cowait/tasks/task.py",
+                "cowait/cowait/tasks/decorator.py",
+                "cowait/cowait/tasks/__init__.py",
+                "cowait/cowait/engine/kubernetes/task.py",
+                "cowait/cowait/engine/kubernetes/kubernetes.py"
+            ]
+        },
+        "gt": [
+            "'cowait/cowait/tasks/task.py'",
+            "'cowait/cowait/tasks/decorator.py'",
+            "'cowait/cowait/tasks/__init__.py'",
+            "'cowait/cowait/engine/kubernetes/task.py'",
+            "'cowait/cowait/engine/kubernetes/kubernetes.py'"
+        ]
+    },
+    {
+        "idx": 174,
+        "pred": {
+            "list_dependencies": [
+                "generic.py",
+                "model.py",
+                "__init__.py"
+            ]
+        },
+        "gt": [
+            "'bitstream_mode3_p1204_3/p1204_3/generic.py'",
+            "'bitstream_mode3_p1204_3/p1204_3/__init__.py'",
+            "'bitstream_mode3_p1204_3/p1204_3/model.py'"
+        ]
+    },
+    {
+        "idx": 175,
+        "pred": {
+            "list_dependencies": [
+                "DeepMimic_mujoco/src/dp_policy_testing/learning/exp_params.py",
+                "DeepMimic_mujoco/src/dp_policy_testing/learning/rl_agent.py",
+                "DeepMimic_mujoco/src/dp_policy_testing/learning/rl_world.py",
+                "DeepMimic_mujoco/src/dp_policy_testing/GetAction.py"
+            ]
+        },
+        "gt": [
+            "'DeepMimic_mujoco/src/dp_policy_testing/learning/exp_params.py'",
+            "'DeepMimic_mujoco/src/dp_policy_testing/learning/rl_agent.py'",
+            "'DeepMimic_mujoco/src/dp_policy_testing/learning/rl_world.py'",
+            "'DeepMimic_mujoco/src/dp_policy_testing/GetAction.py'"
+        ]
+    },
+    {
+        "idx": 176,
+        "pred": {
+            "list_dependencies": [
+                "nrl/metrics/question_prediction_metric.py",
+                "nrl/models/question_predictor.py",
+                "nrl/models/__init__.py",
+                "nrl/models/qasrl_parser.py",
+                "nrl/__init__.py"
+            ]
+        },
+        "gt": [
+            "'nrl-qasrl/nrl/metrics/question_prediction_metric.py'",
+            "'nrl-qasrl/nrl/models/question_predictor.py'",
+            "'nrl-qasrl/nrl/models/qasrl_parser.py'",
+            "'nrl-qasrl/nrl/models/__init__.py'",
+            "'nrl-qasrl/nrl/__init__.py'"
+        ]
+    },
+    {
+        "idx": 177,
+        "pred": {
+            "list_dependencies": [
+                "makahiki/makahiki/apps/components/makahiki_profiles/models.py",
+                "makahiki/makahiki/apps/components/prizes/models.py",
+                "makahiki/makahiki/apps/components/prizes/tests/prize_tests.py"
+            ]
+        },
+        "gt": [
+            "'makahiki/makahiki/apps/components/makahiki_profiles/models.py'",
+            "'makahiki/makahiki/apps/components/prizes/models.py'",
+            "'makahiki/makahiki/apps/components/prizes/tests/prize_tests.py'"
+        ]
+    },
+    {
+        "idx": 178,
+        "pred": {
+            "list_dependencies": [
+                "xumx-sliCQ/xumx_slicq_v2/norbert/__init__.py",
+                "xumx-sliCQ/xumx_slicq_v2/norbert/contrib.py",
+                "xumx-sliCQ/xumx_slicq_v2/phase.py",
+                "xumx-sliCQ/xumx_slicq_v2/tests/test_phase.py"
+            ]
+        },
+        "gt": [
+            "'xumx-sliCQ/xumx_slicq_v2/norbert/contrib.py'",
+            "'xumx-sliCQ/xumx_slicq_v2/norbert/__init__.py'",
+            "'xumx-sliCQ/xumx_slicq_v2/phase.py'",
+            "'xumx-sliCQ/xumx_slicq_v2/tests/test_phase.py'"
+        ]
+    },
+    {
+        "idx": 179,
+        "pred": {
+            "list_dependencies": [
+                "ModelToStringConverter.py",
+                "SentenceAlignment.py",
+                "AlignSentencesIntoTextCalculator.py",
+                "Step5_AlignText.py",
+                "DependencyInjection.py",
+                "Step7_AudioRawStatistic.py"
+            ]
+        },
+        "gt": [
+            "'HUI-Audio-Corpus-German/huiAudioCorpus/utils/ModelToStringConverter.py'",
+            "'HUI-Audio-Corpus-German/huiAudioCorpus/model/SentenceAlignment.py'",
+            "'HUI-Audio-Corpus-German/huiAudioCorpus/calculator/AlignSentencesIntoTextCalculator.py'",
+            "'HUI-Audio-Corpus-German/huiAudioCorpus/workflows/createDatasetWorkflow/Step5_AlignText.py'",
+            "'HUI-Audio-Corpus-German/huiAudioCorpus/dependencyInjection/DependencyInjection.py'",
+            "'HUI-Audio-Corpus-German/huiAudioCorpus/workflows/createDatasetWorkflow/Step7_AudioRawStatistic.py'"
+        ]
+    }
+]

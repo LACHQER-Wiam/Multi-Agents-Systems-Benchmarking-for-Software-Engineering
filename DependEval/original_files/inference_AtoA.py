@@ -12,52 +12,90 @@ import httpx
 from a2a.client import A2AClient
 from a2a.types import MessageSendParams, SendMessageRequest
 
-from utils.AtoA_architecture import agent_card  # ← IMPORTANT
+from DependEval.original_files.AtoA_architecture import agent_card  # ← IMPORTANT
 
 
 def load_dataset(dataset_path, language, task):
-    if  task == "task1":
+    if task == "task1":
         path = os.path.join(dataset_path, language, f"{task}_{language}_1.json")
-        fields = ["feature_description", "content"]  # [function, code]
     elif task == "task2":
         path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
-        fields = ["files", "content"]  # [files description, their content]
-    else: 
-        path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")
-        fields = ["description", "function"] # [repo description, its functions]
+    else:
+        path = os.path.join(dataset_path, language, f"{task}_{language}_new_1.json")
+
     with open(path, "r") as f:
         dataset = json.load(f)
 
     message_payloads = []
 
-    for sample in dataset:
+    for i, sample in enumerate(dataset):
 
-        # Concaténation des champs demandés
-        text_parts = []
-        for field in fields:
-            value = sample.get(field)
-            if value:
-                text_parts.append(str(value))
+        # =========================
+        # Construction du prompt selon la tâche
+        # =========================
 
-        combined_text = "\n\n".join(text_parts).strip()
+        if task == "task1":
+            function = sample["feature_description"]
+            code_content = sample["content"]
 
-        # Construction du payload A2A
+            prompt = (
+                "### Feature Description:\n"
+                f"{function}\n\n"
+                "### Code Content:\n"
+                f"{code_content}\n\n"
+            )
+
+        elif task == "task2":
+            filenames = sample["files"]
+            code_content = sample["content"]
+
+            prompt = (
+                "### Filenames:\n"
+                f"{', '.join(filenames)}\n\n"
+                "### Code Content:\n"
+                f"{code_content}\n\n"
+            )
+
+        else:  # task4
+            description = sample["description"]
+            function = sample["function"]
+            files = "\n".join(
+                [f"- {file['file']}: {file['function']}" for file in sample["files"]]
+            )
+
+            prompt = """### Project Description:\n"
+                f"{description}\n\n"
+                "### Project Function:\n"
+                f"{function}\n\n"
+                "### Files:\n"
+                f"{files}\n\n" """
+
+        # =========================
+        # Construction du payload JSON-RPC
+        # =========================
+
         payload = {
-            "message": {
-                "role": "user",
-                "messageId": uuid4().hex,
-                "parts": [
-                    {
-                        "kind": "text",
-                        "text": combined_text,
-                    }
-                ],
+            "jsonrpc": "2.0",
+            "id": i,
+            "method": "message/stream",
+            "params": {
+                "message": {
+                    "role": "user",
+                    "parts": [
+                        {
+                            "type": "text",
+                            "text": prompt
+                        }
+                    ],
+                    "messageId": str(i)
+                },
+                "metadata": {}
             }
         }
+
         message_payloads.append(payload)
 
     return message_payloads
-
 
 ####################
 def format_save_results(responses, dataset_path, res_dir, task, language, model_name, type_agent="AtoA"):
@@ -71,7 +109,7 @@ def format_save_results(responses, dataset_path, res_dir, task, language, model_
         path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
         gt_field = "gt"
     else:
-        path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_new_1.json")
         gt_field = "gt"
 
     with open(path, "r") as f:
@@ -135,9 +173,9 @@ def format_save_results(responses, dataset_path, res_dir, task, language, model_
 ##################@##
 
 async def main(message_payloads, ):
-
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__name__)
+
     timeout = httpx.Timeout(
         connect=10.0,
         read=120.0,
@@ -152,7 +190,8 @@ async def main(message_payloads, ):
 
     async with httpx.AsyncClient(
         timeout=timeout,
-        limits=limits) as httpx_client:
+        limits=limits
+    ) as httpx_client:
 
         # Utiliser directement l'agent_card local
         client = A2AClient(
@@ -170,7 +209,7 @@ async def main(message_payloads, ):
         for payload in message_payloads:
             message_request = SendMessageRequest(
                 id=str(uuid4()),
-                params=MessageSendParams(**payload),
+                params=MessageSendParams(**payload["params"]),
             )
             tasks.append(client.send_message(message_request))
 
@@ -190,7 +229,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     message_payloads = load_dataset(args.dataset_path, args.language, args.task)
+    print("MESSAGE PAYLOADS", message_payloads)
     responses = asyncio.run(main(message_payloads=message_payloads))
+    print(responses)
     format_save_results(responses, 
                         args.dataset_path, 
                         args.res_dir, 

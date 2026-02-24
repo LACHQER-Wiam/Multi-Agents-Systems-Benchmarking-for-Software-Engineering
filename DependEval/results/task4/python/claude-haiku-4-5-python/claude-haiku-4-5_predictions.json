@@ -1,0 +1,1089 @@
+[
+    {
+        "idx": 0,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "got-your-back/fmbox.py",
+                    "got-your-back/gyb.py"
+                ]
+            ]
+        },
+        "gt": "[['got-your-back/labellang.py', 'got-your-back/gyb.py'], ['got-your-back/fmbox.py', 'got-your-back/gyb.py']]"
+    },
+    {
+        "idx": 1,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "SRCNN-pytorch/utils.py",
+                    "SRCNN-pytorch/models.py",
+                    "SRCNN-pytorch/train.py"
+                ],
+                [
+                    "SRCNN-pytorch/utils.py",
+                    "SRCNN-pytorch/datasets.py",
+                    "SRCNN-pytorch/train.py"
+                ],
+                [
+                    "SRCNN-pytorch/utils.py",
+                    "SRCNN-pytorch/models.py",
+                    "SRCNN-pytorch/test.py"
+                ],
+                [
+                    "SRCNN-pytorch/prepare.py",
+                    "SRCNN-pytorch/utils.py"
+                ]
+            ]
+        },
+        "gt": "[['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/datasets.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/prepare.py']]"
+    },
+    {
+        "idx": 2,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "ConvLSTM-Pytorch/convlstm.py",
+                    "ConvLSTM-Pytorch/convlstm_decoder.py"
+                ]
+            ]
+        },
+        "gt": "[['ConvLSTM-Pytorch/convlstm.py', 'ConvLSTM-Pytorch/convlstm_decoder.py']]"
+    },
+    {
+        "idx": 3,
+        "pred": {
+            "dependency_groups": []
+        },
+        "gt": "[['repos_otherLanguage/python\\\\php-socks5\\\\config.php', 'repos_otherLanguage/python\\\\php-socks5\\\\start.php']]"
+    },
+    {
+        "idx": 4,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "indrnn/ind_rnn_cell.py",
+                    "indrnn/ind_rnn_cell_test.py"
+                ],
+                [
+                    "indrnn/ind_rnn_cell.py",
+                    "indrnn/examples/addition_rnn.py"
+                ],
+                [
+                    "indrnn/ind_rnn_cell.py",
+                    "indrnn/examples/sequential_mnist.py"
+                ]
+            ]
+        },
+        "gt": "[['indrnn/ind_rnn_cell.py', 'indrnn/examples/sequential_mnist.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/examples/addition_rnn.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/ind_rnn_cell_test.py']]"
+    },
+    {
+        "idx": 5,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "tesla-apiscraper/apiconfig.py",
+                    "tesla-apiscraper/teslajson.py",
+                    "tesla-apiscraper/apiscraper.py"
+                ],
+                [
+                    "tesla-apiscraper/srtmread.py"
+                ]
+            ]
+        },
+        "gt": "[['tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/apiconfig.py', 'tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/srtmread.py', 'tesla-apiscraper/apiscraper.py']]"
+    },
+    {
+        "idx": 6,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "pytorch-made/made.py",
+                    "pytorch-made/run.py"
+                ]
+            ]
+        },
+        "gt": "[['pytorch-made/made.py', 'pytorch-made/run.py']]"
+    },
+    {
+        "idx": 7,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "TradingView-data-scraper/app.py",
+                    "TradingView-data-scraper/runp-heroku.py"
+                ]
+            ]
+        },
+        "gt": "[['TradingView-data-scraper/app.py', 'TradingView-data-scraper/runp-heroku.py']]"
+    },
+    {
+        "idx": 8,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/publish_workbook.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/move_workbook_server.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/move_datasource_server.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/move_workbook_sites.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/move_workbook_projects.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/update_permission.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/user_permission_audit.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/users_by_group.py"
+                ],
+                [
+                    "rest-api-samples/python/version.py",
+                    "rest-api-samples/python/webhooks.py"
+                ]
+            ]
+        },
+        "gt": "[['rest-api-samples/python/version.py', 'rest-api-samples/python/users_by_group.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/webhooks.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/publish_workbook.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/update_permission.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_sites.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_datasource_server.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_projects.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/user_permission_audit.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_server.py']]"
+    },
+    {
+        "idx": 9,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "DnCNN-PyTorch/utils.py",
+                    "DnCNN-PyTorch/models.py",
+                    "DnCNN-PyTorch/train.py"
+                ],
+                [
+                    "DnCNN-PyTorch/dataset.py",
+                    "DnCNN-PyTorch/train.py"
+                ],
+                [
+                    "DnCNN-PyTorch/models.py",
+                    "DnCNN-PyTorch/test.py"
+                ],
+                [
+                    "DnCNN-PyTorch/utils.py",
+                    "DnCNN-PyTorch/test.py"
+                ]
+            ]
+        },
+        "gt": "[['DnCNN-PyTorch/models.py', 'DnCNN-PyTorch/test.py'], ['DnCNN-PyTorch/models.py', 'DnCNN-PyTorch/train.py'], ['DnCNN-PyTorch/utils.py', 'DnCNN-PyTorch/test.py'], ['DnCNN-PyTorch/dataset.py', 'DnCNN-PyTorch/train.py'], ['DnCNN-PyTorch/utils.py', 'DnCNN-PyTorch/dataset.py', 'DnCNN-PyTorch/train.py'], ['DnCNN-PyTorch/utils.py', 'DnCNN-PyTorch/train.py']]"
+    },
+    {
+        "idx": 10,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "stable-diffusion-webui-model-toolkit/toolkit.py",
+                    "stable-diffusion-webui-model-toolkit/scripts/toolkit_gui.py"
+                ]
+            ]
+        },
+        "gt": "[['stable-diffusion-webui-model-toolkit/toolkit.py', 'stable-diffusion-webui-model-toolkit/scripts/toolkit_gui.py']]"
+    },
+    {
+        "idx": 11,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "SupervisedChromeTrex/actionCNN.py",
+                    "SupervisedChromeTrex/main.py"
+                ],
+                [
+                    "SupervisedChromeTrex/mychrome.py",
+                    "SupervisedChromeTrex/main.py"
+                ]
+            ]
+        },
+        "gt": "[['SupervisedChromeTrex/actionCNN.py', 'SupervisedChromeTrex/main.py'], ['SupervisedChromeTrex/mychrome.py', 'SupervisedChromeTrex/main.py'], ['SupervisedChromeTrex/mychrome.py', 'SupervisedChromeTrex/actionCNN.py', 'SupervisedChromeTrex/main.py']]"
+    },
+    {
+        "idx": 12,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "CycleGAN/layers.py",
+                    "CycleGAN/model.py",
+                    "CycleGAN/main.py"
+                ]
+            ]
+        },
+        "gt": "[['CycleGAN/layers.py', 'CycleGAN/main.py'], ['CycleGAN/model.py', 'CycleGAN/main.py'], ['CycleGAN/layers.py', 'CycleGAN/model.py', 'CycleGAN/main.py']]"
+    },
+    {
+        "idx": 13,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "googlemaps-scraper/googlemaps.py",
+                    "googlemaps-scraper/scraper.py",
+                    "googlemaps-scraper/monitor.py"
+                ],
+                [
+                    "googlemaps-scraper/googlemaps.py",
+                    "googlemaps-scraper/scrapper_places.py"
+                ]
+            ]
+        },
+        "gt": "[['googlemaps-scraper/googlemaps.py', 'googlemaps-scraper/scraper.py'], ['googlemaps-scraper/googlemaps.py', 'googlemaps-scraper/scrapper_places.py'], ['googlemaps-scraper/googlemaps.py', 'googlemaps-scraper/monitor.py']]"
+    },
+    {
+        "idx": 14,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "gmm-torch/utils.py",
+                    "gmm-torch/gmm.py",
+                    "gmm-torch/example.py"
+                ],
+                [
+                    "gmm-torch/gmm.py",
+                    "gmm-torch/test.py"
+                ]
+            ]
+        },
+        "gt": "[['gmm-torch/utils.py', 'gmm-torch/gmm.py', 'gmm-torch/test.py'], ['gmm-torch/gmm.py', 'gmm-torch/test.py'], ['gmm-torch/gmm.py', 'gmm-torch/example.py'], ['gmm-torch/utils.py', 'gmm-torch/gmm.py', 'gmm-torch/example.py']]"
+    },
+    {
+        "idx": 15,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "2048-ai/chromectrl.py",
+                    "2048-ai/gamectrl.py",
+                    "2048-ai/2048.py"
+                ],
+                [
+                    "2048-ai/ffctrl.py",
+                    "2048-ai/gamectrl.py"
+                ]
+            ]
+        },
+        "gt": "[['2048-ai/gamectrl.py', '2048-ai/2048.py'], ['2048-ai/chromectrl.py', '2048-ai/2048.py'], ['2048-ai/ffctrl.py', '2048-ai/2048.py']]"
+    },
+    {
+        "idx": 16,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "efficient-kan/src/efficient_kan/kan.py",
+                    "efficient-kan/src/efficient_kan/__init__.py"
+                ],
+                [
+                    "efficient-kan/src/efficient_kan/__init__.py",
+                    "efficient-kan/examples/mnist.py"
+                ],
+                [
+                    "efficient-kan/src/efficient_kan/__init__.py",
+                    "efficient-kan/tests/test_simple_math.py"
+                ]
+            ]
+        },
+        "gt": "[['efficient-kan/src/efficient_kan/kan.py', 'efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/examples/mnist.py'], ['efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/examples/mnist.py'], ['efficient-kan/src/efficient_kan/kan.py', 'efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/tests/test_simple_math.py'], ['efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/tests/test_simple_math.py']]"
+    },
+    {
+        "idx": 17,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/chessboard_image.py",
+                    "chessboard-recognizer/recognize.py"
+                ],
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/utils.py",
+                    "chessboard-recognizer/recognize.py"
+                ],
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/chessboard_finder.py",
+                    "chessboard-recognizer/recognize.py"
+                ],
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/chessboard_image.py",
+                    "chessboard-recognizer/generate_tiles.py"
+                ],
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/save_chessboard.py"
+                ],
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/generate_chessboards.py"
+                ],
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/train.py"
+                ],
+                [
+                    "chessboard-recognizer/constants.py",
+                    "chessboard-recognizer/view_images.py"
+                ]
+            ]
+        },
+        "gt": "[['chessboard-recognizer/chessboard_finder.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/train.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/chessboard_image.py', 'chessboard-recognizer/generate_tiles.py'], ['chessboard-recognizer/chessboard_image.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/utils.py', 'chessboard-recognizer/save_chessboard.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/generate_tiles.py'], ['chessboard-recognizer/utils.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/generate_chessboards.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/view_images.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/train.py', 'chessboard-recognizer/recognize.py']]"
+    },
+    {
+        "idx": 18,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "deep-RL-trading/src/lib.py",
+                    "deep-RL-trading/src/sampler.py"
+                ],
+                [
+                    "deep-RL-trading/src/lib.py",
+                    "deep-RL-trading/src/emulator.py"
+                ],
+                [
+                    "deep-RL-trading/src/agents.py",
+                    "deep-RL-trading/src/simulators.py"
+                ],
+                [
+                    "deep-RL-trading/src/emulator.py",
+                    "deep-RL-trading/src/simulators.py"
+                ],
+                [
+                    "deep-RL-trading/src/simulators.py",
+                    "deep-RL-trading/src/visualizer.py"
+                ],
+                [
+                    "deep-RL-trading/src/sampler.py",
+                    "deep-RL-trading/src/main.py"
+                ],
+                [
+                    "deep-RL-trading/src/agents.py",
+                    "deep-RL-trading/src/main.py"
+                ],
+                [
+                    "deep-RL-trading/src/emulator.py",
+                    "deep-RL-trading/src/main.py"
+                ],
+                [
+                    "deep-RL-trading/src/simulators.py",
+                    "deep-RL-trading/src/main.py"
+                ]
+            ]
+        },
+        "gt": "[['deep-RL-trading/src/agents.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/visualizer.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/emulator.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/simulators.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/sampler.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/agents.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/simulators.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/sampler.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/emulator.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/visualizer.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/main.py']]"
+    },
+    {
+        "idx": 19,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "Logsensor/src.py",
+                    "Logsensor/logsensor.py"
+                ]
+            ]
+        },
+        "gt": "[['Logsensor/src.py', 'Logsensor/logsensor.py']]"
+    },
+    {
+        "idx": 20,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "quantum/quantum.py",
+                    "quantum/examples.py"
+                ]
+            ]
+        },
+        "gt": "[['quantum/quantum.py', 'quantum/examples.py']]"
+    },
+    {
+        "idx": 21,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "contrastive-predictive-coding/data_utils.py",
+                    "contrastive-predictive-coding/train_model.py",
+                    "contrastive-predictive-coding/benchmark_model.py"
+                ]
+            ]
+        },
+        "gt": "[['contrastive-predictive-coding/data_utils.py', 'contrastive-predictive-coding/benchmark_model.py'], ['contrastive-predictive-coding/data_utils.py', 'contrastive-predictive-coding/train_model.py']]"
+    },
+    {
+        "idx": 22,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "PyCNN/pycnn.py",
+                    "PyCNN/example.py"
+                ],
+                [
+                    "PyCNN/pycnn.py",
+                    "PyCNN/example_lenna.py"
+                ]
+            ]
+        },
+        "gt": "[['PyCNN/pycnn.py', 'PyCNN/example.py'], ['PyCNN/pycnn.py', 'PyCNN/example_lenna.py']]"
+    },
+    {
+        "idx": 23,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "Flappy-bird-deep-Q-learning-pytorch/src/flappy_bird.py",
+                    "Flappy-bird-deep-Q-learning-pytorch/src/utils.py",
+                    "Flappy-bird-deep-Q-learning-pytorch/train.py"
+                ],
+                [
+                    "Flappy-bird-deep-Q-learning-pytorch/src/deep_q_network.py",
+                    "Flappy-bird-deep-Q-learning-pytorch/train.py"
+                ],
+                [
+                    "Flappy-bird-deep-Q-learning-pytorch/src/deep_q_network.py",
+                    "Flappy-bird-deep-Q-learning-pytorch/test.py"
+                ]
+            ]
+        },
+        "gt": "[['Flappy-bird-deep-Q-learning-pytorch/src/flappy_bird.py', 'Flappy-bird-deep-Q-learning-pytorch/train.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/utils.py', 'Flappy-bird-deep-Q-learning-pytorch/test.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/utils.py', 'Flappy-bird-deep-Q-learning-pytorch/train.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/deep_q_network.py', 'Flappy-bird-deep-Q-learning-pytorch/test.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/flappy_bird.py', 'Flappy-bird-deep-Q-learning-pytorch/test.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/deep_q_network.py', 'Flappy-bird-deep-Q-learning-pytorch/train.py']]"
+    },
+    {
+        "idx": 24,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "DeepInversion/utils/utils.py",
+                    "DeepInversion/deepinversion.py",
+                    "DeepInversion/imagenet_inversion.py"
+                ],
+                [
+                    "DeepInversion/models/resnetv15.py",
+                    "DeepInversion/imagenet_inversion.py"
+                ],
+                [
+                    "DeepInversion/cifar10/resnet_cifar.py",
+                    "DeepInversion/cifar10/deepinversion_cifar10.py"
+                ],
+                [
+                    "DeepInversion/utils/utils.py",
+                    "DeepInversion/FLGradientInversion/fl_gradient_inversion.py",
+                    "DeepInversion/FLGradientInversion/main.py"
+                ],
+                [
+                    "DeepInversion/FLGradientInversion/torchvision_class.py",
+                    "DeepInversion/FLGradientInversion/main.py"
+                ]
+            ]
+        },
+        "gt": "[['DeepInversion/models/resnetv15.py', 'DeepInversion/imagenet_inversion.py'], ['DeepInversion/deepinversion.py', 'DeepInversion/imagenet_inversion.py'], ['DeepInversion/cifar10/resnet_cifar.py', 'DeepInversion/cifar10/deepinversion_cifar10.py'], ['DeepInversion/FLGradientInversion/torchvision_class.py', 'DeepInversion/FLGradientInversion/main.py'], ['DeepInversion/utils/utils.py', 'DeepInversion/imagenet_inversion.py'], ['DeepInversion/FLGradientInversion/fl_gradient_inversion.py', 'DeepInversion/FLGradientInversion/main.py'], ['DeepInversion/utils/utils.py', 'DeepInversion/deepinversion.py', 'DeepInversion/imagenet_inversion.py']]"
+    },
+    {
+        "idx": 25,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "youtube_uploader_selenium/youtube_uploader_selenium/Constant.py",
+                    "youtube_uploader_selenium/youtube_uploader_selenium/__init__.py",
+                    "youtube_uploader_selenium/upload.py"
+                ]
+            ]
+        },
+        "gt": "[['youtube_uploader_selenium/youtube_uploader_selenium/Constant.py', 'youtube_uploader_selenium/youtube_uploader_selenium/__init__.py', 'youtube_uploader_selenium/upload.py'], ['youtube_uploader_selenium/youtube_uploader_selenium/__init__.py', 'youtube_uploader_selenium/upload.py']]"
+    },
+    {
+        "idx": 26,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "llvm-deobfuscator/util.py",
+                    "llvm-deobfuscator/deflatten.py",
+                    "llvm-deobfuscator/__init__.py"
+                ]
+            ]
+        },
+        "gt": "[['llvm-deobfuscator/util.py', 'llvm-deobfuscator/__init__.py'], ['llvm-deobfuscator/deflatten.py', 'llvm-deobfuscator/__init__.py']]"
+    },
+    {
+        "idx": 27,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "throttled/mmio.py",
+                    "throttled/throttled.py"
+                ]
+            ]
+        },
+        "gt": "[['throttled/mmio.py', 'throttled/throttled.py']]"
+    },
+    {
+        "idx": 28,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "ONNX-YOLOv8-Object-Detection/yolov8/utils.py",
+                    "ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py"
+                ],
+                [
+                    "ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py",
+                    "ONNX-YOLOv8-Object-Detection/image_object_detection.py"
+                ],
+                [
+                    "ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py",
+                    "ONNX-YOLOv8-Object-Detection/video_object_detection.py"
+                ],
+                [
+                    "ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py",
+                    "ONNX-YOLOv8-Object-Detection/webcam_object_detection.py"
+                ]
+            ]
+        },
+        "gt": "[['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/video_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/yolov8/__init__.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/image_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/video_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/webcam_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/yolov8/__init__.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/image_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/webcam_object_detection.py']]"
+    },
+    {
+        "idx": 29,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "dockerize/dockerize/depsolver.py",
+                    "dockerize/dockerize/dockerize.py",
+                    "dockerize/dockerize/main.py"
+                ],
+                [
+                    "dockerize/dockerize/__init__.py",
+                    "dockerize/setup.py"
+                ]
+            ]
+        },
+        "gt": "[['dockerize/dockerize/depsolver.py', 'dockerize/dockerize/dockerize.py'], ['dockerize/dockerize/__init__.py', 'dockerize/setup.py'], ['dockerize/dockerize/__init__.py', 'dockerize/dockerize/main.py']]"
+    },
+    {
+        "idx": 30,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "lieer/lieer/__init__.py",
+                    "lieer/lieer/gmailieer.py"
+                ]
+            ]
+        },
+        "gt": "[['lieer/lieer/gmailieer.py', 'lieer/lieer/__init__.py']]"
+    },
+    {
+        "idx": 31,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "ComfyUI-Florence2/__init__.py",
+                    "ComfyUI-Florence2/nodes.py"
+                ]
+            ]
+        },
+        "gt": "[['ComfyUI-Florence2/nodes.py', 'ComfyUI-Florence2/__init__.py']]"
+    },
+    {
+        "idx": 32,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "rnn-nlu/data_utils.py",
+                    "rnn-nlu/multi_task_model.py",
+                    "rnn-nlu/run_multi-task_rnn.py"
+                ],
+                [
+                    "rnn-nlu/seq_classification.py",
+                    "rnn-nlu/seq_labeling.py"
+                ]
+            ]
+        },
+        "gt": "[['rnn-nlu/seq_classification.py', 'rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/data_utils.py', 'rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/data_utils.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/seq_labeling.py', 'rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py']]"
+    },
+    {
+        "idx": 33,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "LDAM-DRW/losses.py",
+                    "LDAM-DRW/cifar_train.py"
+                ],
+                [
+                    "LDAM-DRW/imbalance_cifar.py",
+                    "LDAM-DRW/cifar_train.py"
+                ],
+                [
+                    "LDAM-DRW/models/resnet_cifar.py",
+                    "LDAM-DRW/models/__init__.py",
+                    "LDAM-DRW/cifar_train.py"
+                ],
+                [
+                    "LDAM-DRW/utils.py",
+                    "LDAM-DRW/cifar_train.py"
+                ]
+            ]
+        },
+        "gt": "[['LDAM-DRW/models/resnet_cifar.py', 'LDAM-DRW/models/__init__.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/imbalance_cifar.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/losses.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/models/__init__.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/utils.py', 'LDAM-DRW/cifar_train.py']]"
+    },
+    {
+        "idx": 34,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "vimGPT/vimbot.py",
+                    "vimGPT/vision.py",
+                    "vimGPT/main.py"
+                ]
+            ]
+        },
+        "gt": "[['vimGPT/vimbot.py', 'vimGPT/main.py'], ['vimGPT/vision.py', 'vimGPT/main.py']]"
+    },
+    {
+        "idx": 35,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "speech-to-text-wavenet/data.py",
+                    "speech-to-text-wavenet/model.py",
+                    "speech-to-text-wavenet/train.py"
+                ],
+                [
+                    "speech-to-text-wavenet/data.py",
+                    "speech-to-text-wavenet/model.py",
+                    "speech-to-text-wavenet/test.py"
+                ],
+                [
+                    "speech-to-text-wavenet/preprocess.py",
+                    "speech-to-text-wavenet/recognize.py"
+                ]
+            ]
+        },
+        "gt": "[['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/preprocess.py'], ['speech-to-text-wavenet/model.py', 'speech-to-text-wavenet/train.py'], ['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/train.py'], ['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/test.py'], ['speech-to-text-wavenet/model.py', 'speech-to-text-wavenet/recognize.py'], ['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/recognize.py'], ['speech-to-text-wavenet/model.py', 'speech-to-text-wavenet/test.py']]"
+    },
+    {
+        "idx": 36,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "pytorch-es/model.py",
+                    "pytorch-es/train.py",
+                    "pytorch-es/main.py"
+                ],
+                [
+                    "pytorch-es/envs.py",
+                    "pytorch-es/train.py"
+                ]
+            ]
+        },
+        "gt": "[['pytorch-es/train.py', 'pytorch-es/main.py'], ['pytorch-es/model.py', 'pytorch-es/train.py', 'pytorch-es/main.py'], ['pytorch-es/model.py', 'pytorch-es/main.py'], ['pytorch-es/envs.py', 'pytorch-es/main.py'], ['pytorch-es/envs.py', 'pytorch-es/train.py', 'pytorch-es/main.py']]"
+    },
+    {
+        "idx": 37,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "RFR-Inpainting/modules/partialconv2d.py",
+                    "RFR-Inpainting/modules/Attention.py",
+                    "RFR-Inpainting/modules/RFRNet.py",
+                    "RFR-Inpainting/model.py",
+                    "RFR-Inpainting/run.py"
+                ],
+                [
+                    "RFR-Inpainting/dataset.py",
+                    "RFR-Inpainting/run.py"
+                ],
+                [
+                    "RFR-Inpainting/utils/io.py",
+                    "RFR-Inpainting/model.py"
+                ]
+            ]
+        },
+        "gt": "[['RFR-Inpainting/dataset.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/utils/io.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/partialconv2d.py', 'RFR-Inpainting/modules/RFRNet.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/RFRNet.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/partialconv2d.py', 'RFR-Inpainting/modules/RFRNet_Smaller_Hole.py'], ['RFR-Inpainting/modules/Attention.py', 'RFR-Inpainting/modules/RFRNet.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/Attention.py', 'RFR-Inpainting/modules/RFRNet_Smaller_Hole.py']]"
+    },
+    {
+        "idx": 38,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "depth-map-prediction/model.py",
+                    "depth-map-prediction/main.py"
+                ],
+                [
+                    "depth-map-prediction/data.py",
+                    "depth-map-prediction/main.py"
+                ],
+                [
+                    "depth-map-prediction/model.py",
+                    "depth-map-prediction/evaluate.py"
+                ],
+                [
+                    "depth-map-prediction/image_helper.py",
+                    "depth-map-prediction/evaluate.py"
+                ],
+                [
+                    "depth-map-prediction/model.py",
+                    "depth-map-prediction/test_run.py"
+                ],
+                [
+                    "depth-map-prediction/image_helper.py",
+                    "depth-map-prediction/test_run.py"
+                ]
+            ]
+        },
+        "gt": "[['depth-map-prediction/data.py', 'depth-map-prediction/main.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/main.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/test_run.py'], ['depth-map-prediction/data.py', 'depth-map-prediction/evaluate.py'], ['depth-map-prediction/image_helper.py', 'depth-map-prediction/main.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/evaluate.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/image_helper.py', 'depth-map-prediction/main.py']]"
+    },
+    {
+        "idx": 39,
+        "pred": {
+            "dependency_groups": []
+        },
+        "gt": "[['repo_readmefile/python\\\\FFIMe\\\\README.md', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\02-stdio-codegen\\\\example.php'], ['repo_readmefile/python\\\\FFIMe\\\\README.md', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\00-basic\\\\example.php'], ['repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\02-stdio-codegen\\\\stdio.php', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\02-stdio-codegen\\\\example.php'], ['repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\00-basic\\\\test.php', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\00-basic\\\\example.php']]"
+    },
+    {
+        "idx": 40,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "char-rnn-tensorflow/utils.py",
+                    "char-rnn-tensorflow/model.py",
+                    "char-rnn-tensorflow/train.py"
+                ],
+                [
+                    "char-rnn-tensorflow/model.py",
+                    "char-rnn-tensorflow/sample.py"
+                ]
+            ]
+        },
+        "gt": "[['char-rnn-tensorflow/utils.py', 'char-rnn-tensorflow/train.py'], ['char-rnn-tensorflow/model.py', 'char-rnn-tensorflow/sample.py'], ['char-rnn-tensorflow/model.py', 'char-rnn-tensorflow/train.py']]"
+    },
+    {
+        "idx": 41,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "pytorch-drl4vrp/tasks/tsp.py",
+                    "pytorch-drl4vrp/model.py",
+                    "pytorch-drl4vrp/trainer.py"
+                ],
+                [
+                    "pytorch-drl4vrp/tasks/vrp.py",
+                    "pytorch-drl4vrp/model.py",
+                    "pytorch-drl4vrp/trainer.py"
+                ]
+            ]
+        },
+        "gt": "[['pytorch-drl4vrp/tasks/tsp.py', 'pytorch-drl4vrp/trainer.py'], ['pytorch-drl4vrp/tasks/vrp.py', 'pytorch-drl4vrp/trainer.py'], ['pytorch-drl4vrp/model.py', 'pytorch-drl4vrp/trainer.py']]"
+    },
+    {
+        "idx": 42,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "checkmate/checkmate.py",
+                    "checkmate/__init__.py"
+                ]
+            ]
+        },
+        "gt": "[['checkmate/checkmate.py', 'checkmate/__init__.py']]"
+    },
+    {
+        "idx": 43,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "deepfakes_faceswap/utils.py",
+                    "deepfakes_faceswap/training_data.py",
+                    "deepfakes_faceswap/train.py"
+                ],
+                [
+                    "deepfakes_faceswap/pixel_shuffler.py",
+                    "deepfakes_faceswap/model.py"
+                ],
+                [
+                    "deepfakes_faceswap/image_augmentation.py",
+                    "deepfakes_faceswap/training_data.py"
+                ],
+                [
+                    "deepfakes_faceswap/umeyama.py",
+                    "deepfakes_faceswap/image_augmentation.py"
+                ],
+                [
+                    "deepfakes_faceswap/model.py",
+                    "deepfakes_faceswap/script.py"
+                ]
+            ]
+        },
+        "gt": "[['deepfakes_faceswap/image_augmentation.py', 'deepfakes_faceswap/training_data.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/training_data.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/model.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/utils.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/pixel_shuffler.py', 'deepfakes_faceswap/model.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/utils.py', 'deepfakes_faceswap/script.py'], ['deepfakes_faceswap/umeyama.py', 'deepfakes_faceswap/image_augmentation.py', 'deepfakes_faceswap/training_data.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/model.py', 'deepfakes_faceswap/script.py'], ['deepfakes_faceswap/pixel_shuffler.py', 'deepfakes_faceswap/model.py', 'deepfakes_faceswap/script.py']]"
+    },
+    {
+        "idx": 44,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "Super-mario-bros-PPO-pytorch/src/model.py",
+                    "Super-mario-bros-PPO-pytorch/src/env.py",
+                    "Super-mario-bros-PPO-pytorch/train.py"
+                ],
+                [
+                    "Super-mario-bros-PPO-pytorch/src/model.py",
+                    "Super-mario-bros-PPO-pytorch/src/process.py"
+                ],
+                [
+                    "Super-mario-bros-PPO-pytorch/src/env.py",
+                    "Super-mario-bros-PPO-pytorch/test.py"
+                ]
+            ]
+        },
+        "gt": "[['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/train.py']]"
+    },
+    {
+        "idx": 45,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "horrifying-pdf-experiments/generate.py",
+                    "horrifying-pdf-experiments/generate_breakout.py"
+                ]
+            ]
+        },
+        "gt": "[['horrifying-pdf-experiments/generate.py', 'horrifying-pdf-experiments/generate_breakout.py']]"
+    },
+    {
+        "idx": 46,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "CloudFail/socks.py",
+                    "CloudFail/sockshandler.py",
+                    "CloudFail/cloudfail.py"
+                ],
+                [
+                    "CloudFail/DNSDumpsterAPI.py",
+                    "CloudFail/cloudfail.py"
+                ]
+            ]
+        },
+        "gt": "[['CloudFail/DNSDumpsterAPI.py', 'CloudFail/cloudfail.py'], ['CloudFail/socks.py', 'CloudFail/sockshandler.py'], ['CloudFail/socks.py', 'CloudFail/cloudfail.py']]"
+    },
+    {
+        "idx": 47,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "Tiling/tile.py",
+                    "Tiling/main.py"
+                ]
+            ]
+        },
+        "gt": "[['Tiling/tile.py', 'Tiling/main.py']]"
+    },
+    {
+        "idx": 48,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "Edu-Mail-Generator/__colors__/colors.py",
+                    "Edu-Mail-Generator/__banner/myBanner.py"
+                ],
+                [
+                    "Edu-Mail-Generator/__constants/const.py",
+                    "Edu-Mail-Generator/helper.py"
+                ],
+                [
+                    "Edu-Mail-Generator/setup.py",
+                    "Edu-Mail-Generator/__dwnldDrivers/versions.py"
+                ],
+                [
+                    "Edu-Mail-Generator/helper.py",
+                    "Edu-Mail-Generator/bot.py"
+                ]
+            ]
+        },
+        "gt": "[['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__dwnldDrivers/versions.py', 'Edu-Mail-Generator/setup.py'], ['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__banner/myBanner.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__constants/const.py', 'Edu-Mail-Generator/bot.py']]"
+    },
+    {
+        "idx": 49,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "microsoft-teams-class-attender/discord_webhook.py",
+                    "microsoft-teams-class-attender/bot.py"
+                ]
+            ]
+        },
+        "gt": "[['microsoft-teams-class-attender/discord_webhook.py', 'microsoft-teams-class-attender/bot.py']]"
+    },
+    {
+        "idx": 50,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "twitchchess/state.py",
+                    "twitchchess/play.py"
+                ],
+                [
+                    "twitchchess/state.py",
+                    "twitchchess/generate_training_set.py"
+                ],
+                [
+                    "twitchchess/train.py",
+                    "twitchchess/play.py"
+                ]
+            ]
+        },
+        "gt": "[['twitchchess/state.py', 'twitchchess/generate_training_set.py'], ['twitchchess/train.py', 'twitchchess/play.py'], ['twitchchess/state.py', 'twitchchess/play.py']]"
+    },
+    {
+        "idx": 51,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "MapTilesDownloader/src/file_writer.py",
+                    "MapTilesDownloader/src/mbtiles_writer.py",
+                    "MapTilesDownloader/src/repo_writer.py"
+                ],
+                [
+                    "MapTilesDownloader/src/utils.py",
+                    "MapTilesDownloader/src/server.py"
+                ]
+            ]
+        },
+        "gt": "[['MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/file_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/server.py']]"
+    },
+    {
+        "idx": 52,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "pytorch_memonger/models/baseline/densenet.py",
+                    "pytorch_memonger/models/optimized/densenet_new.py",
+                    "pytorch_memonger/test_memory_optimized.py"
+                ],
+                [
+                    "pytorch_memonger/models/baseline/resnet.py",
+                    "pytorch_memonger/models/optimized/resnet_new.py",
+                    "pytorch_memonger/test_memory_optimized.py"
+                ],
+                [
+                    "pytorch_memonger/models/baseline/vnet.py",
+                    "pytorch_memonger/models/optimized/vnet_new.py",
+                    "pytorch_memonger/test_memory_optimized.py"
+                ],
+                [
+                    "pytorch_memonger/models/baseline/word_language_model.py",
+                    "pytorch_memonger/models/optimized/word_language_model_new.py",
+                    "pytorch_memonger/test_memory_optimized.py"
+                ],
+                [
+                    "pytorch_memonger/models/baseline/densenet.py",
+                    "pytorch_memonger/test_memory_baseline.py"
+                ],
+                [
+                    "pytorch_memonger/models/baseline/resnet.py",
+                    "pytorch_memonger/test_memory_baseline.py"
+                ],
+                [
+                    "pytorch_memonger/models/baseline/vnet.py",
+                    "pytorch_memonger/test_memory_baseline.py"
+                ],
+                [
+                    "pytorch_memonger/models/baseline/word_language_model.py",
+                    "pytorch_memonger/test_memory_baseline.py"
+                ]
+            ]
+        },
+        "gt": "[['pytorch_memonger/models/baseline/word_language_model.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/word_language_model_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/resnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/baseline/vnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/vnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/densenet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/resnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/optimized/densenet_new.py', 'pytorch_memonger/test_memory_optimized.py']]"
+    },
+    {
+        "idx": 53,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "document-scanner/rect.py",
+                    "document-scanner/scanner.py"
+                ]
+            ]
+        },
+        "gt": "[['document-scanner/rect.py', 'document-scanner/scanner.py']]"
+    },
+    {
+        "idx": 54,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "R-BERT/utils.py",
+                    "R-BERT/data_loader.py",
+                    "R-BERT/model.py",
+                    "R-BERT/trainer.py",
+                    "R-BERT/main.py"
+                ],
+                [
+                    "R-BERT/utils.py",
+                    "R-BERT/model.py",
+                    "R-BERT/predict.py"
+                ],
+                [
+                    "R-BERT/official_eval.py",
+                    "R-BERT/trainer.py"
+                ]
+            ]
+        },
+        "gt": "[['R-BERT/model.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/model.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py']]"
+    },
+    {
+        "idx": 55,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "neural-combinatorial-rl-tensorflow/config.py",
+                    "neural-combinatorial-rl-tensorflow/utils.py",
+                    "neural-combinatorial-rl-tensorflow/main.py"
+                ],
+                [
+                    "neural-combinatorial-rl-tensorflow/download.py",
+                    "neural-combinatorial-rl-tensorflow/data_loader.py"
+                ],
+                [
+                    "neural-combinatorial-rl-tensorflow/layers.py",
+                    "neural-combinatorial-rl-tensorflow/model.py",
+                    "neural-combinatorial-rl-tensorflow/trainer.py"
+                ]
+            ]
+        },
+        "gt": "[['neural-combinatorial-rl-tensorflow/download.py', 'neural-combinatorial-rl-tensorflow/data_loader.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/config.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/data_loader.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/utils.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/model.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/layers.py', 'neural-combinatorial-rl-tensorflow/model.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/utils.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/data_loader.py', 'neural-combinatorial-rl-tensorflow/trainer.py']]"
+    },
+    {
+        "idx": 56,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "Lazyman.bundle/Contents/Code/game.py",
+                    "Lazyman.bundle/Contents/Code/__init__.py"
+                ]
+            ]
+        },
+        "gt": "[['Lazyman.bundle/Contents/Code/game.py', 'Lazyman.bundle/Contents/Code/__init__.py']]"
+    },
+    {
+        "idx": 57,
+        "pred": {
+            "dependency_groups": [
+                [
+                    "prefetch_generator/setup.py",
+                    "prefetch_generator/prefetch_generator/__init__.py"
+                ]
+            ]
+        },
+        "gt": "[['prefetch_generator/prefetch_generator/__init__.py', 'prefetch_generator/setup.py']]"
+    }
+]

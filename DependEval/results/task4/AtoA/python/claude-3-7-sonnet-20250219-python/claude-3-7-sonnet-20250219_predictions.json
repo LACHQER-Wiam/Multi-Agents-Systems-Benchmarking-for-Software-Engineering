@@ -1,0 +1,12 @@
+[
+  {
+    "idx": 0,
+    "pred": {
+      "dependency_groups": "[[\"fmbox.py\", \"labellang.py\"], [\"gyb.py\"]]",
+      "justification": "fmbox.py and labellang.py are utility libraries with no interdependencies that should be loaded first. gyb.py is the main entry point that depends on both utility modules, so it should be loaded last after its dependencies are available."
+    },
+    "gt": {
+      "gt": "[['got-your-back/labellang.py', 'got-your-back/gyb.py'], ['got-your-back/fmbox.py', 'got-your-back/gyb.py']]"
+    }
+  }
+]

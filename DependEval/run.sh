@@ -3,7 +3,7 @@
 # script for running evaluations via Anthropic API; mirrors run.sh logic
 # models list here are the anthropic model identifiers (claude-2.1, claude-3, etc.)
 # "java" "javascript" "php" "python" "typescript" "c#" "c++" "c"  ,  "task2" "task4"
-models=("claude-haiku-4-5") #haiku-4-5. opus-4-6
+models=("claude-haiku-4-5") #haiku-4-5. opus-4-6.   3-7-sonnet-20250219
 languages=("python")
 tasks=("task4")
 type_agent="AtoA"  # react or api

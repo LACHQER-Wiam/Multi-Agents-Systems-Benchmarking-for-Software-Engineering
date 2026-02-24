@@ -1,0 +1,48 @@
+Traceback (most recent call last):
+  File "/Users/wiamlachqer/Library/Mobile Documents/com~apple~CloudDocs/Capstone/Multi-Agents-Systems-Benchmarking-for-Software-Engineering/DependEval/run.py", line 36, in <module>
+    eval_path = inference_ReAct.main(
+  File "/Users/wiamlachqer/Library/Mobile Documents/com~apple~CloudDocs/Capstone/Multi-Agents-Systems-Benchmarking-for-Software-Engineering/DependEval/inference_ReAct.py", line 129, in main
+    results = process_dataset(
+  File "/Users/wiamlachqer/Library/Mobile Documents/com~apple~CloudDocs/Capstone/Multi-Agents-Systems-Benchmarking-for-Software-Engineering/DependEval/inference_ReAct.py", line 73, in process_dataset
+    result = agent.invoke(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langgraph/pregel/main.py", line 3071, in invoke
+    for chunk in self.stream(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langgraph/pregel/main.py", line 2646, in stream
+    for _ in runner.tick(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langgraph/pregel/_runner.py", line 167, in tick
+    run_with_retry(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langgraph/pregel/_retry.py", line 42, in run_with_retry
+    return task.proc.invoke(task.input, config)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langgraph/_internal/_runnable.py", line 656, in invoke
+    input = context.run(step.invoke, input, config, **kwargs)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langgraph/_internal/_runnable.py", line 400, in invoke
+    ret = self.func(*args, **kwargs)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain/agents/factory.py", line 1264, in model_node
+    result = wrap_model_call_handler(request, _execute_model_sync)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain/agents/factory.py", line 250, in normalized_single
+    return _to_composed_result(single_handler(request, handler))
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_anthropic/middleware/prompt_caching.py", line 123, in wrap_model_call
+    return handler(request.override(model_settings=new_model_settings))
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain/agents/factory.py", line 1233, in _execute_model_sync
+    output = model_.invoke(messages)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_core/runnables/base.py", line 5695, in invoke
+    return self.bound.invoke(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 402, in invoke
+    self.generate_prompt(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 1123, in generate_prompt
+    return self.generate(prompt_messages, stop=stop, callbacks=callbacks, **kwargs)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 933, in generate
+    self._generate_with_cache(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_core/language_models/chat_models.py", line 1235, in _generate_with_cache
+    result = self._generate(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_anthropic/chat_models.py", line 1394, in _generate
+    payload = self._get_request_payload(messages, stop=stop, **kwargs)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_anthropic/chat_models.py", line 1176, in _get_request_payload
+    output_config["format"] = _convert_to_anthropic_output_config_format(
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/langchain_anthropic/chat_models.py", line 1920, in _convert_to_anthropic_output_config_format
+    json_schema = transform_schema(schema)
+  File "/Users/wiamlachqer/.pyenv/versions/dependeval/lib/python3.10/site-packages/anthropic/lib/_parse/_transform.py", line 109, in transform_schema
+    raise ValueError("Schema must have a 'type', 'anyOf', 'oneOf', or 'allOf' field.")
+ValueError: Schema must have a 'type', 'anyOf', 'oneOf', or 'allOf' field.
+Error encountered while running API model: claude-sonnet-4-5 with language: python and task: task4
+Check log file for details: ./logs/claude-sonnet-4-5_react_python_task4_api.txt

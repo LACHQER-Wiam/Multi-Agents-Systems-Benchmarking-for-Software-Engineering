@@ -29,7 +29,7 @@ from a2a.server.apps import A2AStarletteApplication
 from a2a.types import AgentCard, AgentCapabilities, AgentSkill
 
 
-from .prompts_AtoA import build_prompt_AtoA
+from ..utils.prompts_AtoA import build_prompt_AtoA
 # =========================
 # Constantes
 # =========================
@@ -41,7 +41,7 @@ parser.add_argument("--language", required=True)
 parser.add_argument("--model_name", type=str, default='claude-haiku-4-5')
 
 parser.add_argument("--temperature", type=float, default=0.0)
-parser.add_argument("--max_token_nums", type=int, default=8000)
+parser.add_argument("--max_token_nums", type=int, default=1000)
 parser.add_argument("--max_rounds", type=int, default=3)
 
 args = parser.parse_args()
@@ -79,8 +79,8 @@ class ClaudeLLM:
 
     def __init__(self, model_name="claude-haiku-4-5", temperature=0, max_tokens=8000):
         self.client = anthropic.Client(
-            api_key=os.environ.get("ANTHROPIC_API_KEY")
-        )
+            api_key=os.environ.get("ANTHROPIC_API_KEY"),
+            timeout=10000)
         self.model_name = model_name
         self.temperature = temperature
         self.max_tokens = max_tokens
@@ -125,6 +125,7 @@ class ClaudeLLM:
                 temperature=self.temperature,
                 system=system_prompt,
                 messages=filtered_messages,
+                stream=True,
             )
 
             if response.content:
@@ -545,7 +546,7 @@ agent_card = AgentCard(
     defaultInputModes=['text'],
     defaultOutputModes=['text'],
     capabilities=AgentCapabilities(
-        streaming=False  # Changed: using ainvoke() instead of astream()
+        streaming=True  # Changed: using ainvoke() instead of astream()
     ),
     authentication={
         "schemes": ["basic"]
@@ -595,7 +596,7 @@ class LanggraphAgentExecutor(AgentExecutor):
 
             try:
                 # Run graph to completion
-                result = await self.agent.ainvoke(input_data, config=config)
+                result = await self.agent.astream(input_data, config=config) #ainvoke
 
                 final_message = "Task completed."
                 if result.get("messages"):

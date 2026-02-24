@@ -1,0 +1,466 @@
+[
+    {
+        "idx": 0,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['got-your-back/labellang.py', 'got-your-back/gyb.py'], ['got-your-back/fmbox.py', 'got-your-back/gyb.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 1,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/datasets.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/prepare.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 2,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['ConvLSTM-Pytorch/convlstm.py', 'ConvLSTM-Pytorch/convlstm_decoder.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 3,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['repos_otherLanguage/python\\\\php-socks5\\\\config.php', 'repos_otherLanguage/python\\\\php-socks5\\\\start.php']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 4,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['indrnn/ind_rnn_cell.py', 'indrnn/examples/sequential_mnist.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/examples/addition_rnn.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/ind_rnn_cell_test.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 5,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/apiconfig.py', 'tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/srtmread.py', 'tesla-apiscraper/apiscraper.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 6,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['pytorch-made/made.py', 'pytorch-made/run.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 7,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['TradingView-data-scraper/app.py', 'TradingView-data-scraper/runp-heroku.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 8,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['rest-api-samples/python/version.py', 'rest-api-samples/python/users_by_group.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/webhooks.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/publish_workbook.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/update_permission.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_sites.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_datasource_server.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_projects.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/user_permission_audit.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_server.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 9,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['DnCNN-PyTorch/models.py', 'DnCNN-PyTorch/test.py'], ['DnCNN-PyTorch/models.py', 'DnCNN-PyTorch/train.py'], ['DnCNN-PyTorch/utils.py', 'DnCNN-PyTorch/test.py'], ['DnCNN-PyTorch/dataset.py', 'DnCNN-PyTorch/train.py'], ['DnCNN-PyTorch/utils.py', 'DnCNN-PyTorch/dataset.py', 'DnCNN-PyTorch/train.py'], ['DnCNN-PyTorch/utils.py', 'DnCNN-PyTorch/train.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 10,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['stable-diffusion-webui-model-toolkit/toolkit.py', 'stable-diffusion-webui-model-toolkit/scripts/toolkit_gui.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 11,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['SupervisedChromeTrex/actionCNN.py', 'SupervisedChromeTrex/main.py'], ['SupervisedChromeTrex/mychrome.py', 'SupervisedChromeTrex/main.py'], ['SupervisedChromeTrex/mychrome.py', 'SupervisedChromeTrex/actionCNN.py', 'SupervisedChromeTrex/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 12,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['CycleGAN/layers.py', 'CycleGAN/main.py'], ['CycleGAN/model.py', 'CycleGAN/main.py'], ['CycleGAN/layers.py', 'CycleGAN/model.py', 'CycleGAN/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 13,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['googlemaps-scraper/googlemaps.py', 'googlemaps-scraper/scraper.py'], ['googlemaps-scraper/googlemaps.py', 'googlemaps-scraper/scrapper_places.py'], ['googlemaps-scraper/googlemaps.py', 'googlemaps-scraper/monitor.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 14,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['gmm-torch/utils.py', 'gmm-torch/gmm.py', 'gmm-torch/test.py'], ['gmm-torch/gmm.py', 'gmm-torch/test.py'], ['gmm-torch/gmm.py', 'gmm-torch/example.py'], ['gmm-torch/utils.py', 'gmm-torch/gmm.py', 'gmm-torch/example.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 15,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['2048-ai/gamectrl.py', '2048-ai/2048.py'], ['2048-ai/chromectrl.py', '2048-ai/2048.py'], ['2048-ai/ffctrl.py', '2048-ai/2048.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 16,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['efficient-kan/src/efficient_kan/kan.py', 'efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/examples/mnist.py'], ['efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/examples/mnist.py'], ['efficient-kan/src/efficient_kan/kan.py', 'efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/tests/test_simple_math.py'], ['efficient-kan/src/efficient_kan/__init__.py', 'efficient-kan/tests/test_simple_math.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 17,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['chessboard-recognizer/chessboard_finder.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/train.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/chessboard_image.py', 'chessboard-recognizer/generate_tiles.py'], ['chessboard-recognizer/chessboard_image.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/utils.py', 'chessboard-recognizer/save_chessboard.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/generate_tiles.py'], ['chessboard-recognizer/utils.py', 'chessboard-recognizer/recognize.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/generate_chessboards.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/view_images.py'], ['chessboard-recognizer/constants.py', 'chessboard-recognizer/train.py', 'chessboard-recognizer/recognize.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 18,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['deep-RL-trading/src/agents.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/visualizer.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/emulator.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/simulators.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/sampler.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/agents.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/simulators.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/sampler.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/emulator.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/visualizer.py', 'deep-RL-trading/src/main.py'], ['deep-RL-trading/src/lib.py', 'deep-RL-trading/src/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 19,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['Logsensor/src.py', 'Logsensor/logsensor.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 20,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['quantum/quantum.py', 'quantum/examples.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 21,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['contrastive-predictive-coding/data_utils.py', 'contrastive-predictive-coding/benchmark_model.py'], ['contrastive-predictive-coding/data_utils.py', 'contrastive-predictive-coding/train_model.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 22,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['PyCNN/pycnn.py', 'PyCNN/example.py'], ['PyCNN/pycnn.py', 'PyCNN/example_lenna.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 23,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['Flappy-bird-deep-Q-learning-pytorch/src/flappy_bird.py', 'Flappy-bird-deep-Q-learning-pytorch/train.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/utils.py', 'Flappy-bird-deep-Q-learning-pytorch/test.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/utils.py', 'Flappy-bird-deep-Q-learning-pytorch/train.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/deep_q_network.py', 'Flappy-bird-deep-Q-learning-pytorch/test.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/flappy_bird.py', 'Flappy-bird-deep-Q-learning-pytorch/test.py'], ['Flappy-bird-deep-Q-learning-pytorch/src/deep_q_network.py', 'Flappy-bird-deep-Q-learning-pytorch/train.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 24,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['DeepInversion/models/resnetv15.py', 'DeepInversion/imagenet_inversion.py'], ['DeepInversion/deepinversion.py', 'DeepInversion/imagenet_inversion.py'], ['DeepInversion/cifar10/resnet_cifar.py', 'DeepInversion/cifar10/deepinversion_cifar10.py'], ['DeepInversion/FLGradientInversion/torchvision_class.py', 'DeepInversion/FLGradientInversion/main.py'], ['DeepInversion/utils/utils.py', 'DeepInversion/imagenet_inversion.py'], ['DeepInversion/FLGradientInversion/fl_gradient_inversion.py', 'DeepInversion/FLGradientInversion/main.py'], ['DeepInversion/utils/utils.py', 'DeepInversion/deepinversion.py', 'DeepInversion/imagenet_inversion.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 25,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['youtube_uploader_selenium/youtube_uploader_selenium/Constant.py', 'youtube_uploader_selenium/youtube_uploader_selenium/__init__.py', 'youtube_uploader_selenium/upload.py'], ['youtube_uploader_selenium/youtube_uploader_selenium/__init__.py', 'youtube_uploader_selenium/upload.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 26,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['llvm-deobfuscator/util.py', 'llvm-deobfuscator/__init__.py'], ['llvm-deobfuscator/deflatten.py', 'llvm-deobfuscator/__init__.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 27,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['throttled/mmio.py', 'throttled/throttled.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 28,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/video_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/yolov8/__init__.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/image_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/video_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/webcam_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/utils.py', 'ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/yolov8/__init__.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/image_object_detection.py'], ['ONNX-YOLOv8-Object-Detection/yolov8/YOLOv8.py', 'ONNX-YOLOv8-Object-Detection/webcam_object_detection.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 29,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['dockerize/dockerize/depsolver.py', 'dockerize/dockerize/dockerize.py'], ['dockerize/dockerize/__init__.py', 'dockerize/setup.py'], ['dockerize/dockerize/__init__.py', 'dockerize/dockerize/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 30,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['lieer/lieer/gmailieer.py', 'lieer/lieer/__init__.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 31,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['ComfyUI-Florence2/nodes.py', 'ComfyUI-Florence2/__init__.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 32,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['rnn-nlu/seq_classification.py', 'rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/data_utils.py', 'rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/data_utils.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/seq_labeling.py', 'rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py'], ['rnn-nlu/multi_task_model.py', 'rnn-nlu/run_multi-task_rnn.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 33,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['LDAM-DRW/models/resnet_cifar.py', 'LDAM-DRW/models/__init__.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/imbalance_cifar.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/losses.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/models/__init__.py', 'LDAM-DRW/cifar_train.py'], ['LDAM-DRW/utils.py', 'LDAM-DRW/cifar_train.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 34,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['vimGPT/vimbot.py', 'vimGPT/main.py'], ['vimGPT/vision.py', 'vimGPT/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 35,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/preprocess.py'], ['speech-to-text-wavenet/model.py', 'speech-to-text-wavenet/train.py'], ['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/train.py'], ['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/test.py'], ['speech-to-text-wavenet/model.py', 'speech-to-text-wavenet/recognize.py'], ['speech-to-text-wavenet/data.py', 'speech-to-text-wavenet/recognize.py'], ['speech-to-text-wavenet/model.py', 'speech-to-text-wavenet/test.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 36,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['pytorch-es/train.py', 'pytorch-es/main.py'], ['pytorch-es/model.py', 'pytorch-es/train.py', 'pytorch-es/main.py'], ['pytorch-es/model.py', 'pytorch-es/main.py'], ['pytorch-es/envs.py', 'pytorch-es/main.py'], ['pytorch-es/envs.py', 'pytorch-es/train.py', 'pytorch-es/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 37,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['RFR-Inpainting/dataset.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/utils/io.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/partialconv2d.py', 'RFR-Inpainting/modules/RFRNet.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/RFRNet.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/partialconv2d.py', 'RFR-Inpainting/modules/RFRNet_Smaller_Hole.py'], ['RFR-Inpainting/modules/Attention.py', 'RFR-Inpainting/modules/RFRNet.py', 'RFR-Inpainting/model.py', 'RFR-Inpainting/run.py'], ['RFR-Inpainting/modules/Attention.py', 'RFR-Inpainting/modules/RFRNet_Smaller_Hole.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 38,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['depth-map-prediction/data.py', 'depth-map-prediction/main.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/main.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/test_run.py'], ['depth-map-prediction/data.py', 'depth-map-prediction/evaluate.py'], ['depth-map-prediction/image_helper.py', 'depth-map-prediction/main.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/evaluate.py'], ['depth-map-prediction/model.py', 'depth-map-prediction/image_helper.py', 'depth-map-prediction/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 39,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['repo_readmefile/python\\\\FFIMe\\\\README.md', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\02-stdio-codegen\\\\example.php'], ['repo_readmefile/python\\\\FFIMe\\\\README.md', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\00-basic\\\\example.php'], ['repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\02-stdio-codegen\\\\stdio.php', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\02-stdio-codegen\\\\example.php'], ['repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\00-basic\\\\test.php', 'repos_otherLanguage/python\\\\FFIMe\\\\examples\\\\00-basic\\\\example.php']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 40,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['char-rnn-tensorflow/utils.py', 'char-rnn-tensorflow/train.py'], ['char-rnn-tensorflow/model.py', 'char-rnn-tensorflow/sample.py'], ['char-rnn-tensorflow/model.py', 'char-rnn-tensorflow/train.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 41,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['pytorch-drl4vrp/tasks/tsp.py', 'pytorch-drl4vrp/trainer.py'], ['pytorch-drl4vrp/tasks/vrp.py', 'pytorch-drl4vrp/trainer.py'], ['pytorch-drl4vrp/model.py', 'pytorch-drl4vrp/trainer.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 42,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['checkmate/checkmate.py', 'checkmate/__init__.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 43,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['deepfakes_faceswap/image_augmentation.py', 'deepfakes_faceswap/training_data.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/training_data.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/model.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/utils.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/pixel_shuffler.py', 'deepfakes_faceswap/model.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/utils.py', 'deepfakes_faceswap/script.py'], ['deepfakes_faceswap/umeyama.py', 'deepfakes_faceswap/image_augmentation.py', 'deepfakes_faceswap/training_data.py', 'deepfakes_faceswap/train.py'], ['deepfakes_faceswap/model.py', 'deepfakes_faceswap/script.py'], ['deepfakes_faceswap/pixel_shuffler.py', 'deepfakes_faceswap/model.py', 'deepfakes_faceswap/script.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 44,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/train.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 45,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['horrifying-pdf-experiments/generate.py', 'horrifying-pdf-experiments/generate_breakout.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 46,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['CloudFail/DNSDumpsterAPI.py', 'CloudFail/cloudfail.py'], ['CloudFail/socks.py', 'CloudFail/sockshandler.py'], ['CloudFail/socks.py', 'CloudFail/cloudfail.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 47,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['Tiling/tile.py', 'Tiling/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 48,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__dwnldDrivers/versions.py', 'Edu-Mail-Generator/setup.py'], ['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__banner/myBanner.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__constants/const.py', 'Edu-Mail-Generator/bot.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 49,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['microsoft-teams-class-attender/discord_webhook.py', 'microsoft-teams-class-attender/bot.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 50,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['twitchchess/state.py', 'twitchchess/generate_training_set.py'], ['twitchchess/train.py', 'twitchchess/play.py'], ['twitchchess/state.py', 'twitchchess/play.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 51,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/file_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/server.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 52,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['pytorch_memonger/models/baseline/word_language_model.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/word_language_model_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/resnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/baseline/vnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/vnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/densenet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/resnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/optimized/densenet_new.py', 'pytorch_memonger/test_memory_optimized.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 53,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['document-scanner/rect.py', 'document-scanner/scanner.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 54,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['R-BERT/model.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/model.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 55,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['neural-combinatorial-rl-tensorflow/download.py', 'neural-combinatorial-rl-tensorflow/data_loader.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/config.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/data_loader.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/utils.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/model.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/layers.py', 'neural-combinatorial-rl-tensorflow/model.py', 'neural-combinatorial-rl-tensorflow/trainer.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/utils.py', 'neural-combinatorial-rl-tensorflow/main.py'], ['neural-combinatorial-rl-tensorflow/data_loader.py', 'neural-combinatorial-rl-tensorflow/trainer.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 56,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['Lazyman.bundle/Contents/Code/game.py', 'Lazyman.bundle/Contents/Code/__init__.py']]",
+        "total_tokens": 0
+    },
+    {
+        "idx": 57,
+        "agent1_prediction": [],
+        "agent2_prediction": [],
+        "final_prediction": [],
+        "gt": "[['prefetch_generator/prefetch_generator/__init__.py', 'prefetch_generator/setup.py']]",
+        "total_tokens": 0
+    }
+]

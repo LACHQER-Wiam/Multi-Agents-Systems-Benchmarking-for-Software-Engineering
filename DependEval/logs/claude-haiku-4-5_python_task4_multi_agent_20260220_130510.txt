@@ -1,0 +1,10 @@
+Multi-Agent Task4 Analysis
+Model: claude-haiku-4-5
+Language: python
+Dataset: ./data/python/task4_python_new.json
+Started: 2026-02-20T13:05:10.382350
+================================================================================
+
+[0] Completed - Agent1 tokens: 722/142, Agent2: 977/582, Agent3: 1446/479, Total: 3145/1203
+[1] Completed - Agent1 tokens: 956/317, Agent2: 1386/682, Agent3: 1953/461, Total: 4295/1460
+[2] Completed - Agent1 tokens: 715/145, Agent2: 973/522, Agent3: 1380/452, Total: 3068/1119

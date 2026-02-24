@@ -1,0 +1,375 @@
+Loaded 180 examples from ./data/python/task2_python_final.json
+Results directory: ./results/task2/python/claude-haiku-4-5-python
+prediction for idx 0 done
+prediction for idx 1 done
+prediction for idx 2 done
+prediction for idx 3 done
+prediction for idx 4 done
+prediction for idx 5 done
+prediction for idx 6 done
+prediction for idx 7 done
+prediction for idx 8 done
+prediction for idx 9 done
+prediction for idx 10 done
+prediction for idx 11 done
+prediction for idx 12 done
+prediction for idx 13 done
+prediction for idx 14 done
+prediction for idx 15 done
+prediction for idx 16 done
+prediction for idx 17 done
+prediction for idx 18 done
+prediction for idx 19 done
+prediction for idx 20 done
+prediction for idx 21 done
+prediction for idx 22 done
+prediction for idx 23 done
+prediction for idx 24 done
+prediction for idx 25 done
+prediction for idx 26 done
+prediction for idx 27 done
+prediction for idx 28 done
+prediction for idx 29 done
+prediction for idx 30 done
+prediction for idx 31 done
+prediction for idx 32 done
+prediction for idx 33 done
+prediction for idx 34 done
+prediction for idx 35 done
+prediction for idx 36 done
+prediction for idx 37 done
+prediction for idx 38 done
+prediction for idx 39 done
+prediction for idx 40 done
+prediction for idx 41 done
+prediction for idx 42 done
+prediction for idx 43 done
+prediction for idx 44 done
+prediction for idx 45 done
+prediction for idx 46 done
+prediction for idx 47 done
+prediction for idx 48 done
+prediction for idx 49 done
+prediction for idx 50 done
+prediction for idx 51 done
+prediction for idx 52 done
+prediction for idx 53 done
+prediction for idx 54 done
+prediction for idx 55 done
+prediction for idx 56 done
+prediction for idx 57 done
+prediction for idx 58 done
+prediction for idx 59 done
+prediction for idx 60 done
+prediction for idx 61 done
+prediction for idx 62 done
+prediction for idx 63 done
+prediction for idx 64 done
+prediction for idx 65 done
+prediction for idx 66 done
+prediction for idx 67 done
+prediction for idx 68 done
+prediction for idx 69 done
+prediction for idx 70 done
+prediction for idx 71 done
+prediction for idx 72 done
+prediction for idx 73 done
+prediction for idx 74 done
+prediction for idx 75 done
+prediction for idx 76 done
+prediction for idx 77 done
+prediction for idx 78 done
+prediction for idx 79 done
+prediction for idx 80 done
+prediction for idx 81 done
+prediction for idx 82 done
+prediction for idx 83 done
+prediction for idx 84 done
+prediction for idx 85 done
+prediction for idx 86 done
+prediction for idx 87 done
+prediction for idx 88 done
+prediction for idx 89 done
+prediction for idx 90 done
+prediction for idx 91 done
+prediction for idx 92 done
+prediction for idx 93 done
+prediction for idx 94 done
+prediction for idx 95 done
+prediction for idx 96 done
+prediction for idx 97 done
+prediction for idx 98 done
+prediction for idx 99 done
+prediction for idx 100 done
+prediction for idx 101 done
+prediction for idx 102 done
+prediction for idx 103 done
+prediction for idx 104 done
+prediction for idx 105 done
+prediction for idx 106 done
+prediction for idx 107 done
+prediction for idx 108 done
+prediction for idx 109 done
+prediction for idx 110 done
+prediction for idx 111 done
+prediction for idx 112 done
+prediction for idx 113 done
+prediction for idx 114 done
+prediction for idx 115 done
+prediction for idx 116 done
+prediction for idx 117 done
+prediction for idx 118 done
+prediction for idx 119 done
+prediction for idx 120 done
+prediction for idx 121 done
+prediction for idx 122 done
+prediction for idx 123 done
+prediction for idx 124 done
+prediction for idx 125 done
+prediction for idx 126 done
+prediction for idx 127 done
+prediction for idx 128 done
+prediction for idx 129 done
+prediction for idx 130 done
+prediction for idx 131 done
+prediction for idx 132 done
+prediction for idx 133 done
+prediction for idx 134 done
+prediction for idx 135 done
+prediction for idx 136 done
+prediction for idx 137 done
+prediction for idx 138 done
+prediction for idx 139 done
+prediction for idx 140 done
+prediction for idx 141 done
+prediction for idx 142 done
+prediction for idx 143 done
+prediction for idx 144 done
+prediction for idx 145 done
+prediction for idx 146 done
+prediction for idx 147 done
+prediction for idx 148 done
+prediction for idx 149 done
+prediction for idx 150 done
+prediction for idx 151 done
+prediction for idx 152 done
+prediction for idx 153 done
+prediction for idx 154 done
+prediction for idx 155 done
+prediction for idx 156 done
+prediction for idx 157 done
+prediction for idx 158 done
+prediction for idx 159 done
+prediction for idx 160 done
+prediction for idx 161 done
+prediction for idx 162 done
+prediction for idx 163 done
+prediction for idx 164 done
+prediction for idx 165 done
+prediction for idx 166 done
+prediction for idx 167 done
+prediction for idx 168 done
+prediction for idx 169 done
+prediction for idx 170 done
+prediction for idx 171 done
+prediction for idx 172 done
+prediction for idx 173 done
+prediction for idx 174 done
+prediction for idx 175 done
+prediction for idx 176 done
+prediction for idx 177 done
+prediction for idx 178 done
+prediction for idx 179 done
+Saved token costs to: ./results/task2/python/claude-haiku-4-5-python/cost_predictions_claude-haiku-4-5.xlsx
+
+--- SUMMARY ---
+Total rows: 180
+Total input tokens: 863515
+Total output tokens: 13130
+Total tokens: 876645
+Saved predictions to: ./results/task2/python/claude-haiku-4-5-python/claude-haiku-4-5_predictions.json
+[PREDICTION] Execution time: 975.048983 seconds
+Processing: ./results/task2/python/claude-haiku-4-5-python/claude-haiku-4-5_predictions.json
+idx 0: score=1.00
+idx 1: score=1.00
+idx 2: score=1.00
+idx 3: score=1.00
+idx 4: score=0.00
+idx 5: score=0.00
+idx 6: score=1.00
+idx 7: score=1.00
+idx 8: score=0.00
+idx 9: score=0.00
+idx 10: score=1.00
+idx 11: score=1.00
+idx 12: score=1.00
+idx 13: score=1.00
+idx 14: score=0.00
+idx 15: score=1.00
+idx 16: score=1.00
+idx 17: score=0.00
+idx 18: score=0.00
+idx 19: score=1.00
+idx 20: score=0.00
+idx 21: score=1.00
+idx 22: score=1.00
+idx 23: score=1.00
+idx 24: score=1.00
+idx 25: score=1.00
+idx 26: score=0.00
+idx 27: score=1.00
+idx 28: score=0.00
+idx 29: score=1.00
+idx 30: score=1.00
+idx 31: score=1.00
+idx 32: score=0.00
+idx 33: score=1.00
+idx 34: score=1.00
+idx 35: score=1.00
+idx 36: score=1.00
+idx 37: score=1.00
+idx 38: score=1.00
+idx 39: score=1.00
+idx 40: score=1.00
+idx 41: score=1.00
+idx 42: score=0.00
+idx 43: score=1.00
+idx 44: score=1.00
+idx 45: score=0.00
+idx 46: score=1.00
+idx 47: score=0.00
+idx 48: score=1.00
+idx 49: score=0.00
+idx 50: score=0.00
+idx 51: score=0.00
+idx 52: score=0.00
+idx 53: score=1.00
+idx 54: score=1.00
+idx 55: score=0.00
+idx 56: score=0.00
+idx 57: score=1.00
+idx 58: score=1.00
+idx 59: score=1.00
+idx 60: score=1.00
+idx 61: score=1.00
+idx 62: score=1.00
+idx 63: score=1.00
+idx 64: score=1.00
+idx 65: score=1.00
+idx 66: score=0.00
+idx 67: score=1.00
+idx 68: score=0.00
+idx 69: score=1.00
+idx 70: score=1.00
+idx 71: score=0.00
+idx 72: score=1.00
+idx 73: score=1.00
+idx 74: score=1.00
+idx 75: score=1.00
+idx 76: score=1.00
+idx 77: score=0.00
+idx 78: score=1.00
+idx 79: score=1.00
+idx 80: score=0.00
+idx 81: score=0.00
+idx 82: score=1.00
+idx 83: score=1.00
+idx 84: score=1.00
+idx 85: score=0.00
+idx 86: score=1.00
+idx 87: score=1.00
+idx 88: score=0.00
+idx 89: score=1.00
+idx 90: score=1.00
+idx 91: score=1.00
+idx 92: score=1.00
+idx 93: score=0.00
+idx 94: score=0.00
+idx 95: score=0.00
+idx 96: score=0.00
+idx 97: score=0.00
+idx 98: score=0.00
+idx 99: score=1.00
+idx 100: score=0.00
+idx 101: score=1.00
+idx 102: score=1.00
+idx 103: score=1.00
+idx 104: score=0.00
+idx 105: score=1.00
+idx 106: score=1.00
+idx 107: score=1.00
+idx 108: score=0.00
+idx 109: score=1.00
+idx 110: score=1.00
+idx 111: score=0.00
+idx 112: score=1.00
+idx 113: score=0.00
+idx 114: score=1.00
+idx 115: score=0.00
+idx 116: score=0.00
+idx 117: score=0.00
+idx 118: score=1.00
+idx 119: score=1.00
+idx 120: score=0.00
+idx 121: score=0.00
+idx 122: score=1.00
+idx 123: score=1.00
+idx 124: score=0.00
+idx 125: score=0.00
+idx 126: score=0.00
+idx 127: score=0.00
+idx 128: score=1.00
+idx 129: score=1.00
+idx 130: score=0.00
+idx 131: score=1.00
+idx 132: score=1.00
+idx 133: score=1.00
+idx 134: score=0.00
+idx 135: score=0.00
+idx 136: score=0.00
+idx 137: score=0.00
+idx 138: score=0.00
+idx 139: score=1.00
+idx 140: score=1.00
+idx 141: score=1.00
+idx 142: score=0.00
+idx 143: score=0.00
+idx 144: score=0.00
+idx 145: score=1.00
+idx 146: score=1.00
+idx 147: score=1.00
+idx 148: score=0.00
+idx 149: score=1.00
+idx 150: score=1.00
+idx 151: score=1.00
+idx 152: score=1.00
+idx 153: score=0.00
+idx 154: score=0.00
+idx 155: score=1.00
+idx 156: score=1.00
+idx 157: score=1.00
+idx 158: score=0.00
+idx 159: score=0.00
+idx 160: score=0.00
+idx 161: score=0.00
+idx 162: score=0.00
+idx 163: score=1.00
+idx 164: score=1.00
+idx 165: score=1.00
+idx 166: score=1.00
+idx 167: score=0.00
+idx 168: score=0.00
+idx 169: score=1.00
+idx 170: score=0.00
+idx 171: score=1.00
+idx 172: score=0.00
+idx 173: score=1.00
+idx 174: score=0.00
+idx 175: score=1.00
+idx 176: score=0.00
+idx 177: score=1.00
+idx 178: score=0.00
+idx 179: score=0.00
+Results saved to ./results/task2/python/claude-haiku-4-5-python/claude-haiku-4-5_predictions_scores.xlsx
+[EVALUATION] Execution time: 0.066957 seconds
+Completed task: claude-haiku-4-5 with language: python and task: task2 (log: ./logs/claude-haiku-4-5_python_task2_api.txt)

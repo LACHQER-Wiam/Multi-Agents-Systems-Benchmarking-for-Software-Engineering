@@ -60,7 +60,7 @@ if __name__ == "__main__":
         server = subprocess.Popen([
             "python",
             "-m",
-            "utils/AtoA_architecture.py",
+            "utils.AtoA_architecture_stream",
             "--task", task,
             "--language", language,
             "--model_name", model_name,
@@ -69,19 +69,22 @@ if __name__ == "__main__":
             # "--max_rounds", str(max_rounds),
         ])
         # Attendre que le serveur démarre
-        time.sleep(3)
+        time.sleep(10)
 
         # Lancer client
         subprocess.run([
-            "python",
-            "inference_AtoA.py",
+            sys.executable,
+            "inference_AtoA_stream.py",
             "--task", task,
             "--language", language,
-            "--dataset_path", dataset_path,
-            "--res_dir", res_dir
+            "--model_name", model_name,
+            # "--dataset_path", dataset_path,
+            # "--res_dir", res_dir
 
         ])
+        server.terminate()
+
     end = time.perf_counter()
 
-    print(f"[PREDICTION] Execution time: {end - start:.6f} seconds")
+    print(f"[PREDICTION] Execution time: {end - start - 10:.6f} seconds")
     # print(f"Evaluation complete. Results at: {eval_path}")
