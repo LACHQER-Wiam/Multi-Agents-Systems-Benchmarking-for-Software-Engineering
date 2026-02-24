@@ -78,11 +78,18 @@ def define_tools(task: str, workspace_root: str = WORKSPACE_ROOT) -> list:
     - task2 / task4 : pas d'outils.
     """
     if task == "task1":
-        tools = [BashWorkspaceTool(workspace_root=WORKSPACE_ROOT)]
-        return tools
-    else:
-        tools = []
-    return tools
+        return [
+            ReadFileTool(workspace_root=workspace_root),
+            ListDirTool(workspace_root=workspace_root),
+            SearchInFilesTool(workspace_root=workspace_root),
+            WriteFileTool(workspace_root=workspace_root),
+        ]
+    elif task in ("task2", "task4"):
+        return [
+            ReadFileTool(workspace_root=workspace_root),
+            ExtractImportsTool(workspace_root=workspace_root),
+        ]
+    return []
  
 
 def define_middleware(task: str, token_counter: Optional[TokenCounterMiddleware] = None) -> list:
@@ -140,6 +147,7 @@ def get_system_prompt(task: str, schema_str: str) -> str:
     
     return base + f"Always respond ONLY with a valid JSON object matching this schema:\n{schema_str}"
 
+
 def process_dataset(
     dataset: list,
     model_name: str,
@@ -150,13 +158,6 @@ def process_dataset(
     response_format: dict,
     provider: str = "openai",
 ) -> list:
-    """
-    Lance l'agent ReAct sur chaque item du dataset.
-
-    provider: "openai", "anthropic", "google" — API LLM utilisée.
-    Retourne une liste de dicts {"idx", "pred", "gt"} au format attendu par
-    les scripts d'éval (eval_DR_api, eval_ME_api, eval_RC_api).
-    """
     token_counter = TokenCounterMiddleware()
     model = create_llm(
         provider=provider,
@@ -165,17 +166,20 @@ def process_dataset(
         max_tokens=max_token_nums,
     )
     schema_str = json.dumps(SCHEMAS.get(task, {}), indent=2)
-    agent = create_agent(
-        model=model,
-        tools=define_tools(task),
-        system_prompt=get_system_prompt(task, schema_str),
-        middleware=define_middleware(task, token_counter),
-        response_format=response_format,
-    )
 
     results = []
     for idx, item in enumerate(dataset):
         token_counter.reset_totals()
+        workspace = item.get("repo_path", WORKSPACE_ROOT)  # ← dynamique par item
+
+        agent = create_agent(  # ← dans la boucle, pas avant
+            model=model,
+            tools=define_tools(task, workspace_root=workspace),
+            system_prompt=get_system_prompt(task, schema_str),
+            middleware=define_middleware(task, token_counter),
+            response_format=response_format,
+        )
+
         prompt = construct_prompt(
             item,
             max_token_nums=max_token_nums,
@@ -185,24 +189,23 @@ def process_dataset(
         try:
             result = agent.invoke({"messages": [{"role": "user", "content": prompt}]})
             pred = _extract_pred_from_agent_result(result)
-            # Force le format attendu par les evals (évite 'str' object has no attribute get)
             if task == "task4" and not isinstance(pred, dict):
                 pred = {"dependency_groups": []}
-
             if task == "task2" and not isinstance(pred, dict):
                 pred = {"list_dependencies": []}
         except Exception as e:
             print(f"Error at idx {idx}: {e}")
             pred = {}
-            
+            result = {"messages": []}
+
         input_tokens = 0
         output_tokens = 0
         calls = []
         for msg in result.get("messages", []):
             usage = getattr(msg, "usage_metadata", None)
             if usage:
-                call_input  = usage.get("input_tokens", 0)
-                call_output  = usage.get("output_tokens", 0)
+                call_input = usage.get("input_tokens", 0)
+                call_output = usage.get("output_tokens", 0)
                 input_tokens += call_input
                 output_tokens += call_output
                 calls.append({
@@ -214,7 +217,7 @@ def process_dataset(
         token_counter.total_input_tokens = input_tokens
         token_counter.total_output_tokens = output_tokens
         token_counter.calls = calls
-        
+
         gt = _get_ground_truth(item, task)
         results.append({
             "idx": idx,
@@ -222,11 +225,10 @@ def process_dataset(
             "gt": gt,
             "input_tokens": token_counter.total_input_tokens,
             "output_tokens": token_counter.total_output_tokens,
-            #liste des appels LLM pour cet idx
             "calls": token_counter.calls,
             "num_calls": len(token_counter.calls),
         })
-        print(f"Prediction for idx {idx} done (total tokens: {token_counter.total_input_tokens + token_counter.total_output_tokens}).")
+        print(f"Prediction for idx {idx} done (total tokens: {input_tokens + output_tokens}).")
 
     return results
 
