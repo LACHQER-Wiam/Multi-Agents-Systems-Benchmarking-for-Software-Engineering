@@ -33,12 +33,29 @@ def verify_file_presence(filename: str):
     # In this benchmark, the LLM has the context in the prompt. 
     return f"Verification: {filename} is confirmed present in the provided context."
 
-tools = [verify_file_presence]
+benchmark_context = {}
+@tool
+def get_file_snippet(filename: str, line_start: int = 1, line_end: int = 20) -> str:
+    """
+    Lit un extrait (snippet) d'un fichier spécifique pour voir les imports et la logique.
+    Utile pour lever un doute sur une dépendance complexe.
+    """
+    
+    file_content = benchmark_context.get(filename, "Erreur : Fichier non trouvé.")
+    
+    if file_content == "Erreur : Fichier non trouvé.":
+        return file_content
+        
+    lines = file_content.split('\n')
+    snippet = "\n".join(lines[line_start-1:line_end])
+    return f"Contenu de {filename} (lignes {line_start}-{line_end}) :\n---\n{snippet}\n---"
+
+tools = [verify_file_presence, get_file_snippet]
 tool_node = ToolNode(tools)
 
 # STEP 3: Setup the Model
 llm = ChatAnthropic(
-    model="claude-3-haiku-20240307",
+    model="claude-haiku-4-5",
     temperature=0.2, # Deterministic output for benchmarking
     anthropic_api_key=os.getenv("ANTHROPIC_API_KEY")
 ).bind_tools(tools)

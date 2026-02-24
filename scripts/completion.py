@@ -18,11 +18,11 @@ api_key = os.getenv("ANTHROPIC_API_KEY")
 
 # Initialize the ChatAnthropic model
 llm = ChatAnthropic(
-    model="claude-3-haiku-20240307",
-    temperature=0.2, # from the paper
-    model_kwargs = {
-        "top_p": 0.95 # Filtre la liste des mots possibles.
-    },
+    model="claude-haiku-4-5",
+    # temperature=0.2, # from the paper
+    # model_kwargs = {
+    #     "top_p": 0.95 # Filtre la liste des mots possibles.
+    # },
     anthropic_api_key=api_key
 )
 
