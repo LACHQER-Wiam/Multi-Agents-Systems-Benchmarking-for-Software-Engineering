@@ -26,25 +26,30 @@ Usage
 from __future__ import annotations
 
 import argparse
-import ast
 import json
 import os
 import re
-import shutil
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional
 
 import anthropic
 
 from datasets import load_dataset
 
+from shared import (
+    FileInput,
+    extract_patch_files,
+    extract_patch_hunks,
+    python_imports,
+    module_to_file,
+    collect_neighbourhood,
+)
+
 from agent_cast import (
     CodeAnalysisRequest,
     CodeAnalysisResult,
-    FileInput,
     build_agent,
     run_agent,
 )
@@ -215,103 +220,6 @@ def clone_at_commit(repo: str, commit: str, cache_dir: Path) -> Path:
         _run(["git", "checkout", "--detach", commit], cwd=dest, check=False)
 
     return dest
-
-
-# ---------------------------------------------------------------------------
-# Patch parsing helpers
-# ---------------------------------------------------------------------------
-
-def extract_patch_files(patch: str) -> List[str]:
-    """Return relative paths of files modified by the patch."""
-    return re.findall(r"^--- a/(.+)$", patch, re.MULTILINE)
-
-
-def extract_patch_hunks(patch: str) -> Dict[str, str]:
-    """Return {file_path: unified diff lines for that file}."""
-    result: Dict[str, str] = {}
-    current_file: Optional[str] = None
-    current_lines: List[str] = []
-    for line in patch.splitlines(keepends=True):
-        m = re.match(r"^--- a/(.+)$", line)
-        if m:
-            if current_file:
-                result[current_file] = "".join(current_lines)
-            current_file = m.group(1)
-            current_lines = [line]
-        elif current_file:
-            current_lines.append(line)
-    if current_file:
-        result[current_file] = "".join(current_lines)
-    return result
-
-
-# ---------------------------------------------------------------------------
-# File neighbour discovery (import-graph radius expansion)
-# ---------------------------------------------------------------------------
-
-def _python_imports(path: Path) -> Set[str]:
-    """Best-effort: return module names referenced in a Python file."""
-    try:
-        source = path.read_text(encoding="utf-8", errors="replace")
-        tree = ast.parse(source)
-    except Exception:
-        return set()
-    names: Set[str] = set()
-    for node in ast.walk(tree):
-        if isinstance(node, ast.Import):
-            for alias in node.names:
-                names.add(alias.name.split(".")[0])
-        elif isinstance(node, ast.ImportFrom):
-            if node.module:
-                names.add(node.module.split(".")[0])
-    return names
-
-
-def _module_to_file(module: str, repo_root: Path) -> Optional[Path]:
-    """Try to resolve a module name to a .py file inside the repo."""
-    parts = module.replace(".", "/")
-    candidates = [
-        repo_root / (parts + ".py"),
-        repo_root / parts / "__init__.py",
-    ]
-    for c in candidates:
-        if c.exists():
-            return c
-    return None
-
-
-def collect_neighbourhood(
-    epicentre_files: List[Path],
-    repo_root: Path,
-    radius: int = 1,
-    max_files: int = 30,
-) -> List[Path]:
-    """
-    BFS expansion from `epicentre_files` through import edges.
-    Returns at most `max_files` files (epicentre always included).
-    """
-    visited: Set[Path] = set(epicentre_files)
-    frontier: Set[Path] = set(epicentre_files)
-
-    for _ in range(radius):
-        next_frontier: Set[Path] = set()
-        for f in frontier:
-            if not f.exists():
-                continue
-            for mod in _python_imports(f):
-                neighbour = _module_to_file(mod, repo_root)
-                if neighbour and neighbour not in visited:
-                    visited.add(neighbour)
-                    next_frontier.add(neighbour)
-                    if len(visited) >= max_files:
-                        break
-            if len(visited) >= max_files:
-                break
-        frontier = next_frontier
-        if not frontier:
-            break
-
-    return list(visited)[:max_files]
 
 
 # ---------------------------------------------------------------------------

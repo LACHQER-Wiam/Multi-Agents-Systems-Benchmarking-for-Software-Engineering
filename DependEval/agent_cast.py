@@ -46,19 +46,17 @@ from langchain_anthropic import ChatAnthropic
 from langchain.agents import create_agent
 from pydantic import BaseModel, Field
 
-# ---------------------------------------------------------------------------
-# Generic I/O models (no DependEval-specific fields)
-# ---------------------------------------------------------------------------
+from shared import (
+    FileInput,
+    get_file_store,
+    list_files,
+    read_file,
+    set_file_store,
+)
 
-class FileInput(BaseModel):
-    """A single source file passed to the agent."""
-    path: str = Field(description="Relative or absolute file path.")
-    content: str = Field(description="Full source-code content of the file.")
-    language: Optional[str] = Field(
-        default=None,
-        description="Programming language hint (python, java, javascript, …). "
-                    "Auto-detected from extension when omitted.",
-    )
+# ---------------------------------------------------------------------------
+# I/O models
+# ---------------------------------------------------------------------------
 
 
 class CodeAnalysisRequest(BaseModel):
@@ -99,11 +97,9 @@ class CodeAnalysisResult(BaseModel):
 
 
 # ---------------------------------------------------------------------------
-# In-memory "file system" shared between tools
-# Populated once per run_agent() call via a closure.
+# In-memory graph (CAST-specific, populated by tools)
 # ---------------------------------------------------------------------------
 
-_FILE_STORE: Dict[str, str] = {}   # path -> content
 _GRAPH: nx.DiGraph = nx.DiGraph()
 
 
@@ -175,31 +171,8 @@ def _resolve_import(raw: str, source_path: str, known_paths: List[str]) -> Optio
 
 
 # ---------------------------------------------------------------------------
-# LangChain tools
+# LangChain tools (CAST-specific)
 # ---------------------------------------------------------------------------
-
-@tool
-def list_files(_: str = "") -> str:
-    """List all file paths currently loaded in the analysis context."""
-    if not _FILE_STORE:
-        return "No files loaded."
-    return "\n".join(sorted(_FILE_STORE.keys()))
-
-
-@tool
-def read_file(path: str) -> str:
-    """
-    Read the content of a specific file from the analysis context.
-    Input: file path (as returned by list_files).
-    """
-    content = _FILE_STORE.get(path)
-    if content is None:
-        # Try partial match
-        for k, v in _FILE_STORE.items():
-            if path in k or k.endswith(path):
-                return v
-        return f"File '{path}' not found. Available: {list(_FILE_STORE.keys())}"
-    return content
 
 
 @tool
@@ -209,7 +182,7 @@ def extract_imports(path: str) -> str:
     Returns a JSON list of raw import strings found in that file.
     Input: file path.
     """
-    content = _FILE_STORE.get(path, "")
+    content = get_file_store().get(path, "")
     if not content:
         return json.dumps([])
     raw = _extract_raw_imports(path, content)
@@ -224,13 +197,14 @@ def build_dependency_graph(_: str = "") -> str:
     {file: [files_it_depends_on]}.
     Also stores the graph internally for call-chain / cycle tools.
     """
-    known = list(_FILE_STORE.keys())
+    _file_store = get_file_store()
+    known = list(_file_store.keys())
     graph: Dict[str, List[str]] = {p: [] for p in known}
 
     _GRAPH.clear()
     _GRAPH.add_nodes_from(known)
 
-    for src_path, content in _FILE_STORE.items():
+    for src_path, content in _file_store.items():
         raw_imports = _extract_raw_imports(src_path, content)
         for raw in raw_imports:
             resolved = _resolve_import(raw, src_path, known)
@@ -394,8 +368,8 @@ def run_agent(
     CodeAnalysisResult – structured output ready for a downstream orchestrator.
     """
     # ---- Populate shared file store ----------------------------------------
-    global _FILE_STORE, _GRAPH
-    _FILE_STORE = {f.path: f.content for f in request.files}
+    global _GRAPH
+    set_file_store({f.path: f.content for f in request.files})
     _GRAPH = nx.DiGraph()
 
     # ---- Build or reuse agent ----------------------------------------------
