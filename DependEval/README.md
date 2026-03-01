@@ -40,6 +40,11 @@ Feel free to cite us
 }
 ```
 
+## Architecture Docs
+
+- CAST architecture: `CAST_APPROACH.md`
+- BugFinder architecture (SWE-smith pipeline): `BUGFINDER_ARCHITECTURE.md`
+
 ## Contact
 If you meet any question during running please contact junjia001@e.ntu.edu.sg
 

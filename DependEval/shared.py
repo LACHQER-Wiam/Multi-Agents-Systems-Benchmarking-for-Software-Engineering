@@ -49,6 +49,7 @@ class FileInput(BaseModel):
 # ---------------------------------------------------------------------------
 
 _FILE_STORE: Dict[str, str] = {}
+_REPO_ROOT: Optional[str] = None
 
 
 def set_file_store(files: Dict[str, str]) -> None:
@@ -60,6 +61,17 @@ def set_file_store(files: Dict[str, str]) -> None:
 def get_file_store() -> Dict[str, str]:
     """Return the current file store dict (by reference)."""
     return _FILE_STORE
+
+
+def set_repo_root(path: Optional[str]) -> None:
+    """Set the on-disk repo root for code execution tools."""
+    global _REPO_ROOT
+    _REPO_ROOT = path
+
+
+def get_repo_root() -> Optional[str]:
+    """Return the on-disk repo root path (or None)."""
+    return _REPO_ROOT
 
 
 # ---------------------------------------------------------------------------

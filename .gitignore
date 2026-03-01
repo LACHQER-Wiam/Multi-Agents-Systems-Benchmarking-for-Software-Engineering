@@ -1,7 +1,24 @@
 .env
-DependEval/__pycache__
-DependEval/logs
-DependEval/results
-DependEval/huggingface
-DependEval/utils/__pycache__
-DependEval/.swebench_repos
+.DS_Store
+
+# Python bytecode
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+
+# Repo caches (swesmith / swebench clones)
+DependEval/.swebench_repos/
+DependEval/.swesmith_repos/
+DependEval/pallets__*/
+DependEval/joke2k__*/
+DependEval/marshmallow-code__*/
+DependEval/pydantic__*/
+
+# Run outputs
+DependEval/logs/
+DependEval/results/
+DependEval/huggingface/
