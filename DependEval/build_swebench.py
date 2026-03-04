@@ -63,14 +63,34 @@ def build_dataset():
             "repo_path": repo_path,
         }
 
-        # GT task1 = patch
-        task1.append({**base, "modified_complete_code": patch})
+        # GT task1 — appliquer patch, lire fichiers modifiés, reset
+        subprocess.run(["git", "apply", "-"], input=patch.encode(), cwd=repo_path, check=False)
+        gt_me = {}
+        for i, f in enumerate(modified_files, 1):
+            gt_me[f"#file {i}"] = read_file(repo_path, f)
+        subprocess.run(["git", "checkout", commit], cwd=repo_path, check=False)
 
-        # GT task2 = fichiers modifiés
-        task2.append({**base, "gt": modified_files})
+        task1.append({
+            **base,
+            "called_code_segment": "",
+            "invoking_code_segment": "",
+            "feature_description": problem,
+            "modified_complete_code": gt_me,
+        })
 
-        # GT task4 = groupe unique des fichiers modifiés
-        task4.append({**base, "gt": str([modified_files])})
+        # GT task2 — avec guillemets simples
+        task2.append({
+            **base,
+            "files": [f"'{f}'" for f in modified_files],
+            "gt": [f"'{f}'" for f in modified_files],
+        })
+
+        # GT task4 — même format dataset normal
+        task4.append({
+            **base,
+            "files": [{"file": f, "function": ""} for f in modified_files],
+            "gt": str([[f] for f in modified_files]),
+        })
 
     with open(f"{OUTPUT_DIR}/task1_python.json", "w") as f:
         json.dump(task1, f, indent=2)

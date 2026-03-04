@@ -2,7 +2,10 @@ import argparse
 import os
 import inference_api 
 import inference_ReAct
+# import inference_ReAct_bench
 import time
+from dotenv import load_dotenv
+load_dotenv() 
 
 
 if __name__ == "__main__":
@@ -45,6 +48,18 @@ if __name__ == "__main__":
             max_token_nums=args.max_token_nums,
             provider=args.provider,
         )
+    # elif args.type_agent == "react_bench":
+    #     eval_path = inference_ReAct_bench.main(
+    #         model_name=args.model_name,
+    #         language=args.language,
+    #         task=args.task,
+    #         dataset_path=args.dataset_path,
+    #         res_dir=args.res_dir,
+    #         batch_size=args.batch_size,
+    #         temperature=args.temperature,
+    #         max_token_nums=args.max_token_nums,
+    #         provider=args.provider,
+    #     )
 
 
     end = time.perf_counter()

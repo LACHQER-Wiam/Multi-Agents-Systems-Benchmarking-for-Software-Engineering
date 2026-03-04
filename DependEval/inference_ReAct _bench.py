@@ -17,12 +17,11 @@ from workspace_tools import ReadFileTool, ListDirTool, SearchInFilesTool, WriteF
 from middlewares import TokenCounterMiddleware
 from model_factory import create_llm, get_response_format, SCHEMAS
 os.environ["LANGCHAIN_TRACING_V2"] = "false"
-from tools import BashWorkspaceTool
 
 # Répertoire dans lequel l'outil bash exécute les commandes (éditer fichiers, lancer scripts).
 WORKSPACE_ROOT = os.environ.get("WORKSPACE_ROOT", "/workspace")
 
-type_agent = "react" 
+type_agent = "react_bench" 
 
 # class Task2Schema(BaseModel):
 #     model_config = ConfigDict(extra="forbid")

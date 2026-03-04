@@ -15,7 +15,7 @@ class TokenCounterMiddleware(AgentMiddleware):
         self.calls = []
 
     @after_model
-    def __call__(self, response: ModelResponse) -> ModelResponse:
+    def __call__(self, response: ModelResponse) -> ModelResponse:  
         print("DEBUG: after_model called!")
         input_tokens = 0
         output_tokens = 0

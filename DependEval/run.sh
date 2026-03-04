@@ -4,8 +4,8 @@
 # models: claude-* (anthropic), gpt-* (openai), gemini-* (google)
 # "java" "javascript" "php" "python" "typescript" "c#" "c++" "c"  ,  "task2" "task4"
 models=("gpt-4.1") #haiku-4-5. opus-4-6
-languages=("javascript")
-tasks=("task4")
+languages=("python")
+tasks=("task1")
 type_agent="react"  # react or api
 
 log_dir="./logs"
@@ -29,7 +29,7 @@ for task in "${tasks[@]}"; do
             provider=$(get_provider "$model")
             echo "Running $type_agent model: $model (provider: $provider) with language: $language and task: $task" | tee -a "$log_file"
 
-            python -u run.py --type_agent "$type_agent" --model_name "$model" --language "$language" --task "$task" --provider "$provider" --max_token_nums 16000 >> "$log_file" 2>&1
+            python -u run.py --type_agent "$type_agent" --model_name "$model" --language "$language" --task "$task" --provider "$provider" --max_token_nums 16000  >> "$log_file" 2>&1
             if [ $? -ne 0 ]; then
                 echo "Error encountered while running model: $model with language: $language and task: $task" | tee -a "$log_file"
                 echo "Check log file for details: $log_file" | tee -a "$log_file"
