@@ -1,10 +1,7 @@
 [
   {
     "idx": 0,
-    "pred": {
-      "dependency_groups": "[[\"got-your-back/fmbox.py\", \"got-your-back/labellang.py\"], [\"got-your-back/gyb.py\"]]",
-      "justification": "fmbox.py and labellang.py are utility libraries with no interdependencies - fmbox.py handles mbox file operations and labellang.py handles label language processing. gyb.py is the main CLI tool that depends on both utility libraries for Gmail backup/restore functionality, so it should be processed last."
-    },
+    "pred": {},
     "gt": "[['got-your-back/labellang.py', 'got-your-back/gyb.py'], ['got-your-back/fmbox.py', 'got-your-back/gyb.py']]"
   }
 ]

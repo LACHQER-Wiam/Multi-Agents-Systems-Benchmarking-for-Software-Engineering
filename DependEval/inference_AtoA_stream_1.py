@@ -10,7 +10,7 @@ import httpx
 from a2a.client import A2AClient
 from a2a.types import MessageSendParams, SendStreamingMessageRequest
 
-from utils.AtoA_architecture_stream import agent_card  # ← IMPORTANT
+from utils.AtoA_architecture_stream_1 import agent_card  # ← IMPORTANT
 
 
 def load_dataset(dataset_path, language, task):
@@ -97,6 +97,22 @@ def load_dataset(dataset_path, language, task):
         message_payloads.append(payload)
 
     return message_payloads
+
+
+def save_token_excel(token_records, save_dir, task, model_name):
+    import pandas as pd
+    model_short = model_name.split("/")[-1]
+    excel_path = os.path.join(save_dir, f"{model_short}_{task}_token_usage.xlsx")
+    os.makedirs(save_dir, exist_ok=True)
+
+    if not token_records:
+        print("Warning: No token records to save.")
+        return excel_path
+
+    df = pd.DataFrame(token_records, columns=["sample_idx", "agent", "input_tokens", "output_tokens", "total_tokens"])
+    df.to_excel(excel_path, index=False, sheet_name="token_usage")
+    print(f"Token usage Excel saved: {excel_path} ({len(df)} rows)")
+    return excel_path
 
 
 ####################
@@ -215,12 +231,6 @@ async def stream_one_message(
     """
     Envoie un message en mode SSE (message/stream) et retourne
     le texte du dernier événement 'completed' reçu.
-
-    Stratégie :
-    - On collecte TOUS les chunks de texte reçus.
-    - On garde séparément le texte du dernier événement dont le
-      state == "completed" (c'est le résultat final de l'agent).
-    - Si aucun état completed n'est trouvé, on retourne tout le texte accumulé.
     """
     message_request = SendStreamingMessageRequest(
         id=str(uuid4()),
@@ -327,8 +337,12 @@ if __name__ == "__main__":
     parser.add_argument("--res_dir", type=str, default="./results")
     args = parser.parse_args()
 
+    # Same naming scheme as the server (model_name, task, language)
+    model_short = args.model_name.split("/")[-1]
+    token_log_path = f"/tmp/token_usage_{model_short}_{args.task}_{args.language}.jsonl"
+    print(f"Token log: {token_log_path}")
+
     message_payloads = load_dataset(args.dataset_path, args.language, args.task)
-    print("MESSAGE PAYLOADS", message_payloads)
     responses = asyncio.run(main(message_payloads=message_payloads))
     print(responses)
     format_save_results(responses,
@@ -337,3 +351,40 @@ if __name__ == "__main__":
                         args.task,
                         args.language,
                         args.model_name)
+
+    # ── Read token records from the JSONL log written by the server process ──
+    token_records = []
+    if os.path.exists(token_log_path):
+        with open(token_log_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        token_records.append(json.loads(line))
+                    except Exception:
+                        pass
+    print(f"Token records loaded: {len(token_records)}")
+
+    token_excel_dir = os.path.join(
+        args.res_dir, args.task, "AtoA", f"{args.language}/{model_short}-{args.language}"
+    )
+    save_token_excel(
+        token_records=token_records,
+        save_dir=token_excel_dir,
+        task=args.task,
+        model_name=args.model_name,
+    )
+
+    # Print summary to console
+    print("\n📊 Token usage summary:")
+    from collections import defaultdict
+    agg = defaultdict(lambda: {"input_tokens": 0, "output_tokens": 0, "calls": 0})
+    for rec in token_records:
+        ag = rec["agent"]
+        agg[ag]["input_tokens"] += rec["input_tokens"]
+        agg[ag]["output_tokens"] += rec["output_tokens"]
+        agg[ag]["calls"] += 1
+    for agent, stats in agg.items():
+        total = stats["input_tokens"] + stats["output_tokens"]
+        print(f"  {agent:20s} | calls={stats['calls']:4d} | "
+              f"input={stats['input_tokens']:8,d} | output={stats['output_tokens']:8,d} | total={total:9,d}")

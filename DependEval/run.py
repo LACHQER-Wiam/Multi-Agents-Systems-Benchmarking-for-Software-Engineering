@@ -74,7 +74,7 @@ if __name__ == "__main__":
         # Lancer client
         subprocess.run([
             sys.executable,
-            "inference_AtoA_stream.py",
+            "inference_AtoA_stream_1.py",
             "--task", task,
             "--language", language,
             "--model_name", model_name,
