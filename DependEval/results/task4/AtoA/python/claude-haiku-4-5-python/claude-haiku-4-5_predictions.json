@@ -1,7 +1,10 @@
 [
   {
     "idx": 0,
-    "pred": {},
+    "pred": {
+      "dependency_groups": "[[\"got-your-back/fmbox.py\", \"got-your-back/gyb.py\"], [\"got-your-back/labellang.py\", \"got-your-back/gyb.py\"]]",
+      "justification": "The GYB project follows a utility-based architecture where fmbox.py and labellang.py are independent utility modules that provide specialized functionality (mbox file manipulation and label localization respectively). The main CLI tool gyb.py depends on both utilities to orchestrate Gmail backup/restore operations. fmbox.py is imported by gyb.py for mbox file operations, and labellang.py is imported by gyb.py for label management features. The two utility modules have no cross-dependencies, making them independent chains that both feed into the main application."
+    },
     "gt": "[['got-your-back/labellang.py', 'got-your-back/gyb.py'], ['got-your-back/fmbox.py', 'got-your-back/gyb.py']]"
   }
 ]
