@@ -10,7 +10,7 @@ import httpx
 from a2a.client import A2AClient
 from a2a.types import MessageSendParams, SendStreamingMessageRequest
 
-from utils.AtoA_architecture_stream import agent_card  # ← IMPORTANT
+from DependEval.original_files.AtoA_architecture_stream import agent_card  # ← IMPORTANT
 
 
 def load_dataset(dataset_path, language, task):

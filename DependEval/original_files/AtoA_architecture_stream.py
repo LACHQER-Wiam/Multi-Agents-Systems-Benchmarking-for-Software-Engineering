@@ -30,7 +30,7 @@ from a2a.server.apps import A2AStarletteApplication
 from a2a.types import AgentCard, AgentCapabilities, AgentSkill
 
 
-from .prompts_AtoA import build_prompt_AtoA 
+from ..utils.prompts_AtoA import build_prompt_AtoA 
 # =========================
 # Constantes
 # =========================
