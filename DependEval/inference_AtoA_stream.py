@@ -90,7 +90,9 @@ def load_dataset(dataset_path, language, task):
                     ],
                     "messageId": str(i)
                 },
-                "metadata": {}
+                "metadata": {
+                    "sample_idx": i
+                }
             }
         }
 
@@ -103,16 +105,16 @@ def load_dataset(dataset_path, language, task):
 
 def format_save_results(responses, dataset_path, res_dir, task, language, model_name, type_agent="AtoA"):
     # ========================
-    # Load dataset (for GT)
+    # Load dataset (for GT) - MUST match load_dataset()
     # ========================
     if task == "task1":
-        path = os.path.join(dataset_path, language, f"{task}_{language}.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_1.json")
         gt_field = "modified_complete_code"
     elif task == "task2":
         path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
         gt_field = "gt"
     else:
-        path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_new_1.json")
         gt_field = "gt"
 
     with open(path, "r") as f:

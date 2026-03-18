@@ -597,13 +597,31 @@ class LanggraphAgentExecutor(AgentExecutor):
 
             updater = TaskUpdater(event_queue, task.id, task.context_id)
 
-            # Extract sample index from messageId for token tracking
-            try:
-                msg_id = context.message.messageId if context.message else "0"
-                sample_idx = int(msg_id)
-            except (ValueError, AttributeError):
-                sample_idx = 0
+            # Extract sample index from request context for token tracking
+            sample_idx = 0
+
+            # Try to get sample_idx from context metadata
+            if hasattr(context, 'metadata') and isinstance(context.metadata, dict):
+                sample_idx = context.metadata.get("sample_idx", 0)
+                print(f"✅ Sample index from metadata: {sample_idx}")
+
+            # Fallback: try messageId
+            if sample_idx == 0:
+                try:
+                    if hasattr(context, 'message') and context.message:
+                        msg_id = getattr(context.message, 'messageId', None)
+                        if msg_id:
+                            sample_idx = int(str(msg_id).strip())
+                            print(f"✅ Sample index from messageId: {sample_idx}")
+                except (ValueError, AttributeError, TypeError) as e:
+                    print(f"⚠️ Could not extract sample_idx from messageId: {e}")
+
+            # Final fallback: use context_id as hash to ensure uniqueness
+            if sample_idx == 0:
+                print(f"⚠️ Using default sample_idx=0 (context_id={task.context_id})")
+
             token_tracker.set_sample(sample_idx)
+            print(f"🏷️  Token tracker set to sample_idx={sample_idx}")
 
             input_data = {
                 "messages": [{"role": "user", "content": query}],

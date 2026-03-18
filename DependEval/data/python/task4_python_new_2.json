@@ -1,0 +1,493 @@
+[
+    {
+        "repo": "got-your-back",
+        "description": "GYB is a command-line tool for backing up Gmail messages to a local computer.",
+        "function": "Utilizes Gmail's API over HTTPS to securely download and store emails locally, offering installation options for Linux, MacOS, and Windows.",
+        "files": [
+            {
+                "file": "got-your-back/fmbox.py",
+                "function": "This library provides functionality to read and manipulate mbox files sequentially, allowing extraction, modification, and removal of email headers, as well as iterating through messages in an mbox file."
+            },
+            {
+                "file": "got-your-back/gyb.py",
+                "function": "This script is a command-line tool for backing up and restoring Gmail messages. It supports various actions such as backup, restore, count, purge, and label management, and integrates with Google APIs for Gmail and Google Workspace services. The tool uses OAuth 2.0 for authentication and supports both user accounts and service accounts."
+            },
+            {
+                "file": "got-your-back/labellang.py",
+                "function": "Unable to read file content."
+            }
+        ],
+        "gt": "[['got-your-back/labellang.py', 'got-your-back/gyb.py'], ['got-your-back/fmbox.py', 'got-your-back/gyb.py']]"
+    },
+    {
+        "repo": "SRCNN-pytorch",
+        "description": "An implementation of the SRCNN algorithm for image super-resolution using deep convolutional networks.",
+        "function": "The project allows training and testing of SRCNN models to enhance image resolution by upscaling factors of 2, 3, and 4. It supports custom dataset preparation, training with various hyperparameters, and evaluation using PSNR metrics.",
+        "files": [
+            {
+                "file": "SRCNN-pytorch/datasets.py",
+                "function": "The file defines two PyTorch datasets, `TrainDataset` and `EvalDataset`, for loading and normalizing low-resolution (lr) and high-resolution (hr) image data from HDF5 files during training and evaluation."
+            },
+            {
+                "file": "SRCNN-pytorch/models.py",
+                "function": "The file defines a Super-Resolution Convolutional Neural Network (SRCNN) model using PyTorch, consisting of three convolutional layers with ReLU activations for image super-resolution tasks."
+            },
+            {
+                "file": "SRCNN-pytorch/prepare.py",
+                "function": "The script processes image datasets for training or evaluation by resizing, converting to Y channel, and extracting patches, storing the results in HDF5 files. It supports both training (with patch extraction) and evaluation (storing full images) modes."
+            },
+            {
+                "file": "SRCNN-pytorch/test.py",
+                "function": "This script loads a pre-trained SRCNN model, processes an input image by resizing and converting it to YCbCr format, applies the model to enhance the image quality, and saves the enhanced image along with its PSNR value."
+            },
+            {
+                "file": "SRCNN-pytorch/train.py",
+                "function": "This script trains a Super-Resolution Convolutional Neural Network (SRCNN) model using PyTorch, optimizing it for image super-resolution tasks with Mean Squared Error (MSE) loss and evaluates its performance using PSNR."
+            },
+            {
+                "file": "SRCNN-pytorch/utils.py",
+                "function": "The file provides functions to convert between RGB and YCbCr color spaces, calculate PSNR, and track average values using the `AverageMeter` class."
+            }
+        ],
+        "gt": "[['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/datasets.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/prepare.py']]"
+    },
+    {
+        "repo": "ConvLSTM-Pytorch",
+        "description": "A Pytorch implementation of ConvLSTM for designing a Brain-Computer Interface (BCI) decoder.",
+        "function": "The project provides a ConvLSTM model to decode kinematic signals from neural signals, featuring a bidirectional ConvLSTM decoder with configurable layers, kernel sizes, and dropout rates.",
+        "files": [
+            {
+                "file": "ConvLSTM-Pytorch/convlstm.py",
+                "function": "The file defines a ConvLSTM model for sequence modeling with convolutional layers, supporting bidirectional and peephole connections, and includes a ConvLSTMCell for individual time steps."
+            },
+            {
+                "file": "ConvLSTM-Pytorch/convlstm_decoder.py",
+                "function": "The file defines a ConvLSTMNetwork class that implements a convolutional LSTM-based neural network for sequence processing. It includes layers of ConvLSTM cells, a flattening operation, and a linear layer for final output."
+            }
+        ],
+        "gt": "[['ConvLSTM-Pytorch/convlstm.py', 'ConvLSTM-Pytorch/convlstm_decoder.py']]"
+    },
+    {
+        "repo": "php-socks5",
+        "description": "A Socks5 proxy server implementation in PHP.",
+        "function": "Provides a Socks5 proxy server with username/password authentication, built using the Workerman library. Allows for easy configuration, starting, stopping, and monitoring of the proxy server.",
+        "files": [],
+        "gt": "[['repos_otherLanguage/python\\\\php-socks5\\\\config.php', 'repos_otherLanguage/python\\\\php-socks5\\\\start.php']]"
+    },
+    {
+        "repo": "indrnn",
+        "description": "A TensorFlow implementation of Independently Recurrent Neural Networks (IndRNNs), a novel architecture for building deeper and more interpretable RNNs.",
+        "function": "IndRNNs enable efficient stacking of recurrent layers with ReLU activations, prevent gradient issues, and improve interpretability by allowing neurons to be independent. The implementation includes examples for solving the addition problem and classifying sequential MNIST data.",
+        "files": [
+            {
+                "file": "indrnn/ind_rnn_cell.py",
+                "function": "The file implements an IndRNN (Independently Recurrent Neural Network) cell, which processes inputs and states independently using a single recurrent weight per unit. It supports customizable weight initialization, clipping, and activation functions, and is designed for building deeper and longer-term RNN models."
+            },
+            {
+                "file": "indrnn/ind_rnn_cell_test.py",
+                "function": "This file tests the functionality of the IndRNNCell, focusing on basic cell operations and the handling of recurrent weights within specified bounds."
+            },
+            {
+                "file": "indrnn/examples/addition_rnn.py",
+                "function": "This module uses the IndRNNCell to solve the addition problem, where a neural network is trained to predict the sum of two randomly selected numbers from sequences of input data. The model is optimized using mean squared error and the Adam optimizer."
+            },
+            {
+                "file": "indrnn/examples/sequential_mnist.py",
+                "function": "This module uses the IndRNNCell to solve the Sequential MNIST problem, implementing a multi-layer RNN with batch normalization and dynamic dataset switching for training, validation, and testing."
+            }
+        ],
+        "gt": "[['indrnn/ind_rnn_cell.py', 'indrnn/examples/sequential_mnist.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/examples/addition_rnn.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/ind_rnn_cell_test.py']]"
+    },
+    {
+        "repo": "tesla-apiscraper",
+        "description": "A self-hosted API scraper for collecting Tesla vehicle telemetry data and visualizing it on Grafana dashboards.",
+        "function": "Pulls vehicle telemetry from the Tesla Owner API into InfluxDB, allowing visualization on Grafana dashboards. Supports multiple vehicles, extended sleep mode, and includes an API for control via Android app or custom implementation.",
+        "files": [
+            {
+                "file": "tesla-apiscraper/apiconfig.py",
+                "function": "The file defines API credentials and a base URL for accessing Tesla's owner API, enabling interaction with Tesla vehicle data."
+            },
+            {
+                "file": "tesla-apiscraper/apiscraper.py",
+                "function": "The script continuously monitors and logs Tesla vehicle data from the Tesla API to an InfluxDB database, adjusting polling intervals based on vehicle activity. It also provides an HTTP API for querying the current state and controlling scraping behavior."
+            },
+            {
+                "file": "tesla-apiscraper/srtmread.py",
+                "function": "The script retrieves elevation data for a given latitude and longitude using the SRTM dataset, logs the elevation, and writes it to an InfluxDB database if not in dry-run mode. It uses a lock file to prevent concurrent execution."
+            },
+            {
+                "file": "tesla-apiscraper/teslajson.py",
+                "function": "This Python class provides a connection to the Tesla JSON API, allowing users to authenticate, retrieve vehicle data, and send commands to their Tesla vehicles. It supports both data requests and vehicle commands, with optional proxy support."
+            }
+        ],
+        "gt": "[['tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/apiconfig.py', 'tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/srtmread.py', 'tesla-apiscraper/apiscraper.py']]"
+    },
+    {
+        "repo": "pytorch-made",
+        "description": "A PyTorch implementation of the Masked AutoEncoder for Density Estimation (MADE) model.",
+        "function": "The project allows turning an autoencoder into an autoregressive density model by masking connections in an MLP. It supports training on datasets like binarized MNIST and can handle multiple orderings for improved performance.",
+        "files": [
+            {
+                "file": "pytorch-made/made.py",
+                "function": "The file implements a Masked Autoencoder for Density Estimation (MADE), a neural network that uses masked connections to ensure autoregressive properties. It allows for configurable input-output dependencies and supports multiple mask configurations for ensemble training."
+            },
+            {
+                "file": "pytorch-made/run.py",
+                "function": "The script trains a Masked Autoencoder for Distribution Estimation (MADE) model on the Binarized MNIST dataset using PyTorch. It supports order/connectivity-agnostic training by resampling masks and evaluates the model using binary cross-entropy loss. The training process includes epochs with both training and test phases, and the model is optimized using the Adam optimizer with a learning rate scheduler."
+            }
+        ],
+        "gt": "[['pytorch-made/made.py', 'pytorch-made/run.py']]"
+    },
+    {
+        "repo": "TradingView-data-scraper",
+        "description": "A tool for extracting chart data from user-published TradingView charts.",
+        "function": "Allows users to input the URL of a TradingView chart to extract and export the chart data as a CSV file. Can be run locally or deployed on a server for online usage.",
+        "files": [
+            {
+                "file": "TradingView-data-scraper/app.py",
+                "function": "This script is a Flask web application that scrapes financial data from a given URL, processes it, and returns the data as a downloadable CSV file. It uses Pyppeteer for web scraping and BeautifulSoup for HTML parsing."
+            },
+            {
+                "file": "TradingView-data-scraper/runp-heroku.py",
+                "function": "The file is a script to run a Flask application, starting the app defined in the `app` module."
+            }
+        ],
+        "gt": "[['TradingView-data-scraper/app.py', 'TradingView-data-scraper/runp-heroku.py']]"
+    },
+    {
+        "repo": "rest-api-samples",
+        "description": "A repository providing Python and Java code samples for the Tableau REST API, along with Postman collections for API interaction.",
+        "function": "Offers examples for integrating with Tableau Server or Tableau Online using the REST API, supporting various API versions and including samples for the Metadata API.",
+        "files": [
+            {
+                "file": "rest-api-samples/python/move_datasource_server.py",
+                "function": "This script moves a specified data source from one Tableau Server to another by downloading it, uploading it to the destination server's default project, and then deleting it from the source server."
+            },
+            {
+                "file": "rest-api-samples/python/move_workbook_projects.py",
+                "function": "This script facilitates moving a workbook from one project to another on a Tableau Server using the Tableau REST API. It handles user authentication, retrieves workbook and project IDs, and performs the workbook relocation."
+            },
+            {
+                "file": "rest-api-samples/python/move_workbook_server.py",
+                "function": "This script moves a specified workbook from one Tableau Server to another by downloading it, publishing it to the destination server's 'default' project, and then deleting it from the source server."
+            },
+            {
+                "file": "rest-api-samples/python/move_workbook_sites.py",
+                "function": "This script moves a specified workbook from the server's 'Default' site to a specified site's 'default' project by downloading the workbook in-memory and then publishing it to the new site, while also deleting it from the original site."
+            },
+            {
+                "file": "rest-api-samples/python/publish_workbook.py",
+                "function": "This script uses the Tableau Server REST API to publish a .twbx workbook to the 'default' project of a specified server, handling both small and large files by chunking for files over 64MB."
+            },
+            {
+                "file": "rest-api-samples/python/update_permission.py",
+                "function": "This script manages user permissions on all workbooks in a Tableau Server site, allowing or denying specific permissions for a given user. It handles updating or adding permissions, ensuring that existing permissions with different modes are replaced."
+            },
+            {
+                "file": "rest-api-samples/python/users_by_group.py",
+                "function": "This script connects to a Tableau Server, authenticates with provided credentials, and retrieves and prints users belonging to specified groups or all groups on a given site."
+            },
+            {
+                "file": "rest-api-samples/python/user_permission_audit.py",
+                "function": "This script audits and manages user permissions on a Tableau workbook, allowing or denying specific permissions for a given user. It handles user authentication, permission querying, deletion, and addition or update of permissions."
+            },
+            {
+                "file": "rest-api-samples/python/version.py",
+                "function": "The file defines a version number for a software or project, specifying it as '3.23'."
+            },
+            {
+                "file": "rest-api-samples/python/webhooks.py",
+                "function": "This script manages Tableau Server webhooks by signing in, creating, testing, and deleting webhooks, and then signing out. It interacts with the Tableau Server REST API to perform these operations."
+            }
+        ],
+        "gt": "[['rest-api-samples/python/version.py', 'rest-api-samples/python/users_by_group.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/webhooks.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/publish_workbook.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/update_permission.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_sites.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_datasource_server.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_projects.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/user_permission_audit.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_server.py']]"
+    },
+    {
+        "repo": "Super-mario-bros-PPO-pytorch",
+        "description": "A Python implementation of the Proximal Policy Optimization (PPO) algorithm to train an agent to play Super Mario Bros.",
+        "function": "The project allows users to train and test a PPO-based agent capable of completing 31 out of 32 levels in Super Mario Bros. It includes Docker support for easier setup and training, and offers flexibility in adjusting learning rates for better performance.",
+        "files": [
+            {
+                "file": "Super-mario-bros-PPO-pytorch/test.py",
+                "function": "The script tests a trained Proximal Policy Optimization (PPO) model on a Super Mario Bros environment, loading the model based on specified world and stage, and executing actions to complete the level."
+            },
+            {
+                "file": "Super-mario-bros-PPO-pytorch/train.py",
+                "function": "This script trains a Proximal Policy Optimization (PPO) model to play Super Mario Bros by interacting with multiple environments, optimizing the policy and value functions, and periodically saving the model."
+            },
+            {
+                "file": "Super-mario-bros-PPO-pytorch/src/env.py",
+                "function": "The file defines a framework for training an AI agent to play Super Mario Bros using OpenAI Gym. It includes custom wrappers for processing game frames, calculating rewards, and skipping frames to optimize training. Additionally, it supports multi-process environments for parallel training."
+            },
+            {
+                "file": "Super-mario-bros-PPO-pytorch/src/model.py",
+                "function": "The file defines a PPO (Proximal Policy Optimization) model using convolutional and linear layers for reinforcement learning tasks. It processes input data through convolutional layers, flattens the output, and then uses linear layers to produce both actor and critic outputs."
+            },
+            {
+                "file": "Super-mario-bros-PPO-pytorch/src/process.py",
+                "function": "This script evaluates a Proximal Policy Optimization (PPO) model for playing Super Mario Bros by selecting actions based on the model's policy and rendering the game environment. It periodically syncs with a global model and resets the environment upon completion or stagnation."
+            }
+        ],
+        "gt": "[['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/train.py']]"
+    },
+    {
+        "repo": "horrifying-pdf-experiments",
+        "description": "A project exploring the capabilities of PDF files by embedding JavaScript to create interactive content.",
+        "function": "Demonstrates the ability to run JavaScript within a PDF, leveraging limited Chrome PDFium API features to create a playable Breakout game inside a PDF file.",
+        "files": [
+            {
+                "file": "horrifying-pdf-experiments/generate.py",
+                "function": "This script generates a PDF with interactive form fields and embedded JavaScript, allowing dynamic behavior and customization of field appearance and functionality."
+            },
+            {
+                "file": "horrifying-pdf-experiments/generate_breakout.py",
+                "function": "This script generates a PDF file containing a simple Breakout game, using text fields as interactive elements and JavaScript for game logic. It also includes a README file within the same PDF."
+            }
+        ],
+        "gt": "[['horrifying-pdf-experiments/generate.py', 'horrifying-pdf-experiments/generate_breakout.py']]"
+    },
+    {
+        "repo": "CloudFail",
+        "description": "CloudFail is a reconnaissance tool designed to locate servers behind Cloudflare protection.",
+        "function": "The tool uses three attack phases: misconfigured DNS scanning, Crimeflare database scanning, and subdomain bruteforce scanning. It operates over Tor to mask requests and is intended for controlled, authorized testing.",
+        "files": [
+            {
+                "file": "CloudFail/cloudfail.py",
+                "function": "This script is a tool for identifying misconfigured DNS and uncovering real IP addresses behind Cloudflare-protected websites. It performs DNS lookups, checks for subdomains, and scans databases like DNSDumpster and Crimeflare to find potential vulnerabilities."
+            },
+            {
+                "file": "CloudFail/DNSDumpsterAPI.py",
+                "function": "This Python API allows users to retrieve subdomains and DNS records for a given domain from dnsdumpster.com, along with additional information such as IP addresses, reverse DNS, and network mapping images."
+            },
+            {
+                "file": "CloudFail/socks.py",
+                "function": "The file provides a Python module for tunneling connections through SOCKS4, SOCKS5, and HTTP proxies, offering a socket-like interface for proxy-enabled networking. It supports various proxy types, authentication, and includes functionality for binding, sending, and receiving data through the proxy."
+            },
+            {
+                "file": "CloudFail/sockshandler.py",
+                "function": "This script provides a handler for urllib2 to enable HTTP and HTTPS connections through a SOCKS proxy without modifying the original socket. It supports both HTTP and HTTPS protocols and allows configuration of proxy settings."
+            }
+        ],
+        "gt": "[['CloudFail/DNSDumpsterAPI.py', 'CloudFail/cloudfail.py'], ['CloudFail/socks.py', 'CloudFail/sockshandler.py'], ['CloudFail/socks.py', 'CloudFail/cloudfail.py']]"
+    },
+    {
+        "repo": "Tiling",
+        "description": "A tool for constructing and visualizing tilings of regular polygons and their dual tilings.",
+        "function": "Provides a simple API to create, manipulate, and render tilings using regular polygons. Supports automatic pattern repetition and dual tiling generation for visualizing polygon relationships.",
+        "files": [
+            {
+                "file": "Tiling/main.py",
+                "function": "The file defines a function to generate and render geometric patterns based on predefined configurations, saving the output as PNG images. It supports multiple pattern types and can render both single and dual versions of each pattern."
+            },
+            {
+                "file": "Tiling/tile.py",
+                "function": "This file defines a system for creating and rendering geometric shapes using the Cairo graphics library. It includes classes for managing shapes, generating adjacent shapes, and rendering them with customizable properties like colors, margins, and labels. The system also supports creating dual shapes and repeating patterns across a canvas."
+            }
+        ],
+        "gt": "[['Tiling/tile.py', 'Tiling/main.py']]"
+    },
+    {
+        "repo": "Edu-Mail-Generator",
+        "description": "A tool for generating free edu email addresses for educational purposes.",
+        "function": "Automates the process of creating edu emails, bypassing captchas and VPN detection, and installs necessary dependencies automatically. Allows users to create multiple edu emails quickly and efficiently.",
+        "files": [
+            {
+                "file": "Edu-Mail-Generator/bot.py",
+                "function": "This script automates the process of creating accounts and filling out application forms on the OpenCCC website, bypassing security measures and generating random data for fields like names, addresses, and phone numbers."
+            },
+            {
+                "file": "Edu-Mail-Generator/helper.py",
+                "function": "The file defines a class `EduHelper` that interacts with a web service to fetch authentication tokens, manage cookies, and send data to various endpoints for account creation or management. It uses HTTP requests to handle authentication and session management."
+            },
+            {
+                "file": "Edu-Mail-Generator/setup.py",
+                "function": "This script automates the installation of required Python packages and sets up either Chrome or Firefox as the preferred browser for running scripts, based on user input."
+            },
+            {
+                "file": "Edu-Mail-Generator/__banner/myBanner.py",
+                "function": "This script generates a colorful ASCII banner with random text colors, excluding certain colors, and displays it in the terminal."
+            },
+            {
+                "file": "Edu-Mail-Generator/__colors__/colors.py",
+                "function": "This file initializes colorama and defines variables for foreground, background, and style text colors to be used for text formatting in a terminal."
+            },
+            {
+                "file": "Edu-Mail-Generator/__constants/const.py",
+                "function": "The script generates fake personal and educational data, including names, addresses, and dates, for use in testing or educational purposes. It also includes lists of college IDs, college names, and country codes for potential integration into other applications."
+            },
+            {
+                "file": "Edu-Mail-Generator/__dwnldDrivers/versions.py",
+                "function": "The script automates the installation of web drivers (geckodriver for Firefox and chromedriver for Chrome) by detecting the system architecture, browser versions, and downloading the appropriate drivers. It handles platform-specific checks and ensures dependencies are installed if missing."
+            }
+        ],
+        "gt": "[['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__dwnldDrivers/versions.py', 'Edu-Mail-Generator/setup.py'], ['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__banner/myBanner.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__constants/const.py', 'Edu-Mail-Generator/bot.py']]"
+    },
+    {
+        "repo": "microsoft-teams-class-attender",
+        "description": "A Python-based bot designed to automatically attend online classes or meetings on Microsoft Teams.",
+        "function": "The bot logs into Microsoft Teams using provided credentials, joins classes based on a given timetable, and can send notifications via Discord webhooks. It requires manual setup of credentials and timezone configuration.",
+        "files": [
+            {
+                "file": "microsoft-teams-class-attender/bot.py",
+                "function": "The script automates joining and leaving Microsoft Teams classes based on a user-defined timetable stored in an SQLite database. It schedules classes for specific days and times, logs into Teams, joins classes, and sends status updates via a Discord webhook."
+            },
+            {
+                "file": "microsoft-teams-class-attender/discord_webhook.py",
+                "function": "The script sends a Discord webhook message with details about a class, including its name, status (joined, left, or no class), and timestamps for joining and leaving."
+            }
+        ],
+        "gt": "[['microsoft-teams-class-attender/discord_webhook.py', 'microsoft-teams-class-attender/bot.py']]"
+    },
+    {
+        "repo": "twitchchess",
+        "description": "A simple chess engine implemented as a livestream project.",
+        "function": "Features a 3-ply full search and a 5-ply beam search, with a neural network value function for board evaluation. Includes a web interface for playing against the engine and supports further improvements like quiescence search and multi-GPU training.",
+        "files": [
+            {
+                "file": "twitchchess/generate_training_set.py",
+                "function": "The script processes chess game data from PGN files, extracts board states and game outcomes, and compiles them into a dataset for machine learning purposes. It serializes board states and assigns corresponding game results, saving the dataset as a NumPy file."
+            },
+            {
+                "file": "twitchchess/play.py",
+                "function": "This file implements a chess engine with a Flask-based web interface, allowing users to play against a computer opponent using either a classic piece-based valuation function or a neural network-based valuator. It supports move input via algebraic notation or coordinates, and provides a self-play mode for testing the engine."
+            },
+            {
+                "file": "twitchchess/state.py",
+                "function": "The file defines a `State` class for representing and manipulating chess game states, including serialization of the board into a binary format and listing legal moves."
+            },
+            {
+                "file": "twitchchess/train.py",
+                "function": "The script defines a neural network model for evaluating chess positions and trains it using a dataset of chess positions and their corresponding values. The model is trained using a mean squared error loss function and saved after each epoch."
+            }
+        ],
+        "gt": "[['twitchchess/state.py', 'twitchchess/generate_training_set.py'], ['twitchchess/train.py', 'twitchchess/play.py'], ['twitchchess/state.py', 'twitchchess/play.py']]"
+    },
+    {
+        "repo": "MapTilesDownloader",
+        "description": "A Python-based GUI tool for downloading map tiles from various providers.",
+        "function": "Provides an easy-to-use web-based map interface for selecting areas, supports multi-threaded downloads, and can save tiles in multiple formats. It also includes a Docker setup for cross-platform use.",
+        "files": [
+            {
+                "file": "MapTilesDownloader/src/file_writer.py",
+                "function": "The `FileWriter` class manages file operations, including ensuring directories exist, adding metadata to JSON files, copying tiles, and checking file existence. It supports concurrent operations using locks for synchronization."
+            },
+            {
+                "file": "MapTilesDownloader/src/mbtiles_writer.py",
+                "function": "The `MbtilesWriter` class manages the creation and modification of MBTiles files, handling metadata insertion, tile data storage, and database updates for map tile data. It ensures directory structure, adds metadata, inserts tile data, checks for existing tiles, and finalizes the MBTiles file with updated metadata."
+            },
+            {
+                "file": "MapTilesDownloader/src/repo_writer.py",
+                "function": "The `RepoWriter` class extends `MbtilesWriter` to manage metadata and tile data in an SQLite database. It provides methods to add metadata (name, description, format, bounds, etc.) and tiles (with zoom, column, row, and tile data) to the database, ensuring proper directory structure and handling concurrent access using a lock."
+            },
+            {
+                "file": "MapTilesDownloader/src/server.py",
+                "function": "This script implements a threaded HTTP server that handles tile downloads and metadata management for map tiles. It supports POST requests to download tiles and manage metadata, and GET requests to serve UI files."
+            },
+            {
+                "file": "MapTilesDownloader/src/utils.py",
+                "function": "The file defines a `Utils` class with methods for generating random strings, calculating tile coordinates, creating quadkeys, converting tile numbers to geographic coordinates, and downloading and merging map tiles. It also includes functionality for scaling and merging tiles based on zoom levels."
+            }
+        ],
+        "gt": "[['MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/file_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/server.py']]"
+    },
+    {
+        "repo": "pytorch_memonger",
+        "description": "A repository showcasing PyTorch models optimized with gradient checkpointing.",
+        "function": "Implements gradient checkpointing to reduce memory usage, enabling training of larger models and larger minibatch sizes. Demonstrates optimization on ResNet, DenseNet, LSTM, and VNet models, with a tutorial on handling special layers like Batch normalization and dropout.",
+        "files": [
+            {
+                "file": "pytorch_memonger/test_memory_baseline.py",
+                "function": "This file contains unit tests for benchmarking the performance of various baseline models (DenseNet, ResNet, VNet, and Word Language Model) using PyTorch, measuring both GPU and CPU execution times during training."
+            },
+            {
+                "file": "pytorch_memonger/test_memory_optimized.py",
+                "function": "The file defines a test suite for benchmarking memory-optimized versions of neural network models (DenseNet, ResNet, VNet, and a Word Language Model) using PyTorch. Each test method evaluates the performance of a specific model by training it on synthetic data, measuring both GPU and CPU timings, and printing the results."
+            },
+            {
+                "file": "pytorch_memonger/models/baseline/densenet.py",
+                "function": "This file defines the DenseNet architecture for deep learning, including various configurations like DenseNet-121, DenseNet-169, and others, with options to load pre-trained models on ImageNet."
+            },
+            {
+                "file": "pytorch_memonger/models/baseline/resnet.py",
+                "function": "This file defines the ResNet architecture in PyTorch, including various ResNet models (e.g., ResNet-18, ResNet-50) and their pre-activation variants, with options to load pre-trained weights on ImageNet."
+            },
+            {
+                "file": "pytorch_memonger/models/baseline/vnet.py",
+                "function": "The file defines a 3D convolutional neural network architecture, specifically the VNet model, for medical image segmentation. It includes custom layers like `ContBatchNorm3d`, `LUConv`, and transition modules for downsampling and upsampling, with optional dropout and ELU/PReLU activation functions. The model processes 3D input volumes through a series of convolutional and transposed convolutional layers to produce a segmentation output."
+            },
+            {
+                "file": "pytorch_memonger/models/baseline/word_language_model.py",
+                "function": "The file defines an RNNModel class for language modeling, consisting of an encoder, an LSTM-based recurrent module, and a decoder. It supports optional weight tying between the encoder and decoder for improved performance."
+            },
+            {
+                "file": "pytorch_memonger/models/optimized/densenet_new.py",
+                "function": "This file defines various DenseNet models (e.g., densenet100, densenet121) and their architecture, including dense layers and transition layers, for image classification tasks."
+            },
+            {
+                "file": "pytorch_memonger/models/optimized/resnet_new.py",
+                "function": "This file defines various ResNet architectures (e.g., ResNet18, ResNet50) for image classification, including basic and bottleneck blocks, and supports both standard and pre-activation ResNet models."
+            },
+            {
+                "file": "pytorch_memonger/models/optimized/vnet_new.py",
+                "function": "The file defines a 3D convolutional neural network architecture, specifically the VNet, for medical image segmentation. It includes modules for input processing, downsampling, upsampling, and output generation, with optional dropout and activation functions."
+            },
+            {
+                "file": "pytorch_memonger/models/optimized/word_language_model_new.py",
+                "function": "The file defines an RNNModel class in PyTorch, which encapsulates an encoder, a recurrent module (LSTM, GRU, or RNN), and a decoder for sequence modeling tasks. It supports checkpointing for memory efficiency and includes functionality for weight tying, custom forward and backward passes, and gradient saving."
+            }
+        ],
+        "gt": "[['pytorch_memonger/models/baseline/word_language_model.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/word_language_model_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/resnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/baseline/vnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/vnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/densenet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/resnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/optimized/densenet_new.py', 'pytorch_memonger/test_memory_optimized.py']]"
+    },
+    {
+        "repo": "document-scanner",
+        "description": "A document scanner application built using OpenCV and Python.",
+        "function": "Processes images through various stages including grayscaling, Gaussian blur, edge detection, contour detection, and perspective transformation to accurately scan and transform documents into a flat, readable format.",
+        "files": [
+            {
+                "file": "document-scanner/rect.py",
+                "function": "The function `rectify` reshapes a 4x2 array, calculates sums and differences of its rows, and rearranges the rows based on these calculations to produce a new 4x2 array."
+            },
+            {
+                "file": "document-scanner/scanner.py",
+                "function": "The script processes an image to detect and rectify a document's corners, applies various thresholding techniques to enhance the document, and displays the results in multiple stages for analysis."
+            }
+        ],
+        "gt": "[['document-scanner/rect.py', 'document-scanner/scanner.py']]"
+    },
+    {
+        "repo": "R-BERT",
+        "description": "An unofficial PyTorch implementation of R-BERT for relation classification using pre-trained language models.",
+        "function": "Extracts three vectors from BERT (CLS token, averaged entity vectors) and processes them through fully-connected layers to classify relationships between entities. Supports training, evaluation, and prediction with official F1 score evaluation.",
+        "files": [
+            {
+                "file": "R-BERT/data_loader.py",
+                "function": "This file defines classes and functions for processing and converting SemEval dataset examples into features suitable for sequence classification tasks, including handling input examples, tokenization, and creating TensorDatasets for training, validation, and testing."
+            },
+            {
+                "file": "R-BERT/main.py",
+                "function": "This script initializes and trains a model using specified datasets, tokenizer, and training parameters, and evaluates the model on a test set if required. It supports various configurable options for training and evaluation."
+            },
+            {
+                "file": "R-BERT/model.py",
+                "function": "The file defines a custom neural network model, `RBERT`, built on top of the BERT architecture for relation classification. It includes a fully connected layer (`FCLayer`) with optional dropout and activation, and uses entity-specific and class embeddings to predict relationships between entities."
+            },
+            {
+                "file": "R-BERT/official_eval.py",
+                "function": "The script runs a Perl evaluation script to calculate the macro-averaged F1 score based on proposed answers and answer keys, then reads and formats the result for output."
+            },
+            {
+                "file": "R-BERT/predict.py",
+                "function": "This script loads a pre-trained RBERT model, processes an input text file to extract and tokenize text, and predicts labels for the input data, writing the results to an output file."
+            },
+            {
+                "file": "R-BERT/trainer.py",
+                "function": "The file defines a `Trainer` class for training, evaluating, and saving a fine-tuned BERT-based model (`RBERT`) for a specific task. It includes methods for training the model with gradient accumulation, evaluating performance on test or dev datasets, and saving/loading model checkpoints."
+            },
+            {
+                "file": "R-BERT/utils.py",
+                "function": "The file provides utility functions for a machine learning pipeline, including loading a tokenizer, setting seeds for reproducibility, initializing logging, computing evaluation metrics, and writing predictions to a file. It also includes functions for handling labels and special tokens."
+            }
+        ],
+        "gt": "[['R-BERT/model.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/model.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py']]"
+    }
+]

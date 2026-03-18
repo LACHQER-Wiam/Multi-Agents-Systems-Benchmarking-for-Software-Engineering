@@ -14,6 +14,7 @@ import inspect
 import traceback
 import uvicorn
 import argparse
+import re
 # ---------------------------
 # 1) A2A ADK imports
 # ---------------------------
@@ -53,6 +54,54 @@ max_rounds = args.max_rounds
 
 task = args.task
 language = args.language
+
+# =========================
+# JSON EXTRACTION UTILITY
+# =========================
+
+def extract_json_from_text(text: str) -> Optional[dict]:
+    """
+    Extract JSON object from text that may contain markdown or explanations.
+    Tries multiple strategies to extract valid JSON.
+    """
+    if not text:
+        return None
+
+    # Strategy 1: Remove markdown code blocks
+    cleaned = text.replace("```json", "").replace("```", "").strip()
+
+    if not cleaned:
+        return None
+
+    # Strategy 2: Try to parse the cleaned text directly
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        pass
+
+    # Strategy 3: Find JSON object using regex (handles text before/after JSON)
+    # Matches { ... } pattern where braces are properly balanced
+    json_pattern = r'\{(?:[^{}]|(?:\{[^{}]*\}))*\}'
+    matches = re.findall(json_pattern, cleaned, re.DOTALL)
+
+    for match in reversed(matches):  # Try longest match first
+        try:
+            return json.loads(match)
+        except json.JSONDecodeError:
+            continue
+
+    # Strategy 4: Try to find array pattern for task2 and task4
+    array_pattern = r'\[\s*(?:\[.*?\]|"[^"]*"|\d+|true|false|null)\s*(?:,\s*(?:\[.*?\]|"[^"]*"|\d+|true|false|null)\s*)*\]'
+    array_matches = re.findall(r'\[.*\]', cleaned, re.DOTALL)
+
+    for match in reversed(array_matches):
+        try:
+            parsed = json.loads(match)
+            return {"array_result": parsed}  # Wrap array in object
+        except json.JSONDecodeError:
+            continue
+
+    return None
 
 # =========================
 # PROMPTS
@@ -198,55 +247,59 @@ def supervisor_node(state: State):
     messages = [
         {
             "role": "system",
-            "content": system_prompt + "\n" + _parser.get_format_instructions(),
+            "content": system_prompt,  # Removed format instructions - prompts are explicit
         }
     ] + state["messages"]
 
     response_text = llm.invoke(messages)
-    cleaned = response_text.replace("```json", "").replace("```", "").strip()
 
     print(f"📝 Supervisor raw response: {response_text[:200]}")
-    print(f"📝 Supervisor cleaned: {cleaned[:200]}")
 
-    try:
-        parsed = _parser.parse(cleaned)
-        print(f"✅ Parsed successfully: next={parsed.next}, messages={len(parsed.messages)}")
+    # Try multiple parsing strategies
+    parsed_json = extract_json_from_text(response_text)
 
-        if parsed.messages and len(parsed.messages) > 0 and isinstance(parsed.messages[0], dict):
-            assistant_message = parsed.messages[0].get("content", cleaned)
-        else:
-            assistant_message = cleaned
-
-        next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
-        print(f"🎯 Next value: '{next_value}'")
-
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": assistant_message}
-            ],
-            "next": next_value,
-            "rounds": state.get("rounds", 0) + 1,
-            "analysis": state.get("analysis"),
-            "critique": state.get("critique"),
-        }
-
-    except Exception as e:
-        print(f"❌ Parsing error in supervisor: {e}")
+    if parsed_json:
         try:
-            json_obj = json.loads(cleaned)
-            next_value = str(json_obj.get("next", "supervisor")).lower().strip()
-        except:
-            next_value = "supervisor"
+            # If we got array_result wrapper, it's from array parsing
+            if "array_result" in parsed_json:
+                parsed_json.pop("array_result")
+                if not parsed_json or "messages" not in parsed_json:
+                    # Reconstruct Router format
+                    parsed_json = {"messages": [{"role": "assistant", "content": str(parsed_json)}], "next": "supervisor"}
 
-        return {
-            "messages": state["messages"] + [
-                {"role": "assistant", "content": cleaned}
-            ],
-            "next": next_value,
-            "rounds": state.get("rounds", 0) + 1,
-            "analysis": state.get("analysis"),
-            "critique": state.get("critique"),
-        }
+            parsed = _parser.parse_obj(parsed_json)
+            print(f"✅ Parsed successfully: next={parsed.next}, messages={len(parsed.messages)}")
+
+            next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
+            assistant_message = parsed.messages[0].get("content", response_text) if parsed.messages else response_text
+
+            return {
+                "messages": state["messages"] + [{"role": "assistant", "content": assistant_message}],
+                "next": next_value,
+                "rounds": state.get("rounds", 0) + 1,
+                "analysis": state.get("analysis"),
+                "critique": state.get("critique"),
+            }
+        except Exception as e:
+            print(f"❌ Pydantic parsing error in supervisor: {e}")
+
+    # Fallback: extract next field from response
+    print(f"📝 Supervisor cleaned: {response_text[:200]}")
+    try:
+        if isinstance(parsed_json, dict):
+            next_value = str(parsed_json.get("next", "supervisor")).lower().strip()
+        else:
+            next_value = "supervisor"
+    except:
+        next_value = "supervisor"
+
+    return {
+        "messages": state["messages"] + [{"role": "assistant", "content": response_text}],
+        "next": next_value,
+        "rounds": state.get("rounds", 0) + 1,
+        "analysis": state.get("analysis"),
+        "critique": state.get("critique"),
+    }
 
 
 def code_analyser_node(state: State):
@@ -255,46 +308,57 @@ def code_analyser_node(state: State):
     messages = [
         {
             "role": "system",
-            "content": details["code_analyser"] + "\n" + _parser.get_format_instructions(),
+            "content": details["code_analyser"],  # Removed format instructions
         }
     ] + state["messages"]
 
     response_text = llm.invoke(messages)
-    cleaned = response_text.replace("```json", "").replace("```", "").strip()
 
-    try:
-        parsed = _parser.parse(cleaned)
+    print(f"📝 Code Analyser raw response: {response_text[:200]}")
 
-        if parsed.messages and len(parsed.messages) > 0 and isinstance(parsed.messages[0], dict):
-            assistant_message = parsed.messages[0].get("content", cleaned)
-        else:
-            assistant_message = cleaned
+    # Try multiple parsing strategies
+    parsed_json = extract_json_from_text(response_text)
 
-        next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
-
-        return {
-            "messages": state["messages"] + [{"role": "assistant", "content": assistant_message}],
-            "next": next_value,
-            "rounds": state.get("rounds", 0),
-            "analysis": assistant_message,
-            "critique": state.get("critique"),
-        }
-
-    except Exception as e:
-        print(f"❌ Parsing error in code_analyser: {e}")
+    if parsed_json:
         try:
-            json_obj = json.loads(cleaned)
-            next_value = str(json_obj.get("next", "supervisor")).lower().strip()
-        except:
-            next_value = "supervisor"
+            # Handle array_result wrapper
+            if "array_result" in parsed_json:
+                parsed_json.pop("array_result")
+                if not parsed_json or "messages" not in parsed_json:
+                    parsed_json = {"messages": [{"role": "assistant", "content": str(parsed_json)}], "next": "supervisor"}
 
-        return {
-            "messages": state["messages"] + [{"role": "assistant", "content": cleaned}],
-            "next": next_value,
-            "rounds": state.get("rounds", 0),
-            "analysis": cleaned,
-            "critique": state.get("critique"),
-        }
+            parsed = _parser.parse_obj(parsed_json)
+            next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
+            assistant_message = parsed.messages[0].get("content", response_text) if parsed.messages else response_text
+
+            print(f"✅ Code Analyser parsed: next={next_value}")
+
+            return {
+                "messages": state["messages"] + [{"role": "assistant", "content": assistant_message}],
+                "next": next_value,
+                "rounds": state.get("rounds", 0),
+                "analysis": assistant_message,
+                "critique": state.get("critique"),
+            }
+        except Exception as e:
+            print(f"❌ Pydantic parsing error in code_analyser: {e}")
+
+    # Fallback
+    try:
+        if isinstance(parsed_json, dict):
+            next_value = str(parsed_json.get("next", "supervisor")).lower().strip()
+        else:
+            next_value = "supervisor"
+    except:
+        next_value = "supervisor"
+
+    return {
+        "messages": state["messages"] + [{"role": "assistant", "content": response_text}],
+        "next": next_value,
+        "rounds": state.get("rounds", 0),
+        "analysis": response_text,
+        "critique": state.get("critique"),
+    }
 
 
 def critic_node(state: State):
@@ -303,46 +367,57 @@ def critic_node(state: State):
     messages = [
         {
             "role": "system",
-            "content": details["critic"] + "\n" + _parser.get_format_instructions(),
+            "content": details["critic"],  # Removed format instructions
         }
     ] + state["messages"]
 
     response_text = llm.invoke(messages)
-    cleaned = response_text.replace("```json", "").replace("```", "").strip()
 
-    try:
-        parsed = _parser.parse(cleaned)
+    print(f"📝 Critic raw response: {response_text[:200]}")
 
-        if parsed.messages and len(parsed.messages) > 0 and isinstance(parsed.messages[0], dict):
-            assistant_message = parsed.messages[0].get("content", cleaned)
-        else:
-            assistant_message = cleaned
+    # Try multiple parsing strategies
+    parsed_json = extract_json_from_text(response_text)
 
-        next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
-
-        return {
-            "messages": state["messages"] + [{"role": "assistant", "content": assistant_message}],
-            "next": next_value,
-            "rounds": state.get("rounds", 0),
-            "analysis": state.get("analysis"),
-            "critique": assistant_message,
-        }
-
-    except Exception as e:
-        print(f"❌ Parsing error in critic: {e}")
+    if parsed_json:
         try:
-            json_obj = json.loads(cleaned)
-            next_value = str(json_obj.get("next", "supervisor")).lower().strip()
-        except:
-            next_value = "supervisor"
+            # Handle array_result wrapper
+            if "array_result" in parsed_json:
+                parsed_json.pop("array_result")
+                if not parsed_json or "messages" not in parsed_json:
+                    parsed_json = {"messages": [{"role": "assistant", "content": str(parsed_json)}], "next": "supervisor"}
 
-        return {
-            "messages": state["messages"] + [{"role": "assistant", "content": cleaned}],
-            "next": next_value,
-            "rounds": state.get("rounds", 0),
-            "analysis": state.get("analysis"),
-            "critique": cleaned,
-        }
+            parsed = _parser.parse_obj(parsed_json)
+            next_value = str(parsed.next).lower().strip() if parsed.next else "supervisor"
+            assistant_message = parsed.messages[0].get("content", response_text) if parsed.messages else response_text
+
+            print(f"✅ Critic parsed: next={next_value}")
+
+            return {
+                "messages": state["messages"] + [{"role": "assistant", "content": assistant_message}],
+                "next": next_value,
+                "rounds": state.get("rounds", 0),
+                "analysis": state.get("analysis"),
+                "critique": assistant_message,
+            }
+        except Exception as e:
+            print(f"❌ Pydantic parsing error in critic: {e}")
+
+    # Fallback
+    try:
+        if isinstance(parsed_json, dict):
+            next_value = str(parsed_json.get("next", "supervisor")).lower().strip()
+        else:
+            next_value = "supervisor"
+    except:
+        next_value = "supervisor"
+
+    return {
+        "messages": state["messages"] + [{"role": "assistant", "content": response_text}],
+        "next": next_value,
+        "rounds": state.get("rounds", 0),
+        "analysis": state.get("analysis"),
+        "critique": response_text,
+    }
 
 
 def finalizer_node(state: State):
@@ -351,15 +426,50 @@ def finalizer_node(state: State):
     messages = [
         {
             "role": "system",
-            "content": details["finalizer"] + "\n" + _parser.get_format_instructions(),
+            "content": details["finalizer"],  # Removed format instructions
         }
     ] + state["messages"]
 
     response_text = llm.invoke(messages)
-    cleaned = response_text.replace("```json", "").replace("```", "").strip()
+
+    print(f"📝 Finalizer raw response: {response_text[:200]}")
+
+    # Try to parse as FinalOutput
+    parsed_json = extract_json_from_text(response_text)
+
+    if parsed_json:
+        try:
+            # Handle array_result (for task2 and task4)
+            if "array_result" in parsed_json:
+                content = parsed_json["array_result"]
+                parsed_json = {
+                    "list_dependencies": str(content) if task == "task2" else None,
+                    "dependency_groups": str(content) if task == "task4" else None,
+                    "called_code_segment": None,
+                    "invoking_code_segment": None,
+                    "feature_description": None,
+                    "modified_complete_code": None,
+                    "justification": "Final output from analysis"
+                }
+
+            parsed = _parser.parse_obj(parsed_json)
+            print(f"✅ Finalizer parsed successfully")
+
+            return {
+                "messages": state["messages"] + [{"role": "assistant", "content": response_text}],
+                "next": "complete",
+                "rounds": state.get("rounds", 0),
+                "analysis": state.get("analysis"),
+                "critique": state.get("critique"),
+            }
+        except Exception as e:
+            print(f"❌ Pydantic parsing error in finalizer: {e}")
+
+    # Fallback: just return the response
+    print(f"📝 Finalizer fallback: {response_text[:200]}")
 
     return {
-        "messages": state["messages"] + [{"role": "assistant", "content": cleaned}],
+        "messages": state["messages"] + [{"role": "assistant", "content": response_text}],
         "next": "complete",
         "rounds": state.get("rounds", 0),
         "analysis": state.get("analysis"),

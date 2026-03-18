@@ -15,11 +15,11 @@ from utils.AtoA_architecture_stream_1 import agent_card  # ← IMPORTANT
 
 def load_dataset(dataset_path, language, task):
     if task == "task1":
-        path = os.path.join(dataset_path, language, f"{task}_{language}_1.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_2.json")
     elif task == "task2":
-        path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_final_2.json")
     else:
-        path = os.path.join(dataset_path, language, f"{task}_{language}_new_1.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")
 
     with open(path, "r") as f:
         dataset = json.load(f)
@@ -90,7 +90,9 @@ def load_dataset(dataset_path, language, task):
                     ],
                     "messageId": str(i)
                 },
-                "metadata": {}
+                "metadata": {
+                    "sample_idx": i
+                }
             }
         }
 
@@ -119,13 +121,13 @@ def save_token_excel(token_records, save_dir, task, model_name):
 
 def format_save_results(responses, dataset_path, res_dir, task, language, model_name, type_agent="AtoA"):
     # ========================
-    # Load dataset (for GT)
+    # Load dataset (for GT) - MUST match load_dataset()
     # ========================
     if task == "task1":
-        path = os.path.join(dataset_path, language, f"{task}_{language}.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_2.json")
         gt_field = "modified_complete_code"
     elif task == "task2":
-        path = os.path.join(dataset_path, language, f"{task}_{language}_final.json")
+        path = os.path.join(dataset_path, language, f"{task}_{language}_final_2.json")
         gt_field = "gt"
     else:
         path = os.path.join(dataset_path, language, f"{task}_{language}_new.json")

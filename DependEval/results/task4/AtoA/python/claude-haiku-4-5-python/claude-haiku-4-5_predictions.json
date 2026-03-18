@@ -2,9 +2,158 @@
   {
     "idx": 0,
     "pred": {
-      "dependency_groups": "[[\"got-your-back/fmbox.py\", \"got-your-back/gyb.py\"], [\"got-your-back/labellang.py\", \"got-your-back/gyb.py\"]]",
-      "justification": "The GYB project follows a utility-based architecture where fmbox.py and labellang.py are independent utility modules that provide specialized functionality (mbox file manipulation and label localization respectively). The main CLI tool gyb.py depends on both utilities to orchestrate Gmail backup/restore operations. fmbox.py is imported by gyb.py for mbox file operations, and labellang.py is imported by gyb.py for label management features. The two utility modules have no cross-dependencies, making them independent chains that both feed into the main application."
+      "dependency_groups": "[['got-your-back/gyb.py', 'got-your-back/fmbox.py'], ['got-your-back/gyb.py', 'got-your-back/labellang.py']]",
+      "justification": "gyb.py is the main CLI orchestrator that depends on fmbox.py for mbox file operations and labellang.py for label language/localization handling. These form two separate dependency chains from the main entry point."
     },
     "gt": "[['got-your-back/labellang.py', 'got-your-back/gyb.py'], ['got-your-back/fmbox.py', 'got-your-back/gyb.py']]"
+  },
+  {
+    "idx": 1,
+    "pred": {
+      "dependency_groups": "[['SRCNN-pytorch/models.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/datasets.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/prepare.py', 'SRCNN-pytorch/datasets.py']]",
+      "justification": "The dependency structure reflects the data flow and module relationships in the SRCNN project. Models.py is imported by both train.py and test.py for model architecture. Datasets.py depends on prepare.py for HDF5 file generation and is consumed by train.py. Utils.py provides shared utilities (color conversion, PSNR calculation, AverageMeter) used by both train.py and test.py. This grouping captures the core dependencies while highlighting that prepare.py creates the data pipeline foundation, train.py orchestrates training with models and datasets, and test.py performs inference using trained models and utilities."
+    },
+    "gt": "[['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/datasets.py', 'SRCNN-pytorch/train.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/models.py', 'SRCNN-pytorch/test.py'], ['SRCNN-pytorch/utils.py', 'SRCNN-pytorch/prepare.py']]"
+  },
+  {
+    "idx": 2,
+    "pred": {
+      "dependency_groups": "[['ConvLSTM-Pytorch/convlstm.py', 'ConvLSTM-Pytorch/convlstm_decoder.py']]",
+      "justification": "Linear dependency chain where convlstm_decoder.py imports and utilizes ConvLSTMCell and ConvLSTM classes from convlstm.py. The decoder network builds upon the base ConvLSTM implementation, making convlstm.py a foundational dependency. This structure reflects the hierarchical design of the BCI decoder system."
+    },
+    "gt": "[['ConvLSTM-Pytorch/convlstm.py', 'ConvLSTM-Pytorch/convlstm_decoder.py']]"
+  },
+  {
+    "idx": 3,
+    "pred": {
+      "dependency_groups": "[[\"src/Socks5Server.php\", \"src/Protocol/Socks5Protocol.php\"], [\"src/Protocol/Socks5Protocol.php\", \"src/Auth/AuthenticationHandler.php\"], [\"src/Auth/AuthenticationHandler.php\", \"src/Config/ConfigLoader.php\"], [\"src/Socks5Server.php\", \"src/Connection/ConnectionManager.php\"], [\"src/Connection/ConnectionManager.php\", \"src/Protocol/Socks5Protocol.php\"], [\"bin/start.php\", \"src/Socks5Server.php\"], [\"bin/stop.php\", \"src/Socks5Server.php\"], [\"config/socks5.config.php\", \"src/Config/ConfigLoader.php\"], [\"src/Socks5Server.php\", \"src/Relay/DataRelay.php\"], [\"src/Relay/DataRelay.php\", \"src/Connection/ConnectionManager.php\"]]",
+      "justification": "Socks5 proxy server dependencies organized by functional layers: (1) Core server initialization with protocol handling, (2) Protocol parsing with authentication, (3) Authentication with configuration, (4) Server with connection management, (5) Connection management with protocol, (6) CLI entry points with server, (7) Configuration loading, (8) Data relay with connection management. This structure ensures proper initialization order and separation of concerns."
+    },
+    "gt": "[['repos_otherLanguage/python\\\\php-socks5\\\\config.php', 'repos_otherLanguage/python\\\\php-socks5\\\\start.php']]"
+  },
+  {
+    "idx": 4,
+    "pred": {
+      "dependency_groups": "[['indrnn/ind_rnn_cell.py', 'indrnn/ind_rnn_cell_test.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/examples/addition_rnn.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/examples/sequential_mnist.py']]",
+      "justification": "The core IndRNNCell implementation is the foundation dependency for all other modules. The test file directly validates the cell's functionality. Both example files (addition_rnn.py and sequential_mnist.py) depend on IndRNNCell for their RNN architecture. The grouping reflects the dependency hierarchy: core cell implementation, its unit tests, and two independent example applications that each depend on the core cell but not on each other."
+    },
+    "gt": "[['indrnn/ind_rnn_cell.py', 'indrnn/examples/sequential_mnist.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/examples/addition_rnn.py'], ['indrnn/ind_rnn_cell.py', 'indrnn/ind_rnn_cell_test.py']]"
+  },
+  {
+    "idx": 5,
+    "pred": {
+      "dependency_groups": "[[\"tesla-apiscraper/apiconfig.py\", \"tesla-apiscraper/teslajson.py\"], [\"tesla-apiscraper/teslajson.py\", \"tesla-apiscraper/apiscraper.py\"], [\"tesla-apiscraper/apiscraper.py\", \"tesla-apiscraper/srtmread.py\"]]",
+      "justification": "apiconfig.py provides API credentials and base URL configuration needed by teslajson.py for Tesla API authentication. teslajson.py implements the Tesla API connection class required by apiscraper.py for vehicle data retrieval. apiscraper.py continuously monitors vehicle telemetry and can invoke srtmread.py for elevation data enrichment. This creates a dependency chain from configuration through API connection to the main scraper to optional elevation data collection."
+    },
+    "gt": "[['tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/apiconfig.py', 'tesla-apiscraper/teslajson.py', 'tesla-apiscraper/apiscraper.py'], ['tesla-apiscraper/srtmread.py', 'tesla-apiscraper/apiscraper.py']]"
+  },
+  {
+    "idx": 6,
+    "pred": {
+      "dependency_groups": "[['pytorch-made/made.py', 'pytorch-made/run.py']]",
+      "justification": "Linear dependency chain: made.py implements core MADE model with masked autoencoder functionality; run.py depends on made.py for model instantiation, training loop, and evaluation on Binarized MNIST dataset. Single group reflects minimal project scope with clear separation between model implementation and training script."
+    },
+    "gt": "[['pytorch-made/made.py', 'pytorch-made/run.py']]"
+  },
+  {
+    "idx": 7,
+    "pred": {
+      "dependency_groups": "[['TradingView-data-scraper/app.py', 'TradingView-data-scraper/runp-heroku.py']]",
+      "justification": "The two files form a single dependency group where runp-heroku.py depends on app.py as the entry point that imports and runs the Flask application. However, the project architecture is suboptimal and should be refactored into separate modules for scraping, parsing, exporting, and configuration to improve maintainability, testability, and separation of concerns."
+    },
+    "gt": "[['TradingView-data-scraper/app.py', 'TradingView-data-scraper/runp-heroku.py']]"
+  },
+  {
+    "idx": 8,
+    "pred": {
+      "dependency_groups": "[[\"rest-api-samples/python/move_datasource_server.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/move_workbook_server.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/move_workbook_projects.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/move_workbook_sites.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/publish_workbook.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/update_permission.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/user_permission_audit.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/users_by_group.py\", \"rest-api-samples/python/version.py\"], [\"rest-api-samples/python/webhooks.py\", \"rest-api-samples/python/version.py\"]]",
+      "justification": "All nine Python scripts in the Tableau REST API samples depend on version.py for version information. This creates a star topology dependency pattern where version.py is the central hub. The scripts are grouped by their shared dependency on version.py, representing the primary coupling point in the codebase. Scripts performing similar operations (move_workbook_*.py, permission-related scripts) lack shared utility modules, indicating potential for refactoring to reduce duplication and improve maintainability."
+    },
+    "gt": "[['rest-api-samples/python/version.py', 'rest-api-samples/python/users_by_group.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/webhooks.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/publish_workbook.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/update_permission.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_sites.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_datasource_server.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_projects.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/user_permission_audit.py'], ['rest-api-samples/python/version.py', 'rest-api-samples/python/move_workbook_server.py']]"
+  },
+  {
+    "idx": 9,
+    "pred": {},
+    "gt": "[['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/model.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/test.py'], ['Super-mario-bros-PPO-pytorch/src/process.py', 'Super-mario-bros-PPO-pytorch/train.py'], ['Super-mario-bros-PPO-pytorch/src/env.py', 'Super-mario-bros-PPO-pytorch/train.py']]"
+  },
+  {
+    "idx": 10,
+    "pred": {
+      "dependency_groups": "[['horrifying-pdf-experiments/generate.py', 'horrifying-pdf-experiments/generate_breakout.py']]",
+      "justification": "generate_breakout.py depends on generate.py as the base PDF generation framework with JavaScript embedding capabilities. The generate.py script provides the foundational interactive PDF structure and form field handling, which generate_breakout.py extends to implement the Breakout game logic. Both files should be processed together as generate_breakout.py requires the utilities and patterns established in generate.py."
+    },
+    "gt": "[['horrifying-pdf-experiments/generate.py', 'horrifying-pdf-experiments/generate_breakout.py']]"
+  },
+  {
+    "idx": 11,
+    "pred": {
+      "dependency_groups": "[['CloudFail/cloudfail.py', 'CloudFail/DNSDumpsterAPI.py'], ['CloudFail/cloudfail.py', 'CloudFail/socks.py'], ['CloudFail/cloudfail.py', 'CloudFail/sockshandler.py'], ['CloudFail/sockshandler.py', 'CloudFail/socks.py'], ['CloudFail/DNSDumpsterAPI.py', 'CloudFail/sockshandler.py']]",
+      "justification": "cloudfail.py is the central orchestrator depending on DNS enumeration (DNSDumpsterAPI), proxy tunneling (socks, sockshandler). sockshandler wraps socks for urllib2 integration. DNSDumpsterAPI uses sockshandler for proxied requests. This creates a hub-and-spoke pattern with tight coupling. Recommended refactoring: (1) Abstract proxy layer (ProxyManager) to decouple socks/sockshandler from business logic. (2) Create phase-specific scanner classes with dependency injection. (3) Implement DataSourceAPI interface for pluggable reconnaissance sources. (4) Reduce cloudfail.py to pure orchestration, delegating to specialized modules. This improves modularity, testability, and reduces cyclomatic complexity."
+    },
+    "gt": "[['CloudFail/DNSDumpsterAPI.py', 'CloudFail/cloudfail.py'], ['CloudFail/socks.py', 'CloudFail/sockshandler.py'], ['CloudFail/socks.py', 'CloudFail/cloudfail.py']]"
+  },
+  {
+    "idx": 12,
+    "pred": {
+      "dependency_groups": "[['Tiling/main.py', 'Tiling/tile.py']]",
+      "justification": "Main.py serves as the entry point for generating and rendering tiling patterns, depending on tile.py which provides the core geometric shape classes and Cairo rendering functionality. This represents a single dependency chain where high-level pattern generation logic depends on low-level graphics and shape manipulation utilities."
+    },
+    "gt": "[['Tiling/tile.py', 'Tiling/main.py']]"
+  },
+  {
+    "idx": 13,
+    "pred": {
+      "dependency_groups": "[[\"Edu-Mail-Generator/bot.py\", \"Edu-Mail-Generator/helper.py\"], [\"Edu-Mail-Generator/bot.py\", \"Edu-Mail-Generator/__constants/const.py\"], [\"Edu-Mail-Generator/bot.py\", \"Edu-Mail-Generator/__colors__/colors.py\"], [\"Edu-Mail-Generator/setup.py\", \"Edu-Mail-Generator/__dwnldDrivers/versions.py\"], [\"Edu-Mail-Generator/helper.py\", \"Edu-Mail-Generator/__colors__/colors.py\"], [\"Edu-Mail-Generator/__banner/myBanner.py\", \"Edu-Mail-Generator/__colors__/colors.py\"]]",
+      "justification": "Project automates fraudulent account creation bypassing security measures. Dependency structure shows bot.py as central orchestrator depending on helper.py (HTTP/auth), const.py (fake data generation), and colors.py (formatting). helper.py also uses colors.py. setup.py depends on versions.py for driver installation. Structure supports illegal activity violating educational platform terms of service. Critical security and ethical concerns require complete project redesign."
+    },
+    "gt": "[['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__dwnldDrivers/versions.py', 'Edu-Mail-Generator/setup.py'], ['Edu-Mail-Generator/__colors__/colors.py', 'Edu-Mail-Generator/helper.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__banner/myBanner.py', 'Edu-Mail-Generator/bot.py'], ['Edu-Mail-Generator/__constants/const.py', 'Edu-Mail-Generator/bot.py']]"
+  },
+  {
+    "idx": 14,
+    "pred": {
+      "dependency_groups": "[['microsoft-teams-class-attender/bot.py', 'microsoft-teams-class-attender/discord_webhook.py']]",
+      "justification": "bot.py is the main orchestrator that handles Teams login, class scheduling, and joining logic. It depends on discord_webhook.py to send status notifications about class attendance (joined, left, or no class). These files form a single dependency group where bot.py calls discord_webhook.py functions to report class status updates via Discord webhooks."
+    },
+    "gt": "[['microsoft-teams-class-attender/discord_webhook.py', 'microsoft-teams-class-attender/bot.py']]"
+  },
+  {
+    "idx": 15,
+    "pred": {
+      "dependency_groups": "[['twitchchess/state.py', 'twitchchess/play.py'], ['twitchchess/generate_training_set.py', 'twitchchess/state.py'], ['twitchchess/train.py', 'twitchchess/generate_training_set.py'], ['twitchchess/play.py', 'twitchchess/train.py']]",
+      "justification": "state.py is foundational (no dependencies). play.py depends on state.py for board representation. generate_training_set.py depends on state.py to serialize board states. train.py depends on generate_training_set.py for dataset loading. play.py depends on train.py for the neural network valuator. This creates a linear dependency chain with potential circular coupling between play.py and train.py that should be refactored by introducing abstraction layers (valuator interface) and separating model definition from training logic."
+    },
+    "gt": "[['twitchchess/state.py', 'twitchchess/generate_training_set.py'], ['twitchchess/train.py', 'twitchchess/play.py'], ['twitchchess/state.py', 'twitchchess/play.py']]"
+  },
+  {
+    "idx": 16,
+    "pred": {
+      "dependency_groups": "[['MapTilesDownloader/src/file_writer.py', 'MapTilesDownloader/src/mbtiles_writer.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py'], ['MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/server.py', 'MapTilesDownloader/src/utils.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/file_writer.py']]",
+      "justification": "The dependency structure reveals a circular dependency pattern: file_writer.py -> mbtiles_writer.py -> repo_writer.py -> server.py -> utils.py -> file_writer.py. This cycle violates the acyclic dependency principle and creates tight coupling. Recommended refactoring: (1) Extract common utilities into a separate 'base.py' module; (2) Create 'tile_utils.py' for coordinate calculations; (3) Implement 'writers_base.py' with abstract base classes; (4) Separate server logic into 'handlers.py'; (5) Use dependency injection in server.py; (6) Create 'concurrency.py' for lock management. This establishes a clear hierarchy: base utilities -> specialized utilities -> writer implementations -> server handlers, eliminating circular dependencies and improving code maintainability and testability."
+    },
+    "gt": "[['MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/file_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/repo_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/mbtiles_writer.py', 'MapTilesDownloader/src/server.py'], ['MapTilesDownloader/src/utils.py', 'MapTilesDownloader/src/server.py']]"
+  },
+  {
+    "idx": 17,
+    "pred": {
+      "dependency_groups": "[['pytorch_memonger/test_memory_baseline.py', 'pytorch_memonger/models/baseline/densenet.py'], ['pytorch_memonger/test_memory_baseline.py', 'pytorch_memonger/models/baseline/resnet.py'], ['pytorch_memonger/test_memory_baseline.py', 'pytorch_memonger/models/baseline/vnet.py'], ['pytorch_memonger/test_memory_baseline.py', 'pytorch_memonger/models/baseline/word_language_model.py'], ['pytorch_memonger/test_memory_optimized.py', 'pytorch_memonger/models/optimized/densenet_new.py'], ['pytorch_memonger/test_memory_optimized.py', 'pytorch_memonger/models/optimized/resnet_new.py'], ['pytorch_memonger/test_memory_optimized.py', 'pytorch_memonger/models/optimized/vnet_new.py'], ['pytorch_memonger/test_memory_optimized.py', 'pytorch_memonger/models/optimized/word_language_model_new.py']]",
+      "justification": "Test files depend on their respective model implementations. Baseline tests import baseline models; optimized tests import optimized models. This represents the primary dependency chain in the project where test suites validate specific model variants."
+    },
+    "gt": "[['pytorch_memonger/models/baseline/word_language_model.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/word_language_model_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/resnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/baseline/vnet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/vnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/baseline/densenet.py', 'pytorch_memonger/test_memory_baseline.py'], ['pytorch_memonger/models/optimized/resnet_new.py', 'pytorch_memonger/test_memory_optimized.py'], ['pytorch_memonger/models/optimized/densenet_new.py', 'pytorch_memonger/test_memory_optimized.py']]"
+  },
+  {
+    "idx": 18,
+    "pred": {
+      "dependency_groups": "[['document-scanner/rect.py', 'document-scanner/scanner.py']]",
+      "justification": "rect.py contains the rectify() utility function that reshapes and rearranges corner coordinates. scanner.py is the main processing pipeline that imports and uses rectify() to detect and transform document corners. This creates a direct dependency: rect.py must be processed before scanner.py."
+    },
+    "gt": "[['document-scanner/rect.py', 'document-scanner/scanner.py']]"
+  },
+  {
+    "idx": 19,
+    "pred": {
+      "dependency_groups": "[['R-BERT/main.py', 'R-BERT/trainer.py'], ['R-BERT/trainer.py', 'R-BERT/model.py'], ['R-BERT/trainer.py', 'R-BERT/data_loader.py'], ['R-BERT/trainer.py', 'R-BERT/utils.py'], ['R-BERT/main.py', 'R-BERT/data_loader.py'], ['R-BERT/main.py', 'R-BERT/utils.py'], ['R-BERT/predict.py', 'R-BERT/model.py'], ['R-BERT/predict.py', 'R-BERT/utils.py'], ['R-BERT/trainer.py', 'R-BERT/official_eval.py'], ['R-BERT/model.py', 'R-BERT/utils.py']]",
+      "justification": "Dependencies identified through functional analysis: main.py orchestrates training via trainer.py and requires data_loader.py and utils.py for setup; trainer.py depends on model.py for RBERT architecture, data_loader.py for dataset handling, utils.py for utilities, and official_eval.py for F1 evaluation; model.py depends on utils.py for label/token handling; predict.py depends on model.py for inference and utils.py for tokenizer loading. Critical issue: utils.py is a bottleneck imported by 4 files. Recommend splitting into eval_utils.py, logging_utils.py, and seed_utils.py to reduce coupling and improve maintainability."
+    },
+    "gt": "[['R-BERT/model.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/main.py'], ['R-BERT/model.py', 'R-BERT/predict.py'], ['R-BERT/utils.py', 'R-BERT/predict.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/data_loader.py', 'R-BERT/main.py'], ['R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py'], ['R-BERT/official_eval.py', 'R-BERT/utils.py', 'R-BERT/trainer.py', 'R-BERT/main.py']]"
   }
 ]
