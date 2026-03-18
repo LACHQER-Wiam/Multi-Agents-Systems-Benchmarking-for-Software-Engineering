@@ -1,7 +1,7 @@
 import argparse
 import os
 import inference_api 
-import inference_ReAct
+import DependEval.original_files.inference_ReAct as inference_ReAct
 import time
 import sys
 import subprocess
